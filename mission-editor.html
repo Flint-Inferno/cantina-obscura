@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MISSION EDITOR // CANTINA OBSCURA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #060608;
+      --panel:    #0d0d12;
+      --border:   #1e2030;
+      --accent:   #f0c060;
+      --text:     #a0a8c0;
+      --dim:      #3a3d50;
+      --green:    #00cc88;
+      --red:      #cc3333;
+      --font:     'Share Tech Mono', monospace;
+      --font-hd:  'Orbitron', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.8rem;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #topbar .logo {
+      font-family: var(--font-hd);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+    #topbar-filename {
+      font-family: var(--font);
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      opacity: 0.7;
+      flex: 1;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      outline: none;
+      padding: 0.15rem 0.35rem;
+      transition: border-color 0.15s, opacity 0.15s;
+      min-width: 0;
+    }
+    #topbar-filename:hover { border-color: var(--dim); opacity: 0.9; }
+    #topbar-filename:focus { border-color: var(--accent); opacity: 1; }
+    #status-msg {
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+      min-width: 220px;
+      text-align: right;
+    }
+    #status-msg.ok   { color: var(--green); opacity: 1; }
+    #status-msg.err  { color: var(--red);   opacity: 1; }
+
+    .btn {
+      font-family: var(--font);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      padding: 0.35rem 0.9rem;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--text);
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--text); color: #fff; }
+    .btn.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn.primary:hover { background: rgba(240,192,96,0.1); }
+    .btn.primary:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    #main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Left panel: form ────────────────────────────────────── */
+    #form-panel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .section-heading {
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      opacity: 0.5;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.1rem;
+      text-transform: uppercase;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .field label {
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      color: var(--text);
+      opacity: 0.55;
+      text-transform: uppercase;
+    }
+    .field input, .field textarea, .field select {
+      font-family: var(--font);
+      font-size: 0.78rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.35rem 0.5rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--dim);
+      color: #d0d8f0;
+    }
+    .field textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+    .field select option { background: #111; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    /* Briefing mode toggle */
+    .mode-toggle {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.25rem;
+    }
+    .mode-toggle button {
+      font-family: var(--font);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      opacity: 0.5;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .mode-toggle button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      opacity: 1;
+    }
+
+    /* Color swatches */
+    #faction-swatches {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.35rem;
+      margin-top: 0.35rem;
+    }
+    .swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 3px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.active { border-color: #fff; }
+    .swatch-label {
+      font-size: 0.5rem;
+      letter-spacing: 0.06em;
+      opacity: 0.4;
+      margin-top: 0.15rem;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .swatch-group { display: flex; flex-direction: column; align-items: center; }
+
+    /* Custom color inputs */
+    .color-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-top: 0.6rem;
+    }
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .color-row label {
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      opacity: 0.5;
+      width: 58px;
+      flex-shrink: 0;
+    }
+    .color-row input[type="color"] {
+      width: 26px;
+      height: 20px;
+      padding: 1px 2px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .color-row input[type="text"] {
+      font-family: var(--font);
+      font-size: 0.72rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.18rem 0.4rem;
+      flex: 1;
+      outline: none;
+      min-width: 0;
+    }
+    .color-row input[type="text"]:focus { border-color: var(--dim); }
+
+    /* Logo upload rows */
+    .logo-rows { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.35rem; }
+    .logo-row { display: flex; flex-direction: column; gap: 0.28rem; }
+    .logo-row-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      opacity: 0.5;
+    }
+    .logo-row-controls { display: flex; align-items: center; gap: 0.4rem; }
+    .logo-upload-btn {
+      font-family: var(--font);
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.55rem;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--text);
+      border-radius: 2px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .logo-upload-btn:hover { border-color: var(--text); color: #fff; }
+    .logo-preview-img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      display: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: #000;
+      flex-shrink: 0;
+    }
+    .logo-clear-btn {
+      font-family: var(--font);
+      font-size: 0.62rem;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--red);
+      border-radius: 2px;
+      cursor: pointer;
+      display: none;
+    }
+    .logo-clear-btn:hover { border-color: var(--red); }
+    .logo-reset-btn {
+      font-family: var(--font);
+      font-size: 0.68rem;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--text);
+      opacity: 0.6;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .logo-reset-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+    /* ── Right panel: preview ────────────────────────────────── */
+    #preview-panel {
+      position: relative;
+      background: #000;
+      overflow: hidden;
+    }
+    #preview-label {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.75rem;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      opacity: 0.35;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #preview-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+
+    /* ── Scrollbar ───────────────────────────────────────────── */
+    #form-panel::-webkit-scrollbar { width: 4px; }
+    #form-panel::-webkit-scrollbar-track { background: transparent; }
+    #form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── PAT overlay ─────────────────────────────────────────── */
+    #pat-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #pat-overlay.hidden { display: none; }
+    #pat-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.5rem 2rem;
+      width: 420px;
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    #pat-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+    }
+    #pat-box p {
+      font-size: 0.7rem;
+      line-height: 1.6;
+      color: var(--text);
+      opacity: 0.7;
+    }
+    #pat-input {
+      font-family: var(--font);
+      font-size: 0.75rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.4rem 0.6rem;
+      width: 100%;
+      outline: none;
+    }
+    #pat-input:focus { border-color: var(--accent); }
+    #pat-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+
+  <!-- ── PAT overlay ──────────────────────────────────────────── -->
+  <div id="pat-overlay" class="hidden">
+    <div id="pat-box">
+      <h2>⚿ GITHUB TOKEN</h2>
+      <p>Enter a classic GitHub PAT with <code>repo</code> scope to enable saving directly to the <code>live-page-links/</code> folder in the cantina-obscura repo.<br><br>Token is stored in localStorage only — never sent anywhere except GitHub's API.</p>
+      <input type="password" id="pat-input" placeholder="ghp_..." spellcheck="false" />
+      <div id="pat-actions">
+        <button class="btn" onclick="closePat()">CANCEL</button>
+        <button class="btn primary" onclick="savePat()">SAVE TOKEN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Top bar ──────────────────────────────────────────────── -->
+  <div id="topbar">
+    <div class="logo">◈ MISSION EDITOR</div>
+    <input type="text" id="topbar-filename" value="—" spellcheck="false" />
+    <div id="status-msg">LOADING...</div>
+    <input type="file" id="upload-input" accept=".html" style="display:none" onchange="openLocalFile(this)">
+    <button class="btn" onclick="document.getElementById('upload-input').click()">▲ OPEN</button>
+    <button class="btn" onclick="saveLocal()">⬇ SAVE</button>
+    <button class="btn" onclick="refreshPreview()">⟳ PREVIEW</button>
+    <button class="btn" id="token-btn" onclick="openPat()" title="Set GitHub PAT">⚿ TOKEN</button>
+    <button class="btn primary" id="save-btn" onclick="saveFile()" disabled>▲ COMMIT</button>
+  </div>
+
+  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <div id="main">
+
+    <!-- LEFT: form -->
+    <div id="form-panel">
+
+      <!-- Faction -->
+      <div>
+        <div class="section-heading">Faction / Color Scheme</div>
+        <div id="faction-swatches"></div>
+        <div class="color-rows">
+          <div class="color-row"><label>--bg</label>     <input type="color" id="color-bg">     <input type="text" id="hex-bg"     maxlength="7" placeholder="#000000"></div>
+          <div class="color-row"><label>--text</label>   <input type="color" id="color-text">   <input type="text" id="hex-text"   maxlength="7" placeholder="#ffffff"></div>
+          <div class="color-row"><label>--accent</label> <input type="color" id="color-accent"> <input type="text" id="hex-accent" maxlength="7" placeholder="#ffffff"></div>
+          <div class="color-row"><label>--border</label> <input type="color" id="color-border"> <input type="text" id="hex-border" maxlength="7" placeholder="#333333"></div>
+          <div class="color-row"><label>--dim</label>    <input type="color" id="color-dim">    <input type="text" id="hex-dim"    maxlength="7" placeholder="#111111"></div>
+          <div class="color-row"><label>--danger</label> <input type="color" id="color-danger"> <input type="text" id="hex-danger" maxlength="7" placeholder="#cc0000"></div>
+        </div>
+      </div>
+
+      <!-- Logo / Symbol -->
+      <div>
+        <div class="section-heading">Logo / Symbol</div>
+        <div class="logo-rows">
+
+          <div class="logo-row">
+            <div class="logo-row-label">TITLE — beside heading (~34px)</div>
+            <div class="logo-row-controls">
+              <label class="logo-upload-btn" for="logo-file-title">▲ FILE</label>
+              <input type="file" id="logo-file-title" accept=".svg,.png,.jpg,.jpeg,image/*" style="display:none" onchange="handleLogoUpload('title',this)">
+              <input type="color" id="color-logo-title">
+              <input type="text"  id="hex-logo-title" class="color-row" style="flex:1;font-family:var(--font);font-size:0.72rem;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.18rem 0.4rem;outline:none;" maxlength="7" placeholder="#accent">
+              <img id="logo-img-title" class="logo-preview-img" alt="">
+              <button class="logo-clear-btn" id="logo-clear-title" onclick="clearLogo('title')">✕ IMG</button>
+              <button class="logo-reset-btn" onclick="resetLogo('title')">↺</button>
+            </div>
+          </div>
+
+          <div class="logo-row">
+            <div class="logo-row-label">FOOTER — bottom strip (~18px)</div>
+            <div class="logo-row-controls">
+              <label class="logo-upload-btn" for="logo-file-footer">▲ FILE</label>
+              <input type="file" id="logo-file-footer" accept=".svg,.png,.jpg,.jpeg,image/*" style="display:none" onchange="handleLogoUpload('footer',this)">
+              <input type="color" id="color-logo-footer">
+              <input type="text"  id="hex-logo-footer" style="flex:1;font-family:var(--font);font-size:0.72rem;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.18rem 0.4rem;outline:none;" maxlength="7" placeholder="#accent">
+              <img id="logo-img-footer" class="logo-preview-img" alt="">
+              <button class="logo-clear-btn" id="logo-clear-footer" onclick="clearLogo('footer')">✕ IMG</button>
+              <button class="logo-reset-btn" onclick="resetLogo('footer')">↺</button>
+            </div>
+          </div>
+
+          <div class="logo-row">
+            <div class="logo-row-label">WATERMARK — background (~260px)</div>
+            <div class="logo-row-controls">
+              <label class="logo-upload-btn" for="logo-file-watermark">▲ FILE</label>
+              <input type="file" id="logo-file-watermark" accept=".svg,.png,.jpg,.jpeg,image/*" style="display:none" onchange="handleLogoUpload('watermark',this)">
+              <input type="color" id="color-logo-watermark">
+              <input type="text"  id="hex-logo-watermark" style="flex:1;font-family:var(--font);font-size:0.72rem;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.18rem 0.4rem;outline:none;" maxlength="7" placeholder="#accent">
+              <img id="logo-img-watermark" class="logo-preview-img" alt="">
+              <button class="logo-clear-btn" id="logo-clear-watermark" onclick="clearLogo('watermark')">✕ IMG</button>
+              <button class="logo-reset-btn" onclick="resetLogo('watermark')">↺</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Identity -->
+      <div>
+        <div class="section-heading">Identity</div>
+        <div class="field">
+          <label>Page Title (browser tab)</label>
+          <input type="text" id="f-page-title" placeholder="OPERATION: NAME // DATAPAD" />
+        </div>
+        <br/>
+        <div class="field">
+          <label>Classification Tag</label>
+          <input type="text" id="f-classify" placeholder="CLASSIFIED" />
+        </div>
+        <br/>
+        <div class="field">
+          <label>HoloNet Button URL</label>
+          <input type="text" id="f-holonet-url" placeholder="https://flint-inferno.github.io/cantina-obscura/holonet-main" />
+        </div>
+      </div>
+
+      <!-- Mission header -->
+      <div>
+        <div class="section-heading">Mission Header</div>
+        <div class="field">
+          <label>Mission Title</label>
+          <input type="text" id="f-mission-title" placeholder="MISSION TITLE HERE" />
+        </div>
+        <br/>
+        <div class="field-row">
+          <div class="field">
+            <label>Mission Code</label>
+            <input type="text" id="f-mission-code" placeholder="(uses filename)" />
+          </div>
+          <div class="field">
+            <label>Faction</label>
+            <input type="text" id="f-mission-faction" placeholder="REBEL ALLIANCE" />
+          </div>
+        </div>
+        <br/>
+        <div class="field">
+          <label>Cycle / Date / Event</label>
+          <input type="text" id="f-mission-cycle" placeholder="TATOOINE-3" />
+        </div>
+      </div>
+
+      <!-- Briefing -->
+      <div>
+        <div class="section-heading">Mission Briefing</div>
+        <div class="mode-toggle">
+          <button id="brief-para-btn" class="active" onclick="setBriefMode('para')">¶ PARAGRAPHS</button>
+          <button id="brief-list-btn" onclick="setBriefMode('list')">≡ BULLET LIST</button>
+        </div>
+        <div class="field">
+          <label id="brief-label">One paragraph per blank line</label>
+          <textarea id="f-briefing" rows="7" placeholder="Write the mission objectives here..."></textarea>
+        </div>
+      </div>
+
+      <!-- Payout -->
+      <div>
+        <div class="section-heading">Payout</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Credit Amount</label>
+            <input type="text" id="f-credits" placeholder="$000" />
+          </div>
+          <div class="field">
+            <label>Currency Unit</label>
+            <input type="text" id="f-credit-unit" placeholder="CREDITS" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Turn-in -->
+      <div>
+        <div class="section-heading">Turn-In Instructions</div>
+        <div class="field">
+          <label>One paragraph per blank line</label>
+          <textarea id="f-turnin" rows="5" placeholder="How does the player claim their payout?"></textarea>
+        </div>
+      </div>
+
+    </div><!-- /#form-panel -->
+
+    <!-- RIGHT: preview -->
+    <div id="preview-panel">
+      <div id="preview-label">LIVE PREVIEW</div>
+      <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+  </div><!-- /#main -->
+
+  <script>
+  // ── Faction presets ──────────────────────────────────────────
+  const FACTIONS = [
+    // Warm
+    { id: 'amber',    label: 'AMBER',    accent: '#f0c060', bg: '#0d0b07', text: '#d4a843', border: '#3a2e14', dim: '#1a1508' },
+    { id: 'orange',   label: 'ORANGE',   accent: '#ff8c00', bg: '#0f0900', text: '#e07820', border: '#3a2000', dim: '#1a0e00' },
+    { id: 'red',      label: 'RED',      accent: '#cc0000', bg: '#0f0202', text: '#ff4444', border: '#3a0a0a', dim: '#1a0505' },
+    { id: 'pink',     label: 'PINK',     accent: '#ff5fa0', bg: '#0f0208', text: '#ff8cc0', border: '#3a1028', dim: '#1a0514' },
+    { id: 'magenta',  label: 'MAGENTA',  accent: '#dd00cc', bg: '#0d000d', text: '#ee55e0', border: '#380038', dim: '#1a001a' },
+    { id: 'purple',   label: 'PURPLE',   accent: '#8844ff', bg: '#08050f', text: '#aa80ff', border: '#281848', dim: '#100828' },
+    // Cool
+    { id: 'blue',     label: 'BLUE',     accent: '#00aaff', bg: '#020a14', text: '#4db8ff', border: '#0a2a44', dim: '#0a1e2e' },
+    { id: 'cyan',     label: 'CYAN',     accent: '#00cccc', bg: '#020f0f', text: '#44dddd', border: '#0a3030', dim: '#051818' },
+    { id: 'teal',     label: 'TEAL',     accent: '#7ec8e3', bg: '#07090f', text: '#a8c0d6', border: '#1a2a3a', dim: '#0d1520' },
+    // Green
+    { id: 'green',    label: 'GREEN',    accent: '#00cc00', bg: '#050f05', text: '#33ff33', border: '#1a4a1a', dim: '#1a3a1a' },
+    { id: 'lime',     label: 'LIME',     accent: '#88ff00', bg: '#070f02', text: '#aaff44', border: '#203800', dim: '#0f1e00' },
+    // Yellow / neutral
+    { id: 'yellow',   label: 'YELLOW',   accent: '#ffee00', bg: '#0d0d02', text: '#eecc44', border: '#383600', dim: '#1a1900' },
+    { id: 'white',    label: 'WHITE',    accent: '#c0c8d0', bg: '#080808', text: '#b0b8c0', border: '#303030', dim: '#141414' },
+  ];
+
+  // ── Color var descriptors ────────────────────────────────────
+  const COLOR_VARS = [
+    { varName: '--bg',     colorId: 'color-bg',     hexId: 'hex-bg'     },
+    { varName: '--text',   colorId: 'color-text',   hexId: 'hex-text'   },
+    { varName: '--accent', colorId: 'color-accent', hexId: 'hex-accent' },
+    { varName: '--border', colorId: 'color-border', hexId: 'hex-border' },
+    { varName: '--dim',    colorId: 'color-dim',    hexId: 'hex-dim'    },
+    { varName: '--danger', colorId: 'color-danger', hexId: 'hex-danger' },
+  ];
+
+  function setColorInputs(bg, text, accent, border, dim, danger) {
+    const vals = [bg, text, accent, border, dim, danger];
+    COLOR_VARS.forEach((cv, i) => {
+      document.getElementById(cv.colorId).value = vals[i];
+      document.getElementById(cv.hexId).value   = vals[i];
+    });
+  }
+
+  function getColorValues() {
+    // Prefer the hex text input; fall back to color picker value
+    return COLOR_VARS.map(cv => {
+      const hex = document.getElementById(cv.hexId).value.trim();
+      return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : document.getElementById(cv.colorId).value;
+    });
+  }
+
+  function initColorSync() {
+    COLOR_VARS.forEach(cv => {
+      const picker = document.getElementById(cv.colorId);
+      const hex    = document.getElementById(cv.hexId);
+      picker.addEventListener('input', () => { hex.value = picker.value; });
+      hex.addEventListener('input', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; }
+      });
+    });
+  }
+
+  // ── Logo state ───────────────────────────────────────────────
+  const LOGO_SLOTS = ['title', 'footer', 'watermark'];
+  const logos = { title: null, footer: null, watermark: null }; // each: {data: 'data:...'} or null
+
+  function getLogoColor(slot) {
+    const hex = document.getElementById(`hex-logo-${slot}`).value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+    return document.getElementById(`color-logo-${slot}`).value || getColorValues()[2]; // fallback to accent
+  }
+
+  function handleLogoUpload(slot, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      logos[slot] = { data: e.target.result };
+      updateLogoPreview(slot);
+      schedulePreview();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearLogo(slot) {
+    logos[slot] = null;
+    const img = document.getElementById(`logo-img-${slot}`);
+    img.src = '';
+    img.style.display = 'none';
+    document.getElementById(`logo-clear-${slot}`).style.display = 'none';
+    document.getElementById(`logo-file-${slot}`).value = '';
+    schedulePreview();
+  }
+
+  function updateLogoPreview(slot) {
+    const img = document.getElementById(`logo-img-${slot}`);
+    img.src = logos[slot].data;
+    img.style.display = 'block';
+    document.getElementById(`logo-clear-${slot}`).style.display = '';
+  }
+
+  function setLogoColor(slot, hex) {
+    document.getElementById(`color-logo-${slot}`).value = hex;
+    document.getElementById(`hex-logo-${slot}`).value   = hex;
+  }
+
+  function resetLogo(slot) {
+    // Clear image + reset color to current accent
+    logos[slot] = null;
+    const img = document.getElementById(`logo-img-${slot}`);
+    img.src = ''; img.style.display = 'none';
+    document.getElementById(`logo-clear-${slot}`).style.display = 'none';
+    document.getElementById(`logo-file-${slot}`).value = '';
+    setLogoColor(slot, getColorValues()[2]); // reset to current accent
+    schedulePreview();
+  }
+
+  function initLogoColorSync() {
+    LOGO_SLOTS.forEach(slot => {
+      const picker = document.getElementById(`color-logo-${slot}`);
+      const hex    = document.getElementById(`hex-logo-${slot}`);
+      picker.addEventListener('input', () => { hex.value = picker.value; schedulePreview(); });
+      hex.addEventListener('input', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value;
+        schedulePreview();
+      });
+    });
+  }
+
+  let currentFaction  = FACTIONS[0];
+  let briefMode       = 'para';  // 'para' | 'list'
+  let templateHTML    = '';
+  let fileName        = '';
+  let fileSha         = null;   // GitHub blob SHA — required for PUT updates
+  let previewDebounce = null;
+
+  const GH_OWNER  = 'Flint-Inferno';
+  const GH_REPO   = 'cantina-obscura';
+  const GH_FOLDER = 'live-page-links';
+
+  // ── PAT overlay ──────────────────────────────────────────────
+  function getGhPat() { return localStorage.getItem('gh_pat') || ''; }
+
+  function openPat() {
+    document.getElementById('pat-input').value = getGhPat();
+    document.getElementById('pat-overlay').classList.remove('hidden');
+    document.getElementById('pat-input').focus();
+  }
+
+  function closePat() {
+    document.getElementById('pat-overlay').classList.add('hidden');
+  }
+
+  function savePat() {
+    const val = document.getElementById('pat-input').value.trim();
+    if (val) localStorage.setItem('gh_pat', val);
+    closePat();
+    loadFile();  // retry load with new token
+  }
+
+  // ── Init ─────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    buildSwatches();
+    initColorSync();
+    initLogoColorSync();
+    // Seed inputs with first faction defaults
+    const f0 = FACTIONS[0];
+    setColorInputs(f0.bg, f0.text, f0.accent, f0.border, f0.dim, f0.accent);
+    LOGO_SLOTS.forEach(slot => setLogoColor(slot, f0.accent));
+    const params = new URLSearchParams(window.location.search);
+    fileName = params.get('file') || 'untitled.html';
+    const fnInput = document.getElementById('topbar-filename');
+    fnInput.value = fileName;
+    fnInput.addEventListener('input', () => { fileName = fnInput.value.trim() || 'untitled.html'; });
+    // Show PAT overlay on first visit, otherwise go straight to load
+    if (!getGhPat()) {
+      openPat();
+    } else {
+      loadFile();
+    }
+    // Live preview on any input change
+    document.getElementById('form-panel').addEventListener('input', schedulePreview);
+  });
+
+  // ── Faction swatches ─────────────────────────────────────────
+  function buildSwatches() {
+    const container = document.getElementById('faction-swatches');
+    FACTIONS.forEach((f, i) => {
+      const g = document.createElement('div');
+      g.className = 'swatch-group';
+      const s = document.createElement('div');
+      s.className = 'swatch' + (i === 0 ? ' active' : '');
+      s.style.background = f.accent;
+      s.title = f.label;
+      s.onclick = () => selectFaction(f, s);
+      const lbl = document.createElement('div');
+      lbl.className = 'swatch-label';
+      lbl.textContent = f.label;
+      g.appendChild(s); g.appendChild(lbl);
+      container.appendChild(g);
+    });
+  }
+
+  function selectFaction(faction, swatchEl) {
+    currentFaction = faction;
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    swatchEl.classList.add('active');
+    setColorInputs(faction.bg, faction.text, faction.accent, faction.border, faction.dim, faction.accent);
+    schedulePreview();
+  }
+
+  // ── Brief mode ───────────────────────────────────────────────
+  function setBriefMode(mode) {
+    briefMode = mode;
+    document.getElementById('brief-para-btn').classList.toggle('active', mode === 'para');
+    document.getElementById('brief-list-btn').classList.toggle('active', mode === 'list');
+    document.getElementById('brief-label').textContent =
+      mode === 'para' ? 'One paragraph per blank line' : 'One bullet per line';
+    schedulePreview();
+  }
+
+  // ── GitHub Contents API helpers ──────────────────────────────
+  function ghHeaders() {
+    return {
+      'Authorization': 'Bearer ' + getGhPat(),
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+  }
+
+  function ghContentsUrl(fname) {
+    return `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FOLDER}/${encodeURIComponent(fname)}`;
+  }
+
+  // ── Load file from GitHub ────────────────────────────────────
+  async function loadFile() {
+    setStatus('LOADING...', '');
+    fileSha = null;
+
+    // Try loading the target file from live-page-links/
+    try {
+      const res = await fetch(ghContentsUrl(fileName), { headers: ghHeaders() });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatus('AUTH ERROR — check your token', 'err');
+        openPat();
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        fileSha      = data.sha;
+        templateHTML = atob(data.content.replace(/\n/g, ''));
+        populateFields(templateHTML);
+        setStatus('LOADED — ' + fileName, 'ok');
+        document.getElementById('save-btn').disabled = false;
+        refreshPreview();
+        return;
+      }
+
+      // 404 — new file, fall through to load template
+      if (res.status !== 404) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    } catch (e) {
+      if (!e.message.startsWith('HTTP')) {
+        setStatus('LOAD ERROR: ' + e.message, 'err');
+        document.getElementById('save-btn').disabled = false;
+        return;
+      }
+    }
+
+    // New file — load mission-template.html as the base
+    try {
+      const tplRes = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/mission-template.html`,
+        { headers: ghHeaders() }
+      );
+      if (!tplRes.ok) throw new Error(`template fetch failed: HTTP ${tplRes.status}`);
+      const tplData = await tplRes.json();
+      templateHTML = atob(tplData.content.replace(/\n/g, ''));
+      populateFields(templateHTML);
+      document.getElementById('f-mission-code').value   = '';
+      document.getElementById('f-holonet-url').value    = 'https://flint-inferno.github.io/cantina-obscura/holonet-main';
+      setStatus('NEW FILE — using template', 'ok');
+    } catch (e) {
+      setStatus('TEMPLATE ERROR: ' + e.message, 'err');
+    }
+
+    document.getElementById('save-btn').disabled = false;
+    refreshPreview();
+  }
+
+  // ── Parse template and populate fields ──────────────────────
+  function populateFields(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    // Page title
+    document.getElementById('f-page-title').value = doc.title || '';
+
+    // Classification
+    const classify = doc.querySelector('.classify-tag');
+    document.getElementById('f-classify').value = classify ? classify.textContent.trim() : 'CLASSIFIED';
+
+    // HoloNet URL
+    const holoBtn = doc.querySelector('.holonet-btn');
+    document.getElementById('f-holonet-url').value = holoBtn ? (holoBtn.getAttribute('href') || '') : '';
+
+    // Mission title
+    const mTitle = doc.querySelector('.mission-title');
+    document.getElementById('f-mission-title').value = mTitle ? mTitle.textContent.trim() : '';
+
+    // Mission ID line — parse "MISSION ID: X | ISSUED BY: Y | CYCLE: Z"
+    const midEl = doc.querySelector('.mission-id');
+    if (midEl) {
+      // Get text content without the aurebesh-accent span
+      const clone = midEl.cloneNode(true);
+      clone.querySelectorAll('.aurebesh-accent').forEach(s => s.remove());
+      const parts = clone.textContent.split('|').map(s => s.trim());
+      document.getElementById('f-mission-code').value    = (parts[0] || '').replace(/^MISSION ID:\s*/i, '').trim();
+      document.getElementById('f-mission-faction').value = (parts[1] || '').replace(/^ISSUED BY:\s*/i, '').trim();
+      document.getElementById('f-mission-cycle').value   = (parts[2] || '').replace(/^CYCLE:\s*/i, '').trim();
+    }
+
+    // Briefing
+    const brief = doc.querySelector('.mission-instructions');
+    if (brief) {
+      document.getElementById('f-briefing').value = htmlToPlainText(brief.innerHTML);
+    }
+
+    // Turn-in
+    const turnin = doc.querySelector('.turnin-instructions');
+    if (turnin) {
+      document.getElementById('f-turnin').value = htmlToPlainText(turnin.innerHTML);
+    }
+
+    // Credits
+    const amt  = doc.querySelector('.credit-amount');
+    const unit = doc.querySelector('.credit-unit');
+    document.getElementById('f-credits').value     = amt  ? amt.textContent.trim()  : '$000';
+    document.getElementById('f-credit-unit').value = unit ? unit.textContent.trim() : 'CREDITS';
+
+    // Read logo meta tags
+    LOGO_SLOTS.forEach(slot => {
+      const meta = doc.querySelector(`meta[name="logo-${slot}"]`);
+      const data  = meta ? meta.getAttribute('content')    : '';
+      const color = meta ? meta.getAttribute('data-color') : '';
+      if (data) {
+        logos[slot] = { data };
+        updateLogoPreview(slot);
+      } else {
+        logos[slot] = null;
+        const img = document.getElementById(`logo-img-${slot}`);
+        img.src = ''; img.style.display = 'none';
+        document.getElementById(`logo-clear-${slot}`).style.display = 'none';
+      }
+      if (color && /^#[0-9a-fA-F]{6}$/.test(color)) setLogoColor(slot, color);
+    });
+
+    // Read all 6 CSS color vars from the file and populate inputs
+    const getVar = name => { const m = html.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{3,6})')); return m ? m[1] : null; };
+    const bg     = getVar('--bg');
+    const text   = getVar('--text');
+    const accent = getVar('--accent');
+    const border = getVar('--border');
+    const dim    = getVar('--dim');
+    const danger = getVar('--danger');
+    if (accent) {
+      setColorInputs(bg || '#000000', text || accent, accent, border || '#333333', dim || '#111111', danger || accent);
+      // Highlight matching preset swatch if any
+      const accentLow = accent.toLowerCase();
+      const match = FACTIONS.find(f => f.accent.toLowerCase() === accentLow);
+      const swatches = document.querySelectorAll('.swatch');
+      swatches.forEach(s => s.classList.remove('active'));
+      if (match) {
+        const idx = FACTIONS.indexOf(match);
+        if (idx >= 0) { swatches[idx].classList.add('active'); currentFaction = match; }
+      }
+    }
+  }
+
+  // Convert simple HTML to plain text for textarea
+  function htmlToPlainText(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    // Replace <br> with newlines
+    tmp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+    // Replace </p><p> with double newlines
+    tmp.querySelectorAll('p').forEach(p => {
+      p.insertAdjacentText('afterend', '\n\n');
+    });
+    tmp.querySelectorAll('li').forEach(li => {
+      li.insertAdjacentText('afterend', '\n');
+    });
+    return tmp.textContent.trim().replace(/\n{3,}/g, '\n\n');
+  }
+
+  // ── Build output HTML from fields ────────────────────────────
+  function buildHTML() {
+    let html = templateHTML;
+
+    const [bg, text, accent, border, dim, danger] = getColorValues();
+
+    // Replace CSS color vars (inside :root block)
+    html = html.replace(/(--bg:\s*)#[0-9a-fA-F]+/g,      `$1${bg}`);
+    html = html.replace(/(--text:\s*)#[0-9a-fA-F]+/g,    `$1${text}`);
+    html = html.replace(/(--accent:\s*)#[0-9a-fA-F]+/g,  `$1${accent}`);
+    html = html.replace(/(--border:\s*)#[0-9a-fA-F]+/g,  `$1${border}`);
+    html = html.replace(/(--dim:\s*)#[0-9a-fA-F]+/g,     `$1${dim}`);
+    html = html.replace(/(--danger:\s*)#[0-9a-fA-F]+/g,  `$1${danger}`);
+    // Replace LOGO_COLOR in script
+    html = html.replace(/(const LOGO_COLOR\s*=\s*)'#[0-9a-fA-F]+'/, `$1'${accent}'`);
+
+    // Parse and modify DOM
+    const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+    // Page title
+    doc.title = v('f-page-title') || 'MISSION // DATAPAD';
+
+    // Classification
+    const classify = doc.querySelector('.classify-tag');
+    if (classify) classify.textContent = v('f-classify') || 'CLASSIFIED';
+
+    // HoloNet URL
+    const holoBtn = doc.querySelector('.holonet-btn');
+    if (holoBtn) holoBtn.setAttribute('href', v('f-holonet-url') || 'https://flint-inferno.github.io/cantina-obscura/holonet-main');
+
+    // Mission title
+    const mTitle = doc.querySelector('.mission-title');
+    if (mTitle) mTitle.textContent = v('f-mission-title') || 'MISSION TITLE';
+
+    // Mission ID line
+    const midEl = doc.querySelector('.mission-id');
+    if (midEl) {
+      const accent = midEl.querySelector('.aurebesh-accent');
+      const code    = v('f-mission-code')    || fileName.replace(/\.html$/i, '');
+      const faction = v('f-mission-faction') || '[FACTION]';
+      const cycle   = v('f-mission-cycle')   || '[DATE/EVENT]';
+      midEl.innerHTML =
+        `MISSION ID: ${esc(code)} &nbsp;|&nbsp; ISSUED BY: ${esc(faction)} &nbsp;|&nbsp; CYCLE: ${esc(cycle)}` +
+        (accent ? `&nbsp;${accent.outerHTML}` : '');
+    }
+
+    // Briefing
+    const brief = doc.querySelector('.mission-instructions');
+    if (brief) brief.innerHTML = plainTextToHTML(v('f-briefing'), briefMode);
+
+    // Turn-in
+    const turnin = doc.querySelector('.turnin-instructions');
+    if (turnin) turnin.innerHTML = plainTextToHTML(v('f-turnin'), 'para');
+
+    // Credits
+    const amt  = doc.querySelector('.credit-amount');
+    const unit = doc.querySelector('.credit-unit');
+    if (amt)  amt.textContent  = v('f-credits')     || '$000';
+    if (unit) unit.textContent = v('f-credit-unit') || 'CREDITS';
+
+    // ── Logo meta tags (DOM operations on doc) ──────────────────
+    LOGO_SLOTS.forEach(slot => {
+      const logo  = logos[slot];
+      const color = getLogoColor(slot);
+      let meta = doc.querySelector(`meta[name="logo-${slot}"]`);
+      if (!meta) {
+        meta = doc.createElement('meta');
+        meta.setAttribute('name', `logo-${slot}`);
+        doc.head.appendChild(meta);
+      }
+      meta.setAttribute('content',    logo ? logo.data : '');
+      meta.setAttribute('data-color', color);
+    });
+
+    // ── Logo override script — always inject so per-slot colors work ──
+    doc.querySelectorAll('script[data-logo-override]').forEach(s => s.remove());
+    const logoMap = LOGO_SLOTS.map(slot => {
+      const logo  = logos[slot];
+      const color = getLogoColor(slot);
+      // Always carry the color; data is null when no image uploaded
+      return `'logo-${slot}':{data:${logo ? JSON.stringify(logo.data) : 'null'},color:${JSON.stringify(color)}}`;
+    }).join(',');
+    const scriptEl = doc.createElement('script');
+    scriptEl.setAttribute('data-logo-override', '1');
+    // When data is null: call original draw with per-slot color instead of LOGO_COLOR
+    // When data is set: tint image to per-slot color via source-in compositing
+    scriptEl.textContent = `(function(){var _L={${logoMap}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();`;
+    doc.body.appendChild(scriptEl);
+
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }
+
+  // Plain text → HTML paragraphs or list items
+  function plainTextToHTML(text, mode) {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return '<p>[No content]</p>';
+    if (mode === 'list') {
+      const items = trimmed.split('\n').map(l => l.trim()).filter(Boolean);
+      return '<ul>' + items.map(l => `<li>${esc(l)}</li>`).join('\n') + '</ul>';
+    }
+    // Paragraph mode — split on blank lines
+    const paras = trimmed.split(/\n{2,}/).map(p => p.trim().replace(/\n/g, ' ')).filter(Boolean);
+    return paras.map(p => `<p>${esc(p)}</p>`).join('\n');
+  }
+
+  function v(id) { return document.getElementById(id).value.trim(); }
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ── Preview ──────────────────────────────────────────────────
+  function schedulePreview() {
+    clearTimeout(previewDebounce);
+    previewDebounce = setTimeout(refreshPreview, 300);
+  }
+
+  function refreshPreview() {
+    if (!templateHTML) return;
+    const html = buildHTML();
+    const frame = document.getElementById('preview-frame');
+    frame.srcdoc = html;
+  }
+
+  // ── Save to GitHub ───────────────────────────────────────────
+  async function saveFile() {
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    setStatus('COMMITTING...', '');
+    const html = buildHTML();
+
+    const body = {
+      message: `Update ${GH_FOLDER}/${fileName} via mission editor`,
+      content: btoa(unescape(encodeURIComponent(html))),  // UTF-8 safe base64
+    };
+    if (fileSha) body.sha = fileSha;  // required for updates; omit for new files
+
+    try {
+      const res = await fetch(ghContentsUrl(fileName), {
+        method:  'PUT',
+        headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatus('AUTH ERROR — check your token', 'err');
+        openPat();
+        btn.disabled = false;
+        return;
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      fileSha      = data.content.sha;   // update sha for next save
+      templateHTML = html;
+      setStatus('COMMITTED — ' + fileName, 'ok');
+    } catch (e) {
+      setStatus('COMMIT ERROR: ' + e.message, 'err');
+    }
+
+    btn.disabled = false;
+  }
+
+  function setStatus(msg, cls) {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg;
+    el.className   = cls;
+  }
+
+  // ── Open local file ──────────────────────────────────────────
+  function openLocalFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = ''; // reset so the same file can be reopened
+    const reader = new FileReader();
+    reader.onload = e => {
+      templateHTML = e.target.result;
+      populateFields(templateHTML);
+      fileName = file.name;
+      document.getElementById('topbar-filename').value = fileName;
+      setStatus('OPENED — ' + file.name, 'ok');
+      refreshPreview();
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Save / download local copy ───────────────────────────────
+  function saveLocal() {
+    const html = buildHTML();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  </script>
+
+</body>
+</html>
