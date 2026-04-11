@@ -391,9 +391,73 @@
     }
     #pat-input:focus { border-color: var(--accent); }
     #pat-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+    /* ── Browse overlay ──────────────────────────────────────── */
+    #browse-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #browse-overlay.hidden { display: none; }
+    #browse-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      width: 460px;
+      max-height: 70vh;
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    #browse-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    #browse-list {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex: 1;
+    }
+    #browse-list::-webkit-scrollbar { width: 4px; }
+    #browse-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .browse-item {
+      font-family: var(--font);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      padding: 0.35rem 0.6rem;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.1s, color 0.1s, background 0.1s;
+    }
+    .browse-item:hover { border-color: var(--accent); color: var(--accent); background: rgba(240,192,96,0.06); }
+    #browse-status {
+      font-size: 0.65rem;
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+    #browse-actions { display: flex; justify-content: flex-end; flex-shrink: 0; }
   </style>
 </head>
 <body>
+
+  <!-- ── Browse overlay ──────────────────────────────────────────── -->
+  <div id="browse-overlay" class="hidden">
+    <div id="browse-box">
+      <h2>▤ BROWSE — live-page-links/</h2>
+      <div id="browse-list"></div>
+      <div id="browse-status">Loading...</div>
+      <div id="browse-actions">
+        <button class="btn" onclick="closeBrowse()">CANCEL</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── PAT overlay ──────────────────────────────────────────── -->
   <div id="pat-overlay" class="hidden">
@@ -417,6 +481,7 @@
     <button class="btn" onclick="document.getElementById('upload-input').click()">▲ OPEN</button>
     <button class="btn" onclick="saveLocal()">⬇ SAVE</button>
     <button class="btn" onclick="refreshPreview()">⟳ PREVIEW</button>
+    <button class="btn" onclick="openBrowse()">▤ BROWSE</button>
     <button class="btn" id="token-btn" onclick="openPat()" title="Set GitHub PAT">⚿ TOKEN</button>
     <button class="btn primary" id="save-btn" onclick="saveFile()" disabled>▲ COMMIT</button>
   </div>
@@ -795,6 +860,57 @@
     document.getElementById('brief-label').textContent =
       mode === 'para' ? 'One paragraph per blank line' : 'One bullet per line';
     schedulePreview();
+  }
+
+  // ── Browse overlay ───────────────────────────────────────────
+  async function openBrowse() {
+    document.getElementById('browse-overlay').classList.remove('hidden');
+    const list   = document.getElementById('browse-list');
+    const status = document.getElementById('browse-status');
+    list.innerHTML = '';
+    status.textContent = 'Loading...';
+
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FOLDER}`,
+        { headers: ghHeaders() }
+      );
+      if (res.status === 401 || res.status === 403) {
+        status.textContent = 'Auth error — check your token.';
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const files = (await res.json())
+        .filter(f => f.type === 'file' && f.name.endsWith('.html'))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      if (files.length === 0) {
+        status.textContent = 'No HTML files found.';
+        return;
+      }
+
+      files.forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'browse-item';
+        item.textContent = f.name;
+        item.onclick = () => {
+          closeBrowse();
+          fileName = f.name;
+          document.getElementById('topbar-filename').value = fileName;
+          fileSha = null;
+          loadFile();
+        };
+        list.appendChild(item);
+      });
+      status.textContent = `${files.length} file(s) in ${GH_FOLDER}/`;
+    } catch (e) {
+      status.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  function closeBrowse() {
+    document.getElementById('browse-overlay').classList.add('hidden');
   }
 
   // ── GitHub Contents API helpers ──────────────────────────────
