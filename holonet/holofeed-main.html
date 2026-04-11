@@ -766,7 +766,7 @@ const THEMES = [
   }
 ];
 
-let currentTheme = 0;
+let currentTheme = 1;
 
 function applyTheme(t) {
   const theme = THEMES[t];
@@ -1712,7 +1712,7 @@ function mainLoop() {
 
 setInterval(mainLoop, 1000);
 mainLoop();
-applyTheme(0);
+applyTheme(currentTheme);
 
 // ── UNIVERSAL TRANSLATOR ──
 function toggleUT() {
