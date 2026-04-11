@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cantina Obscura Terminal</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent-rgb: 200,120,50; }
+    html, body { height:100%; margin:0; overflow:hidden; }
+    * { font-family:'Share Tech Mono',monospace; }
+    .font-orbitron { font-family:'Orbitron',sans-serif; }
+
+    @keyframes scanline {
+      0%   { transform:translateY(-100%); }
+      100% { transform:translateY(100%); }
+    }
+    @keyframes flicker {
+      0%,95%,100% { opacity:1; }
+      96% { opacity:0.8; } 97% { opacity:1; } 98% { opacity:0.7; }
+    }
+    @keyframes pulse-glow {
+      0%,100% { box-shadow:0 0 8px rgba(var(--accent-rgb),0.3); }
+      50%      { box-shadow:0 0 20px rgba(var(--accent-rgb),0.6); }
+    }
+    @keyframes blink {
+      0%,100% { opacity:1; } 50% { opacity:0; }
+    }
+    @keyframes data-stream {
+      0%   { transform:translateY(0);    opacity:0.15; }
+      50%  {                             opacity:0.05; }
+      100% { transform:translateY(-20px);opacity:0.15; }
+    }
+    @keyframes glitch {
+      0%   { opacity:1; clip-path:inset(40% 0 50% 0); transform:translate(calc(var(--glitch-x,4px) * -1), 0); }
+      20%  { clip-path:inset(10% 0 70% 0); transform:translate(var(--glitch-x,4px), 0);               color:rgba(0,220,255,var(--glitch-chroma,0.5)); }
+      40%  { clip-path:inset(70% 0 10% 0); transform:translate(calc(var(--glitch-x,4px) * -0.5), 0); color:rgba(255,50,50,var(--glitch-chroma,0.5)); }
+      60%  { clip-path:inset(25% 0 55% 0); transform:translate(calc(var(--glitch-x,4px) *  0.75), 0); }
+      80%  { clip-path:inset(60% 0 20% 0); transform:translate(calc(var(--glitch-x,4px) * -0.25), 0); }
+      100% { opacity:0; clip-path:inset(0 0 100% 0); transform:translate(0); }
+    }
+    @keyframes redir-text {
+      0%,100% { opacity:1; } 50% { opacity:0.4; }
+    }
+    @keyframes fade-in {
+      from { opacity:0; } to { opacity:1; }
+    }
+
+    .scanline-overlay {
+      pointer-events:none; position:absolute; inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);
+      z-index:50;
+    }
+    .scanline-bar {
+      pointer-events:none; position:absolute; left:0; right:0;
+      height:6px;
+      background:linear-gradient(180deg,transparent,rgba(var(--accent-rgb),0.07),transparent);
+      animation:scanline 4s linear infinite; z-index:51;
+    }
+    .terminal-flicker { animation:flicker 8s infinite; }
+    .cursor-blink::after { content:'█'; animation:blink 1s step-end infinite; }
+    .glow-border { animation:pulse-glow 3s ease-in-out infinite; }
+
+    .burn-mark {
+      position:absolute; border-radius:50%;
+      background:radial-gradient(circle,rgba(60,40,20,0.4) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .scratch {
+      position:absolute; background:rgba(255,255,255,0.03);
+      transform:rotate(-15deg); pointer-events:none;
+    }
+
+    .glitch-overlay {
+      position:absolute; inset:0; pointer-events:none; z-index:200; opacity:0;
+      background:rgba(var(--accent-rgb),var(--glitch-bg,0.04));
+    }
+    .glitch-overlay.active { animation:glitch var(--glitch-dur,0.28s) steps(1) forwards; }
+
+    .terminal-output {
+      scrollbar-width:thin;
+      scrollbar-color:rgba(var(--accent-rgb),0.3) transparent;
+    }
+    .terminal-output::-webkit-scrollbar { width:3px; }
+    .terminal-output::-webkit-scrollbar-thumb { background:rgba(var(--accent-rgb),0.3); border-radius:2px; }
+
+    .zone-sq   { width:18px; height:18px; border:1.5px solid; border-radius:3px; transition:all 0.2s; }
+    .zone-circ { width:18px; height:18px; border:1.5px solid; border-radius:50%; transition:all 0.2s; }
+
+    .redir-overlay {
+      position:absolute; inset:0; z-index:40;
+      display:none; flex-direction:column; align-items:center; justify-content:center;
+      background:rgba(10,10,8,0.97);
+      animation:fade-in 0.15s ease;
+    }
+    .redir-path {
+      font-size:11px; letter-spacing:0.05em;
+      color:rgba(var(--accent-rgb),0.4);
+      animation:redir-text 1.4s ease-in-out infinite;
+    }
+    .redir-bar-track {
+      width:280px; height:3px; background:rgba(var(--accent-rgb),0.15); border-radius:2px; margin:18px 0 10px;
+    }
+    .redir-bar-fill {
+      height:100%; width:0%; border-radius:2px;
+      background:rgb(var(--accent-rgb));
+      box-shadow:0 0 8px rgba(var(--accent-rgb),0.6);
+    }
+    .redir-steps { font-size:11px; color:rgba(var(--accent-rgb),0.55); letter-spacing:0.1em; min-height:16px; }
+
+    .cmd-input::placeholder { color:rgba(var(--accent-rgb),0.2); }
+    .cmd-input:focus { outline:none; }
+
+    @font-face {
+      font-family: 'Aurebesh';
+      src: url('AurebeshAF-Canon.otf') format('opentype');
+    }
+    .font-aurebesh { font-family: 'Aurebesh', monospace; }
+
+    .aur-sub {
+      display: block;
+      font-family: 'Aurebesh', monospace;
+      font-size: 9px;
+      opacity: 0.35;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    body.fluent-mode * { font-family: 'Aurebesh', monospace !important; }
+    body.fluent-mode .aur-sub { display: none !important; }
+  </style>
+</head>
+<body class="h-full">
+<div id="app" class="h-full w-full relative overflow-hidden" style="background:#0a0a08;">
+
+  <!-- Texture -->
+  <div class="burn-mark" style="width:180px;height:180px;top:-30px;right:60px;opacity:0.5;"></div>
+  <div class="burn-mark" style="width:100px;height:100px;bottom:40px;left:20px;opacity:0.3;"></div>
+  <div class="scratch" style="width:200px;height:1px;top:35%;left:10%;"></div>
+  <div class="scratch" style="width:120px;height:1px;top:60%;right:5%;transform:rotate(-8deg);"></div>
+
+  <!-- CRT -->
+  <div class="scanline-overlay"></div>
+  <div class="scanline-bar"></div>
+
+  <!-- Glitch overlay -->
+  <div id="glitch-el" class="glitch-overlay"></div>
+
+  <!-- Main layout -->
+  <div class="h-full w-full flex flex-col p-3 terminal-flicker relative z-10" style="color:rgb(var(--accent-rgb));">
+
+    <!-- ── Header ── -->
+    <header class="flex items-center justify-between mb-3 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded border flex items-center justify-center flex-shrink-0"
+             style="border-color:rgb(var(--accent-rgb));background:rgba(var(--accent-rgb),0.08);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent-rgb))" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2 L14 10 L12 8 L10 10 Z"/>
+            <path d="M12 22 L10 14 L12 16 L14 14 Z"/>
+            <line x1="2" y1="12" x2="22" y2="12" stroke-dasharray="2 3"/>
+          </svg>
+        </div>
+        <div>
+          <div class="font-aurebesh text-xs tracking-widest uppercase" style="color:rgba(var(--accent-rgb),0.7);">CANTINA OBSCURA</div>
+          <div class="font-aurebesh" style="color:rgba(var(--accent-rgb),0.3);font-size:10px;">SN: CO-7742-NX-0931</div>
+        </div>
+      </div>
+
+      <!-- Zone indicators -->
+      <div class="flex items-center gap-2" title="LEFT / CENTER / RIGHT zones">
+        <div id="zone-2" class="zone-sq"  style="border-color:rgba(var(--accent-rgb),0.2);opacity:0.2;" title="LEFT"></div>
+        <div id="zone-1" class="zone-circ"style="border-color:rgba(var(--accent-rgb),0.2);opacity:0.2;" title="CENTER"></div>
+        <div id="zone-3" class="zone-sq"  style="border-color:rgba(var(--accent-rgb),0.2);opacity:0.2;" title="RIGHT"></div>
+      </div>
+
+      <!-- Clock + session timer -->
+      <div class="text-right flex-shrink-0">
+        <div id="clock" class="font-aurebesh text-2xl tracking-wider" style="color:rgb(var(--accent-rgb));font-variant-numeric:tabular-nums;min-width:7ch;">00:00:00</div>
+        <div id="session-timer" style="color:rgba(var(--accent-rgb),0.5);font-size:10px;display:none;"><span id="session-timer-main">SESSION: 00:00</span><span id="session-timer-aur" class="aur-sub">SESSION: 00:00</span></div>
+        <div class="font-aurebesh" style="color:rgba(var(--accent-rgb),0.25);font-size:10px;">GALACTIC STANDARD</div>
+      </div>
+    </header>
+
+    <!-- Divider -->
+    <div class="w-full h-px flex-shrink-0 mb-3"
+         style="background:linear-gradient(90deg,transparent,rgb(var(--accent-rgb)),transparent);"></div>
+
+    <!-- ── Main area ── -->
+    <div class="flex-1 relative min-h-0 rounded-lg overflow-hidden border mb-3 glow-border"
+         style="border-color:rgba(var(--accent-rgb),0.35);background:rgba(var(--accent-rgb),0.02);">
+
+      <!-- Idle overlay -->
+      <div id="idle-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center"
+           style="background:rgba(10,10,8,0.96);">
+        <!-- ambient data -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+          <div class="absolute text-xs font-aurebesh" style="left:8%;top:20%;color:rgba(var(--accent-rgb),0.06);animation:data-stream 6s linear infinite;">01001101</div>
+          <div class="absolute text-xs font-aurebesh" style="right:12%;top:40%;color:rgba(var(--accent-rgb),0.05);animation:data-stream 8s linear infinite 2s;">11010010</div>
+          <div class="absolute text-xs font-aurebesh" style="left:70%;top:15%;color:rgba(var(--accent-rgb),0.04);animation:data-stream 7s linear infinite 4s;">00110110</div>
+          <div class="absolute text-xs font-aurebesh" style="left:20%;bottom:25%;color:rgba(var(--accent-rgb),0.04);animation:data-stream 9s linear infinite 1s;">10110001</div>
+        </div>
+        <div class="relative z-10 text-center">
+          <div class="mb-4 mx-auto w-16 h-16 rounded-full border-2 flex items-center justify-center"
+               style="border-color:rgb(var(--accent-rgb));background:rgba(var(--accent-rgb),0.08);">
+            <i data-lucide="scan-line" style="width:32px;height:32px;color:rgb(var(--accent-rgb));"></i>
+          </div>
+          <h1 class="font-orbitron text-3xl font-bold tracking-wide uppercase mb-1"
+              style="color:rgb(var(--accent-rgb));text-shadow:0 0 20px rgba(var(--accent-rgb),0.3);">
+            MISSION CARD SCANNER
+          </h1>
+          <span class="aur-sub mb-3" style="text-align:center;">MISSION CARD SCANNER</span>
+          <p id="statusText" class="text-sm tracking-widest cursor-blink"
+             style="color:rgba(var(--accent-rgb),0.55);">AWAITING INPUT...</p>
+          <span id="statusText-aur" class="aur-sub">AWAITING INPUT...</span>
+          <div class="mt-5 flex items-center gap-2 justify-center">
+            <span class="inline-block w-2 h-2 rounded-full"
+                  style="background:rgb(var(--accent-rgb));box-shadow:0 0 6px rgb(var(--accent-rgb));"></span>
+            <span class="text-xs font-aurebesh uppercase tracking-widest" style="color:rgba(var(--accent-rgb),0.35);">Data Reader Active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Briefing active panel -->
+      <div id="briefing-panel" class="absolute inset-0 z-10 flex flex-col items-center justify-center"
+           style="display:none;background:rgba(10,10,8,0.96);">
+        <div class="text-center px-8">
+          <div class="mb-4 mx-auto w-14 h-14 rounded-full border-2 flex items-center justify-center"
+               style="border-color:rgb(var(--accent-rgb));background:rgba(var(--accent-rgb),0.08);">
+            <i data-lucide="monitor-check" style="width:26px;height:26px;color:rgb(var(--accent-rgb));"></i>
+          </div>
+          <div class="font-orbitron text-lg font-bold tracking-widest uppercase mb-1"
+               style="color:rgb(var(--accent-rgb));text-shadow:0 0 16px rgba(var(--accent-rgb),0.4);">
+            BRIEFING IN PROGRESS
+          </div>
+          <span class="aur-sub mb-3" style="text-align:center;">BRIEFING IN PROGRESS</span>
+          <div class="text-xs font-aurebesh tracking-widest mb-4" style="color:rgba(var(--accent-rgb),0.4);">
+            ARCHIVE OPEN IN SECURE WINDOW
+          </div>
+          <div class="flex items-center gap-2 justify-center">
+            <span class="inline-block w-2 h-2 rounded-full"
+                  style="background:rgb(var(--accent-rgb));box-shadow:0 0 8px rgb(var(--accent-rgb));animation:blink 1.5s step-end infinite;"></span>
+            <span class="text-xs font-aurebesh uppercase tracking-widest" style="color:rgba(var(--accent-rgb),0.35);">TRANSMISSION ACTIVE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Countdown bar (bottom of main area) -->
+      <div id="countdown-wrap" class="absolute bottom-0 left-0 right-0 z-30" style="display:none;">
+        <div class="flex items-center justify-between px-3 py-1.5"
+             style="background:rgba(0,0,0,0.85);border-top:1px solid rgba(var(--accent-rgb),0.25);">
+          <div class="flex flex-col">
+            <span class="text-xs uppercase tracking-widest" style="color:rgba(var(--accent-rgb),0.6);">CARD REMOVED — SESSION EXPIRES</span>
+            <span class="aur-sub">CARD REMOVED — SESSION EXPIRES</span>
+          </div>
+          <div class="flex flex-col items-end">
+            <span id="countdown-secs" class="font-orbitron text-sm" style="color:rgb(var(--accent-rgb));">5.0s</span>
+            <span id="countdown-secs-aur" class="aur-sub">5.0s</span>
+          </div>
+        </div>
+        <div class="w-full h-1" style="background:rgba(var(--accent-rgb),0.12);">
+          <div id="countdown-bar" class="h-full" style="width:100%;transition:width 0.12s linear;background:rgb(var(--accent-rgb));"></div>
+        </div>
+      </div>
+
+      <!-- Redirect overlay -->
+      <div id="redirect-overlay" class="redir-overlay">
+        <div class="text-center px-8">
+          <div class="font-orbitron text-xl font-bold tracking-wider uppercase mb-1"
+               style="color:rgb(var(--accent-rgb));text-shadow:0 0 16px rgba(var(--accent-rgb),0.5);">
+            ACCESSING RESTRICTED ARCHIVE
+          </div>
+          <span class="aur-sub mb-1" style="text-align:center;">ACCESSING RESTRICTED ARCHIVE</span>
+          <div id="redir-path" class="redir-path font-aurebesh">/arch/co-net/classified/mission-db/......enc</div>
+          <div class="redir-bar-track">
+            <div id="redir-bar" class="redir-bar-fill"></div>
+          </div>
+          <div id="redir-steps" class="redir-steps font-aurebesh">VERIFYING CREDENTIALS...</div>
+        </div>
+      </div>
+
+      <!-- Tandem overlay -->
+      <div id="tandem-overlay" class="redir-overlay">
+        <div class="text-center px-8">
+          <div class="font-orbitron text-xl font-bold tracking-wider uppercase mb-1"
+               style="color:rgb(var(--accent-rgb));text-shadow:0 0 16px rgba(var(--accent-rgb),0.5);">
+            DUAL-KEY ENCRYPTION PROTOCOL
+          </div>
+          <span class="aur-sub mb-1" style="text-align:center;">DUAL-KEY ENCRYPTION PROTOCOL</span>
+          <div class="text-xs font-aurebesh tracking-widest mb-4" style="color:rgba(var(--accent-rgb),0.4);">
+            CROSS-REFERENCING CLEARANCE VECTORS
+          </div>
+          <div class="flex items-center justify-center gap-8 mb-4">
+            <div class="text-center">
+              <div class="w-10 h-10 rounded border-2 flex items-center justify-center mx-auto mb-1"
+                   style="border-color:rgb(var(--accent-rgb));background:rgba(var(--accent-rgb),0.1);">
+                <i data-lucide="fingerprint" style="width:18px;height:18px;color:rgb(var(--accent-rgb));"></i>
+              </div>
+              <div class="text-xs font-aurebesh" style="color:rgba(var(--accent-rgb),0.6);">KEY AUREK</div>
+              <div class="text-xs font-aurebesh" style="color:rgb(var(--accent-rgb));">CONFIRMED ✓</div>
+            </div>
+            <div style="color:rgba(var(--accent-rgb),0.3);font-size:18px;">⬡</div>
+            <div class="text-center">
+              <div class="w-10 h-10 rounded border-2 flex items-center justify-center mx-auto mb-1"
+                   style="border-color:rgb(var(--accent-rgb));background:rgba(var(--accent-rgb),0.1);">
+                <i data-lucide="fingerprint" style="width:18px;height:18px;color:rgb(var(--accent-rgb));"></i>
+              </div>
+              <div class="text-xs font-aurebesh" style="color:rgba(var(--accent-rgb),0.6);">KEY BESH</div>
+              <div class="text-xs font-aurebesh" style="color:rgb(var(--accent-rgb));">CONFIRMED ✓</div>
+            </div>
+          </div>
+          <div class="redir-bar-track">
+            <div id="tandem-bar" class="redir-bar-fill"></div>
+          </div>
+          <div id="tandem-steps" class="redir-steps font-aurebesh">INITIATING CLASSIFIED CHANNEL...</div>
+        </div>
+      </div>
+
+      <!-- Confirm overlay -->
+      <div id="confirm-overlay" class="redir-overlay">
+        <div class="text-center px-8">
+          <div class="font-orbitron text-xl font-bold tracking-wider uppercase mb-1"
+               style="color:rgb(var(--accent-rgb));text-shadow:0 0 20px rgba(var(--accent-rgb),0.5);">
+            SECURE CONNECTION FOUND
+          </div>
+          <span class="aur-sub mb-5" style="text-align:center;">SECURE CONNECTION FOUND</span>
+          <div class="text-sm tracking-widest cursor-blink mb-1"
+               style="color:rgba(var(--accent-rgb),0.65);">
+            PRESS ANY KEY TO CONTINUE
+          </div>
+          <span class="aur-sub" style="text-align:center;">PRESS ANY KEY TO CONTINUE</span>
+        </div>
+      </div>
+
+      <!-- Manual lockout overlay -->
+      <div id="lockout-overlay" class="absolute inset-0 flex flex-col items-center justify-center"
+           style="display:none;z-index:50;background:rgba(35,4,4,0.97);animation:fade-in 0.15s ease;">
+        <div class="text-center px-8">
+          <div class="mb-4 mx-auto w-14 h-14 rounded-full border-2 flex items-center justify-center"
+               style="border-color:rgb(220,20,20);background:rgba(220,20,20,0.1);box-shadow:0 0 24px rgba(220,20,20,0.3);">
+            <i data-lucide="lock" style="width:26px;height:26px;color:rgb(220,20,20);"></i>
+          </div>
+          <div class="font-orbitron text-xl font-bold tracking-widest uppercase mb-1"
+               style="color:rgb(220,20,20);text-shadow:0 0 20px rgba(220,20,20,0.6);">
+            TERMINAL LOCKED
+          </div>
+          <span class="aur-sub mb-2" style="text-align:center;opacity:0.5;">TERMINAL LOCKED</span>
+          <div class="text-xs tracking-widest mb-1" style="color:rgba(220,20,20,0.45);">
+            ACCESS SUSPENDED — AWAITING AUTHORIZATION
+          </div>
+          <span class="aur-sub" style="text-align:center;opacity:0.3;">ACCESS SUSPENDED — AWAITING AUTHORIZATION</span>
+        </div>
+      </div>
+
+    </div><!-- /main area -->
+
+    <!-- ── Terminal ── -->
+    <div class="flex-shrink-0 rounded-lg border flex flex-col"
+         style="border-color:rgba(var(--accent-rgb),0.2);background:rgba(0,0,0,0.6);max-height:185px;min-height:120px;">
+      <div class="flex items-center justify-between px-3 pt-2 pb-1.5 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <i data-lucide="terminal" style="width:13px;height:13px;color:rgba(var(--accent-rgb),0.5);"></i>
+          <span class="text-xs font-aurebesh uppercase tracking-widest" style="color:rgba(var(--accent-rgb),0.45);">DATA READER OUTPUT</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span id="pad-dot"  class="w-1.5 h-1.5 rounded-full" style="background:#3a6a2a;box-shadow:0 0 4px #3a6a2a;"></span>
+          <div class="flex flex-col items-end">
+            <span id="pad-text" class="text-xs" style="color:#3a6a2a;font-size:9px;">LINKED</span>
+            <span id="pad-text-aur" class="aur-sub" style="font-size:7px;">LINKED</span>
+          </div>
+        </div>
+      </div>
+      <div class="h-px mx-3 flex-shrink-0" style="background:rgba(var(--accent-rgb),0.12);"></div>
+      <div id="terminalOutput" class="terminal-output flex-1 overflow-y-auto px-3 py-1.5 text-xs space-y-0.5 min-h-0"
+           style="color:rgba(var(--accent-rgb),0.55);"></div>
+      <!-- Command input -->
+      <div class="flex items-center gap-2 px-3 pb-2 pt-1.5 flex-shrink-0"
+           style="border-top:1px solid rgba(var(--accent-rgb),0.1);">
+        <span class="text-xs font-aurebesh flex-shrink-0" style="color:rgba(var(--accent-rgb),0.4);">[CMD]&gt;</span>
+        <input id="cmd-input" type="text" class="cmd-input flex-1 bg-transparent text-xs"
+               placeholder="type /help for commands"
+               style="color:rgb(var(--accent-rgb));caret-color:rgb(var(--accent-rgb));border:none;outline:none;font-family:'Share Tech Mono',monospace;">
+      </div>
+    </div>
+
+    <!-- ── Footer ── -->
+    <footer class="flex items-center justify-between mt-2 flex-shrink-0">
+      <div class="font-aurebesh" style="color:rgba(var(--accent-rgb),0.2);font-size:10px;">SYS v4.17.3 // OUTER RIM NET</div>
+      <div class="flex flex-col items-end">
+        <div id="state-badge" class="text-xs uppercase tracking-widest"
+             style="color:rgba(var(--accent-rgb),0.4);">STANDBY</div>
+        <span id="state-badge-aur" class="aur-sub">STANDBY</span>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const STATE_COLORS = {
+  idle:        {rgb:'200,120,50',  label:'STANDBY'},
+  single:      {rgb:'60,180,90',   label:'SESSION ACTIVE'},
+  single_cd:   {rgb:'220,90,20',   label:'SESSION EXPIRING'},
+  tandem_wait: {rgb:'60,120,220',  label:'AWAITING SECOND KEY'},
+  tandem:      {rgb:'130,60,220',  label:'DUAL ACCESS ACTIVE'},
+  tandem_cd:   {rgb:'220,90,20',   label:'SESSION EXPIRING'},
+  lockout:     {rgb:'220,20,20',   label:'LOCKOUT'},
+};
+
+const REDIRECT_STEPS = [
+  'VERIFYING CREDENTIALS...',
+  'LOCATING ARCHIVE NODE...',
+  'DECRYPTING PAYLOAD...',
+  'ESTABLISHING SECURE CHANNEL...',
+  'ACCESS GRANTED — LOADING',
+];
+
+const TANDEM_STEPS = [
+  'DUAL-KEY PROTOCOL INITIATED...',
+  'VERIFYING KEY AUREK...',
+  'VERIFYING KEY BESH...',
+  'CLEARANCE LEVEL: CLASSIFIED',
+  'UNLOCKING RESTRICTED CHANNEL...',
+];
+
+const HELP_LINES = [
+  '/kiosk        — enter fullscreen, hide cursor',
+  '/exit-kiosk   — exit fullscreen',
+  '/clear        — clear this terminal',
+  '/status       — print current system state',
+  '/tags         — list enrolled data cards',
+  '/lockout      — force a lockout',
+  '/unlock       — force return to idle',
+  '/reload       — confirm config freshness',
+  '/fluent       — switch all text to Aurebesh',
+  '/help         — show this message; restores default text if fluent is active',
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let lastState = '';
+let lastPendingUrl  = null;
+let lastBriefingUrl = null;
+let lastLogSeq = 0;
+let countdownActive = false;
+let confirmKeyHandler   = null;
+let pendingStepInterval = null;
+let pendingPathInterval = null;
+let pendingConfirmTimeout = null;
+let lastInvalidScanTs = null;
+let invalidFlashTimers = {};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const esc = s  => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function setTextWithAur(id, text) {
+  const el = $(id);    if (el) el.textContent = text;
+  const aur = $(id + '-aur'); if (aur) aur.textContent = text;
+}
+
+// ── Clock ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const n = new Date();
+  $('clock').textContent = [n.getHours(), n.getMinutes(), n.getSeconds()]
+    .map(v => String(v).padStart(2,'0')).join(':');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Polling ───────────────────────────────────────────────────────────────────
+async function poll() {
+  try {
+    const d = await fetch('/api/status').then(r => r.json());
+
+    updatePadStatus(d.pad_connected, false);
+
+    if (d.state !== lastState) {
+      triggerGlitch();
+      applyState(d.state);
+      lastState = d.state;
+    }
+
+    updateZones(d.zone_tags || {});
+
+    if (d.invalid_scan && d.invalid_scan.ts !== lastInvalidScanTs) {
+      lastInvalidScanTs = d.invalid_scan.ts;
+      flashZoneRed(d.invalid_scan.zone);
+    }
+
+    const wasPending = lastPendingUrl !== null;
+    const isPending  = d.pending_url  !== null;
+
+    if (isPending && !wasPending) {
+      // New tag scan — run loading animation
+      showPendingAnimation(d.pending_url, d.is_tandem);
+    } else if (!isPending && wasPending) {
+      // Confirmed or cancelled
+      if (d.briefing_url) showBriefingActive();
+      else                cancelPendingSequence();
+    } else if (!isPending && !wasPending && d.briefing_url !== lastBriefingUrl) {
+      if (!d.briefing_url) clearBriefing();
+    }
+
+    lastPendingUrl  = d.pending_url;
+    lastBriefingUrl = d.briefing_url;
+
+    if (d.countdown_start && d.countdown_total) {
+      updateCountdown(d.countdown_start, d.countdown_total);
+    } else {
+      hideCountdown();
+    }
+
+    if (d.session_start) updateSessionTimer(d.session_start);
+    else                 hideSessionTimer();
+
+    if (d.log) {
+      const fresh = d.log.filter(e => e.seq > lastLogSeq);
+      fresh.forEach(e => appendLog(e.msg));
+      if (fresh.length) lastLogSeq = Math.max(...fresh.map(e => e.seq));
+    }
+
+  } catch (_) {
+    updatePadStatus(false, true);
+  }
+}
+setInterval(poll, 500);
+
+// ── State colours ─────────────────────────────────────────────────────────────
+function applyState(state) {
+  const sc = STATE_COLORS[state] || STATE_COLORS.idle;
+  document.documentElement.style.setProperty('--accent-rgb', sc.rgb);
+  setTextWithAur('state-badge', sc.label);
+
+  if (state === 'lockout') {
+    _clearPendingTimers();
+    $('redirect-overlay').style.display = 'none';
+    $('tandem-overlay').style.display   = 'none';
+    $('confirm-overlay').style.display  = 'none';
+    $('briefing-panel').style.display   = 'none';
+    $('idle-overlay').style.display     = 'none';
+    $('lockout-overlay').style.display  = 'flex';
+  } else {
+    if ($('lockout-overlay').style.display !== 'none') {
+      $('lockout-overlay').style.display = 'none';
+      $('idle-overlay').style.display    = 'flex';
+    }
+  }
+
+  const statusMap = {
+    idle:        'AWAITING INPUT...',
+    lockout:     'TERMINAL LOCKED',
+    tandem_wait: 'AWAITING SECOND KEY...',
+    single_cd:   'REPLACE CARD TO RESTORE...',
+    tandem_cd:   'REPLACE CARDS TO RESTORE...',
+  };
+  if (statusMap[state]) setTextWithAur('statusText', statusMap[state]);
+}
+
+// ── Zone indicators ───────────────────────────────────────────────────────────
+function updateZones(tags) {
+  [1,2,3].forEach(z => {
+    if (invalidFlashTimers[z]) return; // leave red flash intact
+    const el = $('zone-' + z);
+    if (!el) return;
+    const on = tags[String(z)] != null;
+    el.style.transition  = '';
+    el.style.opacity     = on ? '1' : '0.18';
+    el.style.borderColor = `rgb(var(--accent-rgb))`;
+    el.style.background  = on ? `rgba(var(--accent-rgb),0.25)` : 'transparent';
+    el.style.boxShadow   = on ? `0 0 10px rgba(var(--accent-rgb),0.5)` : 'none';
+  });
+}
+
+// ── Invalid scan flash ────────────────────────────────────────────────────────
+function flashZoneRed(zoneId) {
+  const el = $('zone-' + zoneId);
+  if (!el) return;
+  // Cancel any ongoing flash timer for this zone
+  if (invalidFlashTimers[zoneId]) clearTimeout(invalidFlashTimers[zoneId]);
+  // Apply red flash styling
+  el.style.opacity     = '1';
+  el.style.borderColor = 'rgb(220,40,40)';
+  el.style.background  = 'rgba(220,40,40,0.3)';
+  el.style.boxShadow   = '0 0 18px rgba(220,40,40,0.8), 0 0 6px rgba(220,40,40,1)';
+  el.style.transition  = 'opacity 0.1s, background 0.1s, box-shadow 0.1s, border-color 0.1s';
+  // Revert to normal after 1.2s, let updateZones() take over from the next poll
+  invalidFlashTimers[zoneId] = setTimeout(() => {
+    el.style.transition = 'opacity 0.4s, background 0.4s, box-shadow 0.4s, border-color 0.4s';
+    el.style.opacity     = '0.18';
+    el.style.borderColor = `rgba(var(--accent-rgb),0.2)`;
+    el.style.background  = 'transparent';
+    el.style.boxShadow   = 'none';
+    delete invalidFlashTimers[zoneId];
+  }, 1200);
+}
+
+// ── Briefing ──────────────────────────────────────────────────────────────────
+function _clearPendingTimers() {
+  clearInterval(pendingStepInterval);
+  clearInterval(pendingPathInterval);
+  clearTimeout(pendingConfirmTimeout);
+  if (confirmKeyHandler) {
+    document.removeEventListener('keydown', confirmKeyHandler);
+    confirmKeyHandler = null;
+  }
+}
+
+function showPendingAnimation(url, isTandem) {
+  _clearPendingTimers();
+  const overlayId = isTandem ? 'tandem-overlay' : 'redirect-overlay';
+  const barId     = isTandem ? 'tandem-bar'     : 'redir-bar';
+  const stepsId   = isTandem ? 'tandem-steps'   : 'redir-steps';
+  const steps     = isTandem ? TANDEM_STEPS      : REDIRECT_STEPS;
+  const overlay   = $(overlayId);
+
+  $('idle-overlay').style.display    = 'none';
+  $('briefing-panel').style.display  = 'none';
+  $('confirm-overlay').style.display = 'none';
+  overlay.style.display = 'flex';
+
+  // Progress bar
+  const bar = $(barId);
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  void bar.offsetWidth;
+  bar.style.transition = 'width 2.6s cubic-bezier(0.3,0,0.1,1)';
+  bar.style.width = '100%';
+
+  // Step cycling
+  const stepsEl = $(stepsId);
+  stepsEl.textContent = steps[0];
+  let i = 0;
+  pendingStepInterval = setInterval(() => {
+    i++;
+    if (i < steps.length) stepsEl.textContent = steps[i];
+    else clearInterval(pendingStepInterval);
+  }, 520);
+
+  // Fake path typing (redirect only)
+  if (!isTandem) {
+    const path = $('redir-path');
+    const fake = `/arch/co-net/classified/mission-db/${randHex(8)}.enc`;
+    let ci = 0;
+    path.textContent = '';
+    pendingPathInterval = setInterval(() => {
+      if (ci < fake.length) { path.textContent += fake[ci]; ci++; }
+      else clearInterval(pendingPathInterval);
+    }, 40);
+  }
+
+  // After animation: show confirm overlay + listen for keypress
+  pendingConfirmTimeout = setTimeout(() => {
+    overlay.style.display = 'none';
+    $('confirm-overlay').style.display = 'flex';
+    confirmKeyHandler = e => {
+      if (document.activeElement === $('cmd-input')) return;
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      _clearPendingTimers();
+      $('confirm-overlay').style.display = 'none';
+      postCmd('confirm_open');
+    };
+    document.addEventListener('keydown', confirmKeyHandler);
+  }, 2800);
+}
+
+function showBriefingActive() {
+  _clearPendingTimers();
+  $('idle-overlay').style.display    = 'none';
+  $('redirect-overlay').style.display = 'none';
+  $('tandem-overlay').style.display   = 'none';
+  $('confirm-overlay').style.display  = 'none';
+  $('briefing-panel').style.display   = 'flex';
+}
+
+function cancelPendingSequence() {
+  _clearPendingTimers();
+  $('redirect-overlay').style.display = 'none';
+  $('tandem-overlay').style.display   = 'none';
+  $('confirm-overlay').style.display  = 'none';
+  $('briefing-panel').style.display   = 'none';
+  $('idle-overlay').style.display     = 'flex';
+}
+
+function clearBriefing() {
+  $('briefing-panel').style.display   = 'none';
+  $('redirect-overlay').style.display = 'none';
+  $('tandem-overlay').style.display   = 'none';
+  $('confirm-overlay').style.display  = 'none';
+  $('idle-overlay').style.display     = 'flex';
+}
+
+function randHex(n) {
+  return Array.from({length:n}, () => Math.floor(Math.random()*16).toString(16)).join('');
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+function updateCountdown(startTs, totalSecs) {
+  const elapsed   = Date.now() / 1000 - startTs;
+  const remaining = Math.max(0, totalSecs - elapsed);
+  const pct       = (remaining / totalSecs) * 100;
+
+  $('countdown-wrap').style.display = 'block';
+  setTextWithAur('countdown-secs', remaining.toFixed(1) + 's');
+  $('countdown-bar').style.width    = pct + '%';
+  $('countdown-bar').style.background =
+    pct < 25 ? 'rgb(220,50,50)' :
+    pct < 55 ? 'rgb(220,130,30)' :
+               'rgb(var(--accent-rgb))';
+}
+
+function hideCountdown() { $('countdown-wrap').style.display = 'none'; }
+
+// ── Session timer ─────────────────────────────────────────────────────────────
+function updateSessionTimer(startTs) {
+  $('session-timer').style.display = 'block';
+  const elapsed = Math.floor(Date.now() / 1000 - startTs);
+  const m = String(Math.floor(elapsed / 60)).padStart(2,'0');
+  const s = String(elapsed % 60).padStart(2,'0');
+  const text = `SESSION: ${m}:${s}`;
+  $('session-timer-main').textContent = text;
+  $('session-timer-aur').textContent  = text;
+}
+function hideSessionTimer() { $('session-timer').style.display = 'none'; }
+
+// ── Pad status ────────────────────────────────────────────────────────────────
+function updatePadStatus(connected, unreachable) {
+  const dot = $('pad-dot'), txt = $('pad-text');
+  const aur = $('pad-text-aur');
+  if (unreachable) {
+    dot.style.background = '#666'; dot.style.boxShadow = 'none';
+    txt.textContent = 'CONNECTING...'; txt.style.color = '#666';
+    if (aur) { aur.textContent = 'CONNECTING...'; aur.style.color = '#666'; }
+  } else if (connected) {
+    dot.style.background = '#3a6a2a'; dot.style.boxShadow = '0 0 4px #3a6a2a';
+    txt.textContent = 'LINKED'; txt.style.color = '#3a6a2a';
+    if (aur) { aur.textContent = 'LINKED'; aur.style.color = '#3a6a2a'; }
+  } else {
+    dot.style.background = '#8a2a2a'; dot.style.boxShadow = '0 0 4px #8a2a2a';
+    txt.textContent = 'NO READER'; txt.style.color = '#8a2a2a';
+    if (aur) { aur.textContent = 'NO READER'; aur.style.color = '#8a2a2a'; }
+  }
+}
+
+// ── Terminal log ──────────────────────────────────────────────────────────────
+function appendLog(msg) {
+  const el  = $('terminalOutput');
+  const div = document.createElement('div');
+  div.innerHTML = colorLine(msg);
+  el.appendChild(div);
+  while (el.children.length > 80) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function colorLine(msg) {
+  const col =
+    msg.startsWith('[SINGLE')   ? 'rgba(60,180,90,0.8)'  :
+    msg.startsWith('[TANDEM')   ? 'rgba(80,130,220,0.8)' :
+    msg.startsWith('[CMD')      ? 'rgba(220,180,60,0.8)' :
+    msg.startsWith('Ready')     ? 'rgba(var(--accent-rgb),0.8)' :
+    'rgba(var(--accent-rgb),0.5)';
+  return `<span style="color:${col}">${esc(msg)}</span>`;
+}
+
+// ── Glitch ────────────────────────────────────────────────────────────────────
+let _glitchTimer = null;
+function triggerGlitch(strength = 1) {
+  const el  = $('glitch-el');
+  if (_glitchTimer) clearTimeout(_glitchTimer);
+  el.style.setProperty('--glitch-x',      (4  * strength) + 'px');
+  el.style.setProperty('--glitch-chroma', Math.min(0.5  * strength, 0.95));
+  el.style.setProperty('--glitch-bg',     Math.min(0.04 * strength, 0.18));
+  const dur = Math.round(280 * Math.max(strength * 0.6, 0.4));
+  el.style.setProperty('--glitch-dur', (dur / 1000) + 's');
+  el.classList.remove('active');
+  void el.offsetWidth;
+  el.classList.add('active');
+  _glitchTimer = setTimeout(() => el.classList.remove('active'), dur + 50);
+}
+
+// ── Fluent transition ─────────────────────────────────────────────────────────
+async function transitionFluent(enable) {
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  // burst glitches before the swap
+  triggerGlitch(2.5);
+  await wait(90);
+  triggerGlitch(3.5);
+  await wait(80);
+
+  // swap font
+  document.body.classList.toggle('fluent-mode', enable);
+
+  // jarring hit on the new font
+  triggerGlitch(4);
+  await wait(100);
+  triggerGlitch(2);
+}
+
+// ── Slash commands ────────────────────────────────────────────────────────────
+async function postCmd(cmd) {
+  try {
+    await fetch('/api/command', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({cmd}),
+    });
+  } catch(_) {}
+}
+
+// ── Key tap sound (configured via led_config.json sounds.key_tap) ─────────────
+const _keyTapAudio = new Audio('/sounds/key_tap');
+_keyTapAudio.preload = 'auto';
+function playKeyTap() {
+  if (!_keyTapAudio.duration) return; // not loaded / not configured
+  const clone = _keyTapAudio.cloneNode();
+  clone.play().catch(() => {});
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const input = $('cmd-input');
+
+  // Shift+/ (?) — focus the terminal input and seed it with /
+  document.addEventListener('keydown', e => {
+    if (e.key === '?' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (document.activeElement !== input) {
+        e.preventDefault();
+        input.focus();
+        input.value = '/';
+      }
+    }
+  });
+
+  // Key tap sound on every keystroke in the terminal input
+  input.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') playKeyTap();
+  });
+
+  input.addEventListener('keydown', async e => {
+    if (e.key !== 'Enter') return;
+    const raw = input.value.trim();
+    input.value = '';
+    input.blur();
+    if (!raw) return;
+    if (!raw.startsWith('/')) { appendLog(`[CMD] Unknown — type /help`); return; }
+
+    const cmd = raw.slice(1).split(' ')[0].toLowerCase();
+    appendLog(`[CMD] > ${raw}`);
+
+    switch (cmd) {
+      case 'kiosk':
+        document.documentElement.requestFullscreen().catch(()=>{});
+        document.body.style.cursor = 'none';
+        appendLog('[CMD] Fullscreen activated.');
+        break;
+      case 'exit-kiosk':
+        document.exitFullscreen().catch(()=>{});
+        document.body.style.cursor = '';
+        appendLog('[CMD] Fullscreen exited.');
+        break;
+      case 'clear':
+        $('terminalOutput').innerHTML = '';
+        break;
+      case 'status':
+        try {
+          const d = await fetch('/api/status').then(r=>r.json());
+          appendLog(`[SYS] State:  ${d.state.toUpperCase()}`);
+          appendLog(`[SYS] Zones:  L=${d.zone_tags['2']||'—'}  C=${d.zone_tags['1']||'—'}  R=${d.zone_tags['3']||'—'}`);
+          appendLog(`[SYS] Reader: ${d.pad_connected ? 'LINKED' : 'DISCONNECTED'}`);
+          if (d.briefing_url) appendLog(`[SYS] Active: ${d.briefing_url}`);
+        } catch { appendLog('[ERR] Could not reach runner.'); }
+        break;
+      case 'tags':
+        try {
+          const d = await fetch('/api/tags').then(r=>r.json());
+          appendLog(`[SYS] Single cards: ${d.tags.length}`);
+          d.tags.forEach(t => appendLog(`  ${t.uid}  →  ${t.url}`));
+          appendLog(`[SYS] Tandem pairs: ${d.tandem_pairs.length}`);
+          d.tandem_pairs.forEach((p,i) => appendLog(`  Pair ${i+1}: ${p.tags.join(' + ')}  →  ${p.url}`));
+        } catch { appendLog('[ERR] Could not fetch card data.'); }
+        break;
+      case 'lockout':
+        await postCmd('lockout');
+        appendLog('[CMD] Lockout triggered.');
+        break;
+      case 'unlock':
+        await postCmd('unlock');
+        appendLog('[CMD] Forced idle.');
+        break;
+      case 'reload':
+        await postCmd('reload');
+        appendLog('[CMD] Config freshness confirmed — files read on each scan.');
+        break;
+      case 'fluent':
+        transitionFluent(true);
+        appendLog('[CMD] Aurebesh mode activated. Use /help to restore.');
+        break;
+      case 'help':
+        if (document.body.classList.contains('fluent-mode')) {
+          transitionFluent(false);
+          appendLog('[CMD] Default text restored.');
+        }
+        HELP_LINES.forEach(l => appendLog('[SYS] ' + l));
+        break;
+      default:
+        appendLog(`[CMD] Unknown: ${raw} — type /help`);
+    }
+  });
+
+  // Prevent right-click
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Boot messages
+  appendLog('[SYS] Terminal initialized...');
+  appendLog('[SYS] Data reader online — standby');
+  appendLog('[SYS] Encryption layer: ACTIVE');
+  appendLog('[RDY] _');
+
+  poll();
+
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>

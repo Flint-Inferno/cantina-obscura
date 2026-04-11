@@ -1,0 +1,160 @@
+{
+  "global_passive": {
+    "mode": "static",
+    "r": 80,
+    "g": 80,
+    "b": 80
+  },
+  "zones": {
+    "1": {
+      "passive_override": {
+        "mode": "breathe",
+        "r": 154,
+        "g": 153,
+        "b": 150,
+        "speed": 4
+      },
+      "match": {
+        "mode": "flash",
+        "r": 0,
+        "g": 255,
+        "b": 0,
+        "count": 3,
+        "on": 0.3,
+        "off": 0.2
+      },
+      "no_match": {
+        "mode": "flash",
+        "r": 255,
+        "g": 0,
+        "b": 0,
+        "count": 3,
+        "on": 0.3,
+        "off": 0.2
+      },
+      "tag_on_pad": {
+        "mode": "breathe",
+        "r": 0,
+        "g": 255,
+        "b": 0,
+        "speed": 4
+      }
+    },
+    "2": {
+      "passive_override": null,
+      "match": {
+        "mode": "flash",
+        "r": 255,
+        "g": 0,
+        "b": 255,
+        "count": 3,
+        "on": 0.3,
+        "off": 0.2
+      },
+      "no_match": {
+        "mode": "flash",
+        "r": 255,
+        "g": 0,
+        "b": 0,
+        "count": 3,
+        "on": 0.3,
+        "off": 0.2
+      },
+      "tag_on_pad": {
+        "mode": "breathe",
+        "r": 255,
+        "g": 0,
+        "b": 255,
+        "speed": 4
+      }
+    },
+    "3": {
+      "passive_override": null,
+      "match": {
+        "mode": "flash",
+        "r": 255,
+        "g": 0,
+        "b": 255,
+        "count": 3,
+        "on": 0.3,
+        "off": 0.2
+      },
+      "no_match": {
+        "mode": "flash",
+        "r": 255,
+        "g": 0,
+        "b": 0,
+        "count": 3,
+        "on": 0.3,
+        "off": 0.2
+      },
+      "tag_on_pad": {
+        "mode": "breathe",
+        "r": 255,
+        "g": 0,
+        "b": 255,
+        "speed": 4
+      }
+    }
+  },
+  "zone_links": [
+    1,
+    2,
+    3
+  ],
+  "sounds": {
+    "match": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/beep correct.mp3",
+    "no_match": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/error short2.mp3",
+    "tandem_first": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/selection1.mp3",
+    "tandem_match": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/Puzzle click2.mp3",
+    "page_open": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/short beep2.mp3",
+    "page_close": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/Close page1.mp3",
+    "lockout_start": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/short beep1.mp3",
+    "countdown_start": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/Error1.mp3",
+    "session_restore": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/trill1.mp3",
+    "ambient": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/comlink loop.mp3",
+    "countdown_loop": "/home/Cantina_Obscura/Desktop/Star Wars Computer sounds/3 sec beep.mp3"
+  },
+  "removal_countdown": true,
+  "countdown_seconds": 5,
+  "lockout_seconds": 3,
+  "lockout": {
+    "mode": "static",
+    "r": 255,
+    "g": 0,
+    "b": 0
+  },
+  "tandem": {
+    "waiting_mode": {
+      "mode": "breathe",
+      "r": 0,
+      "g": 80,
+      "b": 255,
+      "speed": 2
+    },
+    "countdown_flash_colors": {
+      "1": {
+        "r": 0,
+        "g": 255,
+        "b": 0
+      },
+      "2": {
+        "r": 255,
+        "g": 0,
+        "b": 255
+      },
+      "3": {
+        "r": 255,
+        "g": 0,
+        "b": 255
+      }
+    },
+    "countdown_flash_on": 0.25,
+    "countdown_flash_off": 0.25,
+    "countdown_fade_color": {
+      "r": 0,
+      "g": 0,
+      "b": 255
+    }
+  }
+}
