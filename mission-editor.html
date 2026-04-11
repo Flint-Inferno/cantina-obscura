@@ -1644,13 +1644,33 @@
     setStatus('COMMITTING...', '');
     const html = buildHTML();
 
-    const body = {
-      message: `Update ${GH_FOLDER}/${fileName} via mission editor`,
-      content: btoa(unescape(encodeURIComponent(html))),  // UTF-8 safe base64
-    };
-    if (fileSha) body.sha = fileSha;  // required for updates; omit for new files
-
     try {
+      // Always fetch the current SHA before committing — stored SHA can go
+      // stale if the file was changed on GitHub (e.g. by a bulk script).
+      const headRes = await fetch(ghContentsUrl(fileName), {
+        headers: ghHeaders(),
+      });
+      if (headRes.status === 401 || headRes.status === 403) {
+        setStatus('AUTH ERROR — check your token', 'err');
+        openPat();
+        btn.disabled = false;
+        return;
+      }
+      if (headRes.ok) {
+        const headData = await headRes.json();
+        fileSha = headData.sha;
+      } else if (headRes.status !== 404) {
+        // 404 = new file, that's fine; anything else is unexpected
+        const e = await headRes.json().catch(() => ({}));
+        throw new Error(e.message || `HTTP ${headRes.status}`);
+      }
+
+      const body = {
+        message: `Update ${GH_FOLDER}/${fileName} via mission editor`,
+        content: btoa(unescape(encodeURIComponent(html))),
+      };
+      if (fileSha) body.sha = fileSha;  // required for updates; omit for new files
+
       const res = await fetch(ghContentsUrl(fileName), {
         method:  'PUT',
         headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
