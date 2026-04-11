@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Toy Pad LED Editor
+Exec=urxvt -e bash /home/Cantina_Obscura/toypad_editor.sh
+Terminal=false
+Icon=applications-other

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Toy Pad Enrollment
+Exec=urxvt -e bash /home/Cantina_Obscura/toypad_add.sh
+Terminal=false
+Icon=applications-other

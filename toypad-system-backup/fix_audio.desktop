@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Restart Audio
+Comment=Check audio device and restart PipeWire
+Exec=x-terminal-emulator -e bash -c "/home/Cantina_Obscura/fix_audio.sh; read -p 'Press Enter to close...'"
+Icon=audio-card
+Terminal=false
+Categories=System;
