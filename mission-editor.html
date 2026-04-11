@@ -452,6 +452,11 @@
       opacity: 0.35;
       letter-spacing: 0.08em;
     }
+    .browse-meta {
+      font-size: 0.6rem;
+      opacity: 0.45;
+      letter-spacing: 0.06em;
+    }
     #browse-status {
       font-size: 0.65rem;
       opacity: 0.5;
@@ -607,8 +612,8 @@
         </div>
         <br/>
         <div class="field">
-          <label>Cycle / Date / Event</label>
-          <input type="text" id="f-mission-cycle" placeholder="TATOOINE-3" />
+          <label>Difficulty</label>
+          <input type="text" id="f-mission-cycle" placeholder="EASY / HARD / etc." />
         </div>
       </div>
 
@@ -929,15 +934,21 @@
         };
         list.appendChild(item);
 
-        // Fetch title in background
+        // Fetch title + difficulty in background
+        const metaEl = document.createElement('div');
+        metaEl.className = 'browse-meta';
+        item.insertBefore(metaEl, fnEl);
+
         fetch(f.url, { headers: ghHeaders() })
           .then(r => r.ok ? r.json() : null)
           .then(data => {
             if (!data) return;
             const html = atob(data.content.replace(/\n/g, ''));
-            const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-            titleEl.textContent = match ? match[1].trim() : f.name;
+            const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+            titleEl.textContent = titleMatch ? titleMatch[1].trim() : f.name;
             titleEl.classList.remove('loading');
+            const diffMatch = html.match(/DIFFICULTY:\s*([^<&|]+)/i);
+            if (diffMatch) metaEl.textContent = 'DIFFICULTY: ' + diffMatch[1].trim();
           })
           .catch(() => {
             titleEl.textContent = f.name;
@@ -1046,7 +1057,7 @@
     const mTitle = doc.querySelector('.mission-title');
     document.getElementById('f-mission-title').value = mTitle ? mTitle.textContent.trim() : '';
 
-    // Mission ID line — parse "MISSION ID: X | ISSUED BY: Y | CYCLE: Z"
+    // Mission ID line — parse "MISSION ID: X | ISSUED BY: Y | DIFFICULTY: Z"
     const midEl = doc.querySelector('.mission-id');
     if (midEl) {
       // Get text content without the aurebesh-accent span
@@ -1055,7 +1066,7 @@
       const parts = clone.textContent.split('|').map(s => s.trim());
       document.getElementById('f-mission-code').value    = (parts[0] || '').replace(/^MISSION ID:\s*/i, '').trim();
       document.getElementById('f-mission-faction').value = (parts[1] || '').replace(/^ISSUED BY:\s*/i, '').trim();
-      document.getElementById('f-mission-cycle').value   = (parts[2] || '').replace(/^CYCLE:\s*/i, '').trim();
+      document.getElementById('f-mission-cycle').value   = (parts[2] || '').replace(/^DIFFICULTY:\s*/i, '').trim();
     }
 
     // Briefing
@@ -1173,7 +1184,7 @@
       const faction = v('f-mission-faction') || '[FACTION]';
       const cycle   = v('f-mission-cycle')   || '[DATE/EVENT]';
       midEl.innerHTML =
-        `MISSION ID: ${esc(code)} &nbsp;|&nbsp; ISSUED BY: ${esc(faction)} &nbsp;|&nbsp; CYCLE: ${esc(cycle)}` +
+        `MISSION ID: ${esc(code)} &nbsp;|&nbsp; ISSUED BY: ${esc(faction)} &nbsp;|&nbsp; DIFFICULTY: ${esc(cycle)}` +
         (accent ? `&nbsp;${accent.outerHTML}` : '');
     }
 
