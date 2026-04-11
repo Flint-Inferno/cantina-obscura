@@ -794,7 +794,7 @@ function showPatOverlay() {
   document.getElementById('pw-overlay').classList.add('hidden');
   document.getElementById('pat-overlay').classList.remove('hidden');
   document.getElementById('pat-err').textContent = '';
-  document.getElementById('pat-input').value = '';
+  document.getElementById('pat-input').value = localStorage.getItem('gh_pat') || '';
   setTimeout(() => document.getElementById('pat-input').focus(), 50);
 }
 
@@ -874,6 +874,7 @@ async function submitPat() {
       sessionPat = null;
       return;
     }
+    localStorage.setItem('gh_pat', pat);
     showOwnerButtons();
     document.getElementById('pat-overlay').classList.add('hidden');
     await initEditor();
@@ -1336,8 +1337,27 @@ function toast(msg, isErr) {
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
-// Show password overlay on load
-showPwOverlay();
+// Auto-login with stored PAT if available, otherwise show password overlay
+(async function() {
+  const stored = localStorage.getItem('gh_pat');
+  if (stored) {
+    sessionPat = stored;
+    try {
+      const user = await ghApi('GET', '/user');
+      isOwner = (user.login === GH_OWNER);
+      if (isOwner) showOwnerButtons();
+      document.getElementById('pw-overlay').classList.add('hidden');
+      document.getElementById('pat-overlay').classList.add('hidden');
+      await initEditor();
+      return;
+    } catch(e) {
+      // Stored PAT invalid/expired — clear it and fall through to overlay
+      localStorage.removeItem('gh_pat');
+      sessionPat = null;
+    }
+  }
+  showPwOverlay();
+})();
 </script>
 </body>
 </html>
