@@ -392,6 +392,78 @@
     #pat-input:focus { border-color: var(--accent); }
     #pat-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
 
+    /* ── Password / change-password overlays ─────────────────── */
+    #pw-overlay, #changepw-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.96);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    #changepw-overlay.hidden { display: none; }
+    #pw-box, #changepw-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.75rem 2rem;
+      width: 380px;
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    #pw-box h2, #changepw-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      color: var(--accent);
+    }
+    #pw-box p, #changepw-box p {
+      font-size: 0.68rem;
+      line-height: 1.6;
+      color: var(--text);
+      opacity: 0.6;
+    }
+    #pw-input, #changepw-input, #changepw-confirm {
+      font-family: var(--font);
+      font-size: 0.8rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.45rem 0.65rem;
+      width: 100%;
+      outline: none;
+      letter-spacing: 0.08em;
+    }
+    #pw-input:focus, #changepw-input:focus, #changepw-confirm:focus { border-color: var(--accent); }
+    #pw-status, #changepw-status {
+      font-size: 0.65rem;
+      min-height: 1rem;
+      color: var(--red);
+    }
+    #pw-status.ok { color: var(--green); }
+    #pw-actions, #changepw-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+    #pw-owner-link {
+      font-size: 0.6rem;
+      color: var(--text);
+      opacity: 0.3;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: 0.08em;
+      transition: opacity 0.15s;
+    }
+    #pw-owner-link:hover { opacity: 0.7; }
+    #inactivity-warning {
+      position: fixed;
+      bottom: 1rem; right: 1rem;
+      font-family: var(--font);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--red);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 500;
+    }
+    #inactivity-warning.visible { opacity: 1; }
+
     /* ── Browse overlay ──────────────────────────────────────── */
     #browse-overlay {
       position: fixed; inset: 0;
@@ -488,6 +560,40 @@
 </head>
 <body>
 
+  <!-- ── Password overlay (shown by default until authenticated) ──── -->
+  <div id="pw-overlay">
+    <div id="pw-box">
+      <h2>◈ CANTINA OBSCURA</h2>
+      <p>Enter the access password to continue.</p>
+      <input type="password" id="pw-input" placeholder="Password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitPassword()" />
+      <div id="pw-status"></div>
+      <div id="pw-actions">
+        <button class="btn primary" onclick="submitPassword()">ENTER</button>
+      </div>
+      <div id="pw-owner-link" onclick="openPat()">⚿ Owner login</div>
+    </div>
+  </div>
+
+  <!-- ── Change password overlay (owner only) ─────────────────────── -->
+  <div id="changepw-overlay" class="hidden">
+    <div id="changepw-box">
+      <h2>⚿ CHANGE COLLABORATOR PASSWORD</h2>
+      <p>Set the shared password collaborators use to access the editor. Your PAT will be encrypted with this password and stored in the repo.</p>
+      <input type="password" id="changepw-input" placeholder="New password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') document.getElementById('changepw-confirm').focus()" />
+      <input type="password" id="changepw-confirm" placeholder="Confirm password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitChangePw()" />
+      <div id="changepw-status"></div>
+      <div id="changepw-actions">
+        <button class="btn" onclick="closeChangePw()">CANCEL</button>
+        <button class="btn primary" onclick="submitChangePw()">SAVE PASSWORD</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inactivity-warning">SESSION EXPIRING...</div>
+
   <!-- ── Browse overlay ──────────────────────────────────────────── -->
   <div id="browse-overlay" class="hidden">
     <div id="browse-box">
@@ -530,7 +636,8 @@
     <button class="btn" onclick="saveLocal()">⬇ SAVE</button>
     <button class="btn" onclick="refreshPreview()">⟳ PREVIEW</button>
     <button class="btn" onclick="openBrowse()">▤ BROWSE</button>
-    <button class="btn" id="token-btn" onclick="openPat()" title="Set GitHub PAT">⚿ TOKEN</button>
+    <button class="btn" id="changepw-btn" onclick="showChangePw()" style="display:none" title="Change collaborator password">⚿ PASSWORD</button>
+    <button class="btn" id="token-btn" onclick="openPat()" style="display:none" title="Set GitHub PAT">⚿ TOKEN</button>
     <button class="btn primary" id="save-btn" onclick="saveFile()" disabled>▲ COMMIT</button>
   </div>
 
@@ -829,13 +936,49 @@
   const GH_REPO   = 'cantina-obscura';
   const GH_FOLDER = 'live-page-links';
 
-  // ── PAT overlay ──────────────────────────────────────────────
-  function getGhPat() { return localStorage.getItem('gh_pat') || ''; }
+  // ── Auth state ───────────────────────────────────────────────
+  let sessionPat      = null;   // decrypted PAT for collaborators (memory only)
+  let isOwner         = false;
+  let inactivityTimer = null;
+  let warningTimer    = null;
+  const INACTIVITY_MS = 5 * 60 * 1000;   // 5 min
+  const WARNING_MS    = 4.5 * 60 * 1000; // warn at 4:30
+  const CONFIG_FILE   = 'editor-config.json';
+
+  // ── Crypto helpers ────────────────────────────────────────────
+  async function _deriveKey(password, salt) {
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password),
+      'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  }
+  function _hex(buf) { return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  function _unhex(h) { return new Uint8Array(h.match(/.{2}/g).map(x=>parseInt(x,16))); }
+
+  async function encryptPat(pat, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv   = crypto.getRandomValues(new Uint8Array(12));
+    const key  = await _deriveKey(password, salt);
+    const ct   = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, new TextEncoder().encode(pat));
+    return { salt: _hex(salt), iv: _hex(iv), ciphertext: btoa(String.fromCharCode(...new Uint8Array(ct))) };
+  }
+
+  async function decryptPat(cfg, password) {
+    const key = await _deriveKey(password, _unhex(cfg.salt));
+    const ct  = Uint8Array.from(atob(cfg.ciphertext), c => c.charCodeAt(0));
+    const pt  = await crypto.subtle.decrypt({name:'AES-GCM', iv: _unhex(cfg.iv)}, key, ct);
+    return new TextDecoder().decode(pt);
+  }
+
+  // ── PAT overlay (owner only) ──────────────────────────────────
+  function getGhPat() { return sessionPat || localStorage.getItem('gh_pat') || ''; }
 
   function openPat() {
-    document.getElementById('pat-input').value = getGhPat();
+    document.getElementById('pat-input').value = localStorage.getItem('gh_pat') || '';
     document.getElementById('pat-overlay').classList.remove('hidden');
-    document.getElementById('pat-input').focus();
+    setTimeout(() => document.getElementById('pat-input').focus(), 50);
   }
 
   function closePat() {
@@ -846,7 +989,142 @@
     const val = document.getElementById('pat-input').value.trim();
     if (val) localStorage.setItem('gh_pat', val);
     closePat();
-    loadFile();  // retry load with new token
+    initEditor(); // re-check ownership with new PAT
+  }
+
+  // ── Password overlay (collaborators) ─────────────────────────
+  function showPwOverlay(msg, cls) {
+    const st = document.getElementById('pw-status');
+    st.textContent  = msg || '';
+    st.className    = cls || '';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-overlay').style.display = '';
+    setTimeout(() => document.getElementById('pw-input').focus(), 50);
+  }
+
+  async function submitPassword() {
+    const pw  = document.getElementById('pw-input').value;
+    const st  = document.getElementById('pw-status');
+    if (!pw) return;
+    st.textContent = 'Verifying...'; st.className = '';
+    try {
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${CONFIG_FILE}?t=${Date.now()}`
+      );
+      if (!res.ok) throw new Error('No collaborator password configured yet.');
+      const cfg = await res.json();
+      let pat;
+      try { pat = await decryptPat(cfg, pw); } catch(_) { throw new Error('incorrect'); }
+      if (!pat || (!pat.startsWith('ghp_') && !pat.startsWith('github_')))
+        throw new Error('incorrect');
+      sessionPat = pat;
+      document.getElementById('pw-overlay').style.display = 'none';
+      _startInactivityTracking();
+      initEditorContent();
+    } catch(e) {
+      const msg = e.message === 'incorrect' ? 'Incorrect password.' : 'Error: ' + e.message;
+      st.textContent = msg; st.className = '';
+      sessionPat = null;
+    }
+  }
+
+  // ── Inactivity tracking ───────────────────────────────────────
+  function _startInactivityTracking() {
+    const reset = () => {
+      clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
+      document.getElementById('inactivity-warning').classList.remove('visible');
+      warningTimer    = setTimeout(() => document.getElementById('inactivity-warning').classList.add('visible'), WARNING_MS);
+      inactivityTimer = setTimeout(_lockEditor, INACTIVITY_MS);
+    };
+    ['mousemove','keydown','click','touchstart','scroll'].forEach(ev =>
+      document.addEventListener(ev, reset, { passive: true })
+    );
+    reset();
+  }
+
+  function _lockEditor() {
+    sessionPat = null;
+    clearTimeout(inactivityTimer);
+    clearTimeout(warningTimer);
+    document.getElementById('inactivity-warning').classList.remove('visible');
+    showPwOverlay('Session expired — please re-enter password.');
+    setStatus('SESSION LOCKED', 'err');
+    document.getElementById('save-btn').disabled = true;
+  }
+
+  // ── Change password overlay (owner only) ─────────────────────
+  function showChangePw() {
+    document.getElementById('changepw-input').value   = '';
+    document.getElementById('changepw-confirm').value = '';
+    document.getElementById('changepw-status').textContent = '';
+    document.getElementById('changepw-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('changepw-input').focus(), 50);
+  }
+
+  function closeChangePw() {
+    document.getElementById('changepw-overlay').classList.add('hidden');
+  }
+
+  async function submitChangePw() {
+    const pw1 = document.getElementById('changepw-input').value;
+    const pw2 = document.getElementById('changepw-confirm').value;
+    const st  = document.getElementById('changepw-status');
+    if (!pw1)       { st.textContent = 'Enter a password.'; return; }
+    if (pw1 !== pw2){ st.textContent = 'Passwords do not match.'; return; }
+    const pat = localStorage.getItem('gh_pat');
+    if (!pat)       { st.textContent = 'No PAT stored — use ⚿ TOKEN first.'; return; }
+    st.textContent = 'Encrypting and saving...';
+    try {
+      const cfg    = await encryptPat(pat, pw1);
+      const cfgB64 = btoa(JSON.stringify(cfg, null, 2));
+      // Check for existing file SHA
+      let sha = null;
+      try {
+        const ex = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_FILE}`,
+          { headers: ghHeaders() });
+        if (ex.ok) sha = (await ex.json()).sha;
+      } catch(_) {}
+      const body = { message: 'Update editor-config.json (password change)', content: cfgB64 };
+      if (sha) body.sha = sha;
+      const put = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_FILE}`,
+        { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(body) }
+      );
+      if (!put.ok) throw new Error(`HTTP ${put.status}`);
+      st.textContent = 'Password saved!';
+      setTimeout(closeChangePw, 1500);
+    } catch(e) { st.textContent = 'Error: ' + e.message; }
+  }
+
+  // ── Editor init ───────────────────────────────────────────────
+  async function initEditor() {
+    const storedPat = localStorage.getItem('gh_pat');
+    if (storedPat) {
+      try {
+        const res = await fetch('https://api.github.com/user', {
+          headers: { 'Authorization': `Bearer ${storedPat}`, 'Accept': 'application/vnd.github+json',
+                     'X-GitHub-Api-Version': '2022-11-28' }
+        });
+        if (res.ok && (await res.json()).login === GH_OWNER) {
+          isOwner = true;
+          document.getElementById('pw-overlay').style.display    = 'none';
+          document.getElementById('changepw-btn').style.display  = '';
+          document.getElementById('token-btn').style.display     = '';
+          initEditorContent();
+          return;
+        }
+      } catch(_) {}
+    }
+    // Not owner — show password prompt
+    showPwOverlay();
+  }
+
+  function initEditorContent() {
+    document.getElementById('save-btn').disabled = false;
+    loadFile();
+    document.getElementById('form-panel').addEventListener('input', schedulePreview);
   }
 
   // ── Init ─────────────────────────────────────────────────────
@@ -854,7 +1132,6 @@
     buildSwatches();
     initColorSync();
     initLogoColorSync();
-    // Seed inputs with first faction defaults
     const f0 = FACTIONS[0];
     setColorInputs(f0.bg, f0.text, f0.accent, f0.border, f0.dim, f0.accent);
     LOGO_SLOTS.forEach(slot => setLogoColor(slot, f0.accent));
@@ -863,14 +1140,7 @@
     const fnInput = document.getElementById('topbar-filename');
     fnInput.value = fileName;
     fnInput.addEventListener('input', () => { fileName = fnInput.value.trim() || 'untitled.html'; });
-    // Show PAT overlay on first visit, otherwise go straight to load
-    if (!getGhPat()) {
-      openPat();
-    } else {
-      loadFile();
-    }
-    // Live preview on any input change
-    document.getElementById('form-panel').addEventListener('input', schedulePreview);
+    initEditor();
   });
 
   // ── Faction swatches ─────────────────────────────────────────
