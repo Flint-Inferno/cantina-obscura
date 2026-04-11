@@ -405,9 +405,9 @@
       border: 1px solid var(--accent);
       border-radius: 4px;
       padding: 1.25rem 1.5rem;
-      width: 460px;
-      max-height: 70vh;
-      display: flex; flex-direction: column; gap: 0.75rem;
+      width: 480px;
+      max-height: 75vh;
+      display: flex; flex-direction: column; gap: 0.65rem;
     }
     #browse-box h2 {
       font-family: var(--font-hd);
@@ -416,6 +416,27 @@
       color: var(--accent);
       flex-shrink: 0;
     }
+    #browse-sort-bar {
+      display: flex;
+      gap: 0.35rem;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .sort-btn {
+      font-family: var(--font);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.55rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      opacity: 0.5;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .sort-btn:hover { opacity: 0.85; border-color: var(--dim); }
+    .sort-btn.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
     #browse-list {
       overflow-y: auto;
       display: flex;
@@ -434,7 +455,7 @@
       border: 1px solid transparent;
       border-radius: 2px;
       cursor: pointer;
-      transition: border-color 0.1s, color 0.1s, background 0.1s;
+      transition: border-color 0.1s, background 0.1s;
       display: flex;
       flex-direction: column;
       gap: 0.1rem;
@@ -447,15 +468,15 @@
       transition: color 0.1s;
     }
     .browse-title.loading { opacity: 0.3; font-style: italic; }
-    .browse-fname {
-      font-size: 0.6rem;
-      opacity: 0.35;
-      letter-spacing: 0.08em;
-    }
     .browse-meta {
       font-size: 0.6rem;
       opacity: 0.45;
       letter-spacing: 0.06em;
+    }
+    .browse-fname {
+      font-size: 0.6rem;
+      opacity: 0.3;
+      letter-spacing: 0.08em;
     }
     #browse-status {
       font-size: 0.65rem;
@@ -471,6 +492,13 @@
   <div id="browse-overlay" class="hidden">
     <div id="browse-box">
       <h2>▤ BROWSE — live-page-links/</h2>
+      <div id="browse-sort-bar">
+        <button class="sort-btn active" onclick="setBrowseSort('name')">NAME</button>
+        <button class="sort-btn" onclick="setBrowseSort('title')">TITLE</button>
+        <button class="sort-btn" onclick="setBrowseSort('difficulty')">DIFFICULTY</button>
+        <button class="sort-btn" onclick="setBrowseSort('updated')">LAST UPDATED</button>
+        <button class="sort-btn" onclick="setBrowseSort('size')">SIZE</button>
+      </div>
       <div id="browse-list"></div>
       <div id="browse-status">Loading...</div>
       <div id="browse-actions">
@@ -883,80 +911,151 @@
   }
 
   // ── Browse overlay ───────────────────────────────────────────
+  let browseFiles  = [];   // [{name, size, url, title, difficulty, updatedAt}]
+  let browseSort   = 'name';
+  let browseLoaded = 0;
+
+  const DIFF_ORDER = ['EASY','MEDIUM','HARD','EXTREME','DEADLY'];
+
+  function diffRank(d) {
+    if (!d) return 999;
+    const up = d.toUpperCase().trim();
+    const i  = DIFF_ORDER.indexOf(up);
+    return i >= 0 ? i : 500;
+  }
+
+  function sortedBrowseFiles() {
+    const copy = [...browseFiles];
+    switch (browseSort) {
+      case 'title':
+        return copy.sort((a, b) => {
+          if (!a.title && !b.title) return a.name.localeCompare(b.name);
+          if (!a.title) return 1; if (!b.title) return -1;
+          return a.title.localeCompare(b.title);
+        });
+      case 'difficulty':
+        return copy.sort((a, b) => {
+          const dr = diffRank(a.difficulty) - diffRank(b.difficulty);
+          return dr !== 0 ? dr : a.name.localeCompare(b.name);
+        });
+      case 'updated':
+        return copy.sort((a, b) => {
+          if (!a.updatedAt && !b.updatedAt) return a.name.localeCompare(b.name);
+          if (!a.updatedAt) return 1; if (!b.updatedAt) return -1;
+          return b.updatedAt.localeCompare(a.updatedAt); // newest first
+        });
+      case 'size':
+        return copy.sort((a, b) => b.size - a.size); // largest first
+      default: // name
+        return copy.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  }
+
+  function renderBrowseList() {
+    const list = document.getElementById('browse-list');
+    list.innerHTML = '';
+    sortedBrowseFiles().forEach(f => {
+      const item = document.createElement('div');
+      item.className = 'browse-item';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'browse-title' + (f.title ? '' : ' loading');
+      titleEl.textContent = f.title || '...';
+
+      const metaEl = document.createElement('div');
+      metaEl.className = 'browse-meta';
+      const parts = [];
+      if (f.difficulty) parts.push('DIFFICULTY: ' + f.difficulty);
+      if (f.updatedAt)  parts.push('UPDATED: ' + f.updatedAt.slice(0,10));
+      if (parts.length) metaEl.textContent = parts.join('  ·  ');
+
+      const fnEl = document.createElement('div');
+      fnEl.className = 'browse-fname';
+      fnEl.textContent = f.name + (f.size ? `  (${(f.size/1024).toFixed(1)} KB)` : '');
+
+      item.appendChild(titleEl);
+      item.appendChild(metaEl);
+      item.appendChild(fnEl);
+      item.onclick = () => {
+        closeBrowse();
+        fileName = f.name;
+        document.getElementById('topbar-filename').value = fileName;
+        fileSha = null;
+        loadFile();
+      };
+      list.appendChild(item);
+    });
+  }
+
+  function setBrowseSort(mode) {
+    browseSort = mode;
+    document.querySelectorAll('.sort-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent.toLowerCase().replace(' ','_') === mode ||
+        (mode === 'updated' && b.textContent === 'LAST UPDATED') ||
+        (mode === 'name'   && b.textContent === 'NAME') ||
+        (mode === 'title'  && b.textContent === 'TITLE') ||
+        (mode === 'difficulty' && b.textContent === 'DIFFICULTY') ||
+        (mode === 'size'   && b.textContent === 'SIZE'));
+    });
+    renderBrowseList();
+  }
+
   async function openBrowse() {
     document.getElementById('browse-overlay').classList.remove('hidden');
-    const list   = document.getElementById('browse-list');
+    browseFiles  = [];
+    browseLoaded = 0;
     const status = document.getElementById('browse-status');
-    list.innerHTML = '';
     status.textContent = 'Loading...';
+    document.getElementById('browse-list').innerHTML = '';
 
     try {
       const res = await fetch(
         `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FOLDER}`,
         { headers: ghHeaders() }
       );
-      if (res.status === 401 || res.status === 403) {
-        status.textContent = 'Auth error — check your token.';
-        return;
-      }
+      if (res.status === 401 || res.status === 403) { status.textContent = 'Auth error — check your token.'; return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const files = (await res.json())
-        .filter(f => f.type === 'file' && f.name.endsWith('.html'))
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const rawFiles = (await res.json()).filter(f => f.type === 'file' && f.name.endsWith('.html'));
+      if (!rawFiles.length) { status.textContent = 'No HTML files found.'; return; }
 
-      if (files.length === 0) {
-        status.textContent = 'No HTML files found.';
-        return;
-      }
+      browseFiles = rawFiles.map(f => ({ name: f.name, size: f.size, url: f.url, title: null, difficulty: null, updatedAt: null }));
+      renderBrowseList();
+      status.textContent = `${browseFiles.length} file(s) — loading details...`;
 
-      // Render list immediately with filenames; titles load in background
-      files.forEach(f => {
-        const item = document.createElement('div');
-        item.className = 'browse-item';
-
-        const titleEl = document.createElement('div');
-        titleEl.className = 'browse-title loading';
-        titleEl.textContent = '...';
-
-        const fnEl = document.createElement('div');
-        fnEl.className = 'browse-fname';
-        fnEl.textContent = f.name;
-
-        item.appendChild(titleEl);
-        item.appendChild(fnEl);
-        item.onclick = () => {
-          closeBrowse();
-          fileName = f.name;
-          document.getElementById('topbar-filename').value = fileName;
-          fileSha = null;
-          loadFile();
-        };
-        list.appendChild(item);
-
-        // Fetch title + difficulty in background
-        const metaEl = document.createElement('div');
-        metaEl.className = 'browse-meta';
-        item.insertBefore(metaEl, fnEl);
-
-        fetch(f.url, { headers: ghHeaders() })
+      // Fetch content (title + difficulty) for all files in parallel
+      browseFiles.forEach(entry => {
+        fetch(entry.url, { headers: ghHeaders() })
           .then(r => r.ok ? r.json() : null)
           .then(data => {
             if (!data) return;
             const html = atob(data.content.replace(/\n/g, ''));
-            const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-            titleEl.textContent = titleMatch ? titleMatch[1].trim() : f.name;
-            titleEl.classList.remove('loading');
-            const diffMatch = html.match(/DIFFICULTY:\s*([^<&|]+)/i);
-            if (diffMatch) metaEl.textContent = 'DIFFICULTY: ' + diffMatch[1].trim();
+            const tm = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const dm = html.match(/DIFFICULTY:\s*([^<&|]+)/i);
+            entry.title      = tm ? tm[1].trim() : entry.name;
+            entry.difficulty = dm ? dm[1].trim() : null;
+            browseLoaded++;
+            renderBrowseList();
+            if (browseLoaded === browseFiles.length)
+              status.textContent = `${browseFiles.length} file(s) in ${GH_FOLDER}/`;
           })
-          .catch(() => {
-            titleEl.textContent = f.name;
-            titleEl.classList.remove('loading');
-          });
+          .catch(() => { entry.title = entry.name; browseLoaded++; renderBrowseList(); });
+
+        // Fetch last commit date separately
+        fetch(
+          `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${GH_FOLDER}/${encodeURIComponent(entry.name)}&per_page=1`,
+          { headers: ghHeaders() }
+        )
+          .then(r => r.ok ? r.json() : null)
+          .then(commits => {
+            if (commits && commits[0]) {
+              entry.updatedAt = commits[0].commit.author.date;
+              renderBrowseList();
+            }
+          })
+          .catch(() => {});
       });
 
-      status.textContent = `${files.length} file(s) in ${GH_FOLDER}/`;
     } catch (e) {
       status.textContent = 'Error: ' + e.message;
     }
