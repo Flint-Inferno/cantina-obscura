@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HoloFeed Editor — Datanet Config Terminal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg: #04080a;
+  --panel: #070e12;
+  --panel2: #0b141a;
+  --border: #112230;
+  --border2: #1a3448;
+  --glow: #00ccff;
+  --glow-dim: #1a6a8a;
+  --amber: #f0c040;
+  --amber-dim: #8a6a10;
+  --danger: #ff4444;
+  --success: #44ff88;
+  --mono: 'Share Tech Mono', monospace;
+  --title: 'Orbitron', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--glow);
+  font-family: var(--mono);
+  min-height: 100vh;
+  padding: 0;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px);
+  pointer-events: none;
+  z-index: 9000;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  background: var(--panel2);
+  border-bottom: 2px solid var(--border2);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+#topbar-left { display: flex; flex-direction: column; gap: 2px; }
+
+#topbar-title {
+  font-family: var(--title);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--amber);
+  text-shadow: 0 0 12px rgba(240,192,64,0.4);
+}
+
+#topbar-sub {
+  font-size: 10px;
+  color: var(--glow-dim);
+  letter-spacing: 2px;
+}
+
+#topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.top-btn {
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  padding: 7px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  transition: all 0.15s;
+  background: none;
+  color: var(--glow-dim);
+}
+.top-btn:hover { border-color: var(--glow); color: var(--glow); }
+
+.btn-commit {
+  background: rgba(0,204,255,0.08);
+  border-color: var(--glow);
+  color: var(--glow);
+}
+.btn-commit:hover { background: rgba(0,204,255,0.18); box-shadow: 0 0 12px rgba(0,204,255,0.3); }
+.btn-commit:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.btn-token  { display: none; }
+.btn-passwd { display: none; }
+
+/* ── STATUS BAR ── */
+#status-bar {
+  background: var(--panel2);
+  border-top: 1px solid var(--border);
+  padding: 6px 20px;
+  font-size: 10px;
+  color: var(--glow-dim);
+  letter-spacing: 1px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+#status-msg { flex: 1; }
+#status-msg.ok  { color: var(--success); }
+#status-msg.err { color: var(--danger); }
+
+/* ── EDITOR LAYOUT ── */
+#editor-wrap {
+  display: none;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+#editor-wrap.visible { display: block; }
+
+/* ── SECTION TABS ── */
+#section-nav {
+  display: flex;
+  border-bottom: 2px solid var(--border2);
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.sec-tab {
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--glow-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+}
+.sec-tab:hover { color: var(--glow); }
+.sec-tab.active { color: var(--glow); border-bottom-color: var(--glow); }
+
+.sec-pane { display: none; }
+.sec-pane.active { display: block; }
+
+/* ── SECTION HEADER ── */
+.sec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.sec-title {
+  font-family: var(--title);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--amber);
+}
+.sec-count { font-size: 10px; color: var(--glow-dim); }
+
+/* ── CARDS ── */
+.card-list { display: flex; flex-direction: column; gap: 8px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--border2); }
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.card-num {
+  font-size: 9px;
+  color: var(--glow-dim);
+  min-width: 24px;
+  padding-top: 3px;
+  flex-shrink: 0;
+}
+
+.card-fields { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+
+.card-del {
+  background: none;
+  border: 1px solid #3a1010;
+  color: #884444;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.card-del:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ── INPUTS ── */
+input[type="text"], input[type="number"], input[type="password"], textarea, select {
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  color: var(--glow);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 2px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--glow);
+  box-shadow: 0 0 6px rgba(0,204,255,0.15);
+}
+textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+select { cursor: pointer; }
+
+.field-label {
+  font-size: 9px;
+  color: var(--amber-dim);
+  letter-spacing: 1.5px;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.field-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.field-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; }
+
+/* ── ADD BUTTON ── */
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px dashed var(--border2);
+  color: var(--glow-dim);
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+.add-btn:hover { border-color: var(--glow); color: var(--glow); background: rgba(0,204,255,0.04); }
+
+/* ── NAME CHIPS ── */
+.chip-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  min-height: 50px;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--glow);
+}
+.chip-del {
+  background: none;
+  border: none;
+  color: #664444;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 0.15s;
+}
+.chip-del:hover { color: var(--danger); }
+
+.chip-input-row { display: flex; gap: 6px; margin-top: 8px; }
+.chip-input-row input { flex: 1; }
+.chip-add-btn {
+  background: rgba(0,204,255,0.08);
+  border: 1px solid var(--glow);
+  color: var(--glow);
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 11px;
+  padding: 5px 14px;
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.chip-add-btn:hover { background: rgba(0,204,255,0.18); }
+
+/* ── TIMING ── */
+.timing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.timing-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 12px;
+}
+.timing-title { font-size: 9px; color: var(--amber); letter-spacing: 2px; margin-bottom: 4px; }
+.timing-desc {
+  font-size: 9px;
+  color: var(--glow-dim);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.timing-input-row { display: flex; gap: 6px; align-items: center; }
+.timing-input-row input { width: 80px; flex-shrink: 0; }
+.timing-unit { font-size: 10px; color: var(--glow-dim); }
+
+/* ── HINT TEXT ── */
+.hint {
+  font-size: 9px;
+  color: var(--glow-dim);
+  line-height: 1.6;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.3);
+  border-left: 2px solid var(--border2);
+  margin-bottom: 12px;
+  border-radius: 0 2px 2px 0;
+}
+.hint strong { color: var(--amber); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel2);
+  border: 1px solid var(--glow);
+  color: var(--glow);
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 8px 20px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 0 20px rgba(0,204,255,0.2);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err  { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 20px rgba(255,68,68,0.2); }
+
+/* ── OVERLAYS ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+.overlay.hidden { display: none; }
+
+.overlay-box {
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 32px 36px;
+  width: min(420px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 0 40px rgba(0,204,255,0.15);
+}
+
+.overlay-title {
+  font-family: var(--title);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--amber);
+  text-align: center;
+  text-shadow: 0 0 12px rgba(240,192,64,0.4);
+}
+
+.overlay-sub {
+  font-size: 10px;
+  color: var(--glow-dim);
+  letter-spacing: 1px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.overlay-field { display: flex; flex-direction: column; gap: 6px; }
+
+.overlay-field label {
+  font-size: 9px;
+  color: var(--amber-dim);
+  letter-spacing: 2px;
+}
+
+.overlay-btn {
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 12px;
+  letter-spacing: 2px;
+  padding: 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid var(--glow);
+  background: rgba(0,204,255,0.08);
+  color: var(--glow);
+  transition: all 0.15s;
+  width: 100%;
+}
+.overlay-btn:hover { background: rgba(0,204,255,0.18); box-shadow: 0 0 12px rgba(0,204,255,0.2); }
+.overlay-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.overlay-err {
+  font-size: 10px;
+  color: var(--danger);
+  letter-spacing: 1px;
+  min-height: 14px;
+  text-align: center;
+}
+
+.overlay-link {
+  font-size: 10px;
+  color: var(--glow-dim);
+  text-align: center;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: color 0.15s;
+}
+.overlay-link:hover { color: var(--glow); text-decoration: underline; }
+
+/* ── INACTIVITY WARNING ── */
+#inact-warn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--panel2);
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 10px 16px;
+  border-radius: 2px;
+  box-shadow: 0 0 16px rgba(240,192,64,0.2);
+  z-index: 400;
+  display: none;
+}
+
+/* ── COMMIT CONFIRM ── */
+#commit-overlay { z-index: 600; }
+#commit-msg-input { margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD OVERLAY (shown by default) -->
+<div class="overlay" id="pw-overlay">
+  <div class="overlay-box">
+    <div class="overlay-title">HOLOFEED EDITOR</div>
+    <div class="overlay-sub">DATANET CONFIGURATION TERMINAL<br>Enter the access password to continue.</div>
+    <div class="overlay-field">
+      <label>ACCESS PASSWORD</label>
+      <input type="password" id="pw-input" placeholder="Enter password..." autocomplete="off"
+             onkeydown="if(event.key==='Enter')submitPassword()">
+    </div>
+    <div class="overlay-err" id="pw-err"></div>
+    <button class="overlay-btn" id="pw-btn" onclick="submitPassword()">▶ AUTHENTICATE</button>
+    <div class="overlay-link" onclick="showPatOverlay()">⚿ Owner login</div>
+  </div>
+</div>
+
+<!-- PAT OVERLAY (hidden by default) -->
+<div class="overlay hidden" id="pat-overlay">
+  <div class="overlay-box">
+    <div class="overlay-title">OWNER ACCESS</div>
+    <div class="overlay-sub">Enter a GitHub Personal Access Token<br>with <strong>repo</strong> scope.</div>
+    <div class="overlay-field">
+      <label>GITHUB PAT</label>
+      <input type="password" id="pat-input" placeholder="ghp_..." autocomplete="off"
+             onkeydown="if(event.key==='Enter')submitPat()">
+    </div>
+    <div class="overlay-err" id="pat-err"></div>
+    <button class="overlay-btn" id="pat-btn" onclick="submitPat()">▶ VERIFY TOKEN</button>
+    <div class="overlay-link" onclick="showPwOverlay()">← Back to password login</div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD OVERLAY (owner only) -->
+<div class="overlay hidden" id="chpw-overlay">
+  <div class="overlay-box">
+    <div class="overlay-title">SET ACCESS PASSWORD</div>
+    <div class="overlay-sub">Encrypts your PAT with the new password<br>and saves it to the repo config.</div>
+    <div class="overlay-field">
+      <label>NEW PASSWORD</label>
+      <input type="password" id="chpw-new" placeholder="New password..." autocomplete="new-password">
+    </div>
+    <div class="overlay-field">
+      <label>CONFIRM PASSWORD</label>
+      <input type="password" id="chpw-confirm" placeholder="Confirm..." autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')submitChangePw()">
+    </div>
+    <div class="overlay-err" id="chpw-err"></div>
+    <button class="overlay-btn" id="chpw-btn" onclick="submitChangePw()">▲ SAVE PASSWORD</button>
+    <div class="overlay-link" onclick="closeChangePw()">← Cancel</div>
+  </div>
+</div>
+
+<!-- COMMIT CONFIRM OVERLAY -->
+<div class="overlay hidden" id="commit-overlay">
+  <div class="overlay-box">
+    <div class="overlay-title">COMMIT TO GITHUB</div>
+    <div class="overlay-sub">This will overwrite <strong>holonet/holofeed-main.html</strong><br>in the repository.</div>
+    <div class="overlay-field">
+      <label>COMMIT MESSAGE</label>
+      <input type="text" id="commit-msg-input" value="Update holofeed content via editor"
+             onkeydown="if(event.key==='Enter')doCommit()">
+    </div>
+    <div class="overlay-err" id="commit-err"></div>
+    <button class="overlay-btn" id="commit-btn" onclick="doCommit()">▲ COMMIT &amp; PUSH</button>
+    <div class="overlay-link" onclick="closeCommitOverlay()">← Cancel</div>
+  </div>
+</div>
+
+<!-- INACTIVITY WARNING -->
+<div id="inact-warn">⚠ SESSION EXPIRING IN 30s — Move mouse or press a key to stay logged in</div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="topbar-left">
+    <div id="topbar-title">HoloFeed Editor</div>
+    <div id="topbar-sub">DATANET CONFIGURATION TERMINAL — holonet/holofeed-main.html</div>
+  </div>
+  <div id="topbar-actions">
+    <button class="top-btn btn-passwd" id="btn-passwd" onclick="showChangePw()" title="Set collaborator password">⚿ PASSWORD</button>
+    <button class="top-btn btn-token"  id="btn-token"  onclick="showPatOverlay()" title="Change PAT">⚿ TOKEN</button>
+    <button class="top-btn btn-commit" id="btn-commit" onclick="openCommitOverlay()" disabled>▲ COMMIT</button>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <span id="status-msg">Authenticating…</span>
+</div>
+
+<!-- MAIN EDITOR -->
+<div id="editor-wrap">
+
+  <div id="section-nav">
+    <button class="sec-tab active" onclick="showSection(event,'news')">📰 HEADLINES</button>
+    <button class="sec-tab" onclick="showSection(event,'ads')">📢 ADS</button>
+    <button class="sec-tab" onclick="showSection(event,'racers')">🐎 RACER NAMES</button>
+    <button class="sec-tab" onclick="showSection(event,'tournament')">♟ TOURN. NAMES</button>
+    <button class="sec-tab" onclick="showSection(event,'stocks')">📈 STOCKS</button>
+    <button class="sec-tab" onclick="showSection(event,'timing')">⏱ TIMING</button>
+  </div>
+
+  <!-- HEADLINES -->
+  <div class="sec-pane active" id="sec-news">
+    <div class="sec-header">
+      <span class="sec-title">HOLONEWS HEADLINES</span>
+      <span class="sec-count" id="news-count"></span>
+    </div>
+    <div class="hint">
+      <strong>Click a headline to expand/edit it.</strong> Each story has a headline, a body paragraph, and a tag.<br>
+      Tag options: <strong>standard</strong> (plain badge) or <strong>breaking</strong> (red BREAKING badge).<br>
+      Stories cycle automatically — order here doesn't matter, the feed shuffles them.
+    </div>
+    <div class="card-list" id="news-list"></div>
+    <button class="add-btn" onclick="addHeadline()">+ ADD NEW HEADLINE</button>
+  </div>
+
+  <!-- ADS -->
+  <div class="sec-pane" id="sec-ads">
+    <div class="sec-header">
+      <span class="sec-title">SPONSORED ADS</span>
+      <span class="sec-count" id="ads-count"></span>
+    </div>
+    <div class="hint">
+      Ads appear roughly <strong>once every 3 headlines</strong> in the feed, marked with an amber SPONSORED badge.<br>
+      The <strong>Cantina Obscura</strong> ad contains the free-drink easter egg — keep it if you want that to work.
+    </div>
+    <div class="card-list" id="ads-list"></div>
+    <button class="add-btn" onclick="addAd()">+ ADD NEW AD</button>
+  </div>
+
+  <!-- RACER NAMES -->
+  <div class="sec-pane" id="sec-racers">
+    <div class="sec-header">
+      <span class="sec-title">FATHIER RACER NAME POOL</span>
+      <span class="sec-count" id="racers-count"></span>
+    </div>
+    <div class="hint">
+      Each race picks <strong>6 names at random</strong> from this pool.<br>
+      You need <strong>at least 6 names</strong>. More names = more variety between races.
+    </div>
+    <div class="chip-area" id="racers-chips"></div>
+    <div class="chip-input-row">
+      <input type="text" id="racer-new-input" placeholder="New racer name…" onkeydown="if(event.key==='Enter')addChip('racers')">
+      <button class="chip-add-btn" onclick="addChip('racers')">+ ADD</button>
+    </div>
+  </div>
+
+  <!-- TOURNAMENT NAMES -->
+  <div class="sec-pane" id="sec-tournament">
+    <div class="sec-header">
+      <span class="sec-title">SPEED HOLOCHESS PLAYER POOL</span>
+      <span class="sec-count" id="tourn-count"></span>
+    </div>
+    <div class="hint">
+      16 names are picked each tournament. The previous winner always carries over with a ★.<br>
+      You need <strong>at least 17 names</strong> so there's always someone new to replace the champion.
+    </div>
+    <div class="chip-area" id="tourn-chips"></div>
+    <div class="chip-input-row">
+      <input type="text" id="tourn-new-input" placeholder="New player name…" onkeydown="if(event.key==='Enter')addChip('tourn')">
+      <button class="chip-add-btn" onclick="addChip('tourn')">+ ADD</button>
+    </div>
+  </div>
+
+  <!-- STOCKS -->
+  <div class="sec-pane" id="sec-stocks">
+    <div class="sec-header">
+      <span class="sec-title">EXCHANGE LISTINGS</span>
+      <span class="sec-count" id="stocks-count"></span>
+    </div>
+    <div class="hint">
+      Each stock shows a live scrolling line graph on the Exchange tab.<br>
+      <strong>Symbol</strong>: short all-caps ticker (e.g. KDY). &nbsp;
+      <strong>Base price</strong>: starting credit value. &nbsp;
+      <strong>Volatility</strong>: price swing per tick — 0.01 = stable, 0.05 = very jumpy.
+    </div>
+    <div class="card-list" id="stocks-list"></div>
+    <button class="add-btn" onclick="addStock()">+ ADD NEW STOCK</button>
+  </div>
+
+  <!-- TIMING -->
+  <div class="sec-pane" id="sec-timing">
+    <div class="sec-header">
+      <span class="sec-title">TIMING &amp; SPEED SETTINGS</span>
+    </div>
+    <div class="hint">
+      These control how fast things happen. All values are in <strong>seconds</strong> unless noted.
+    </div>
+    <div class="timing-grid" id="timing-grid"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── GITHUB CONSTANTS ─────────────────────────────────────────────────────────
+const GH_OWNER   = 'Flint-Inferno';
+const GH_REPO    = 'cantina-obscura';
+const GH_FILE    = 'holonet/holofeed-main.html';
+const CONFIG_FILE = 'editor-config.json';
+
+// ── AUTH STATE ───────────────────────────────────────────────────────────────
+let sessionPat       = null;
+let isOwner          = false;
+let fileSha          = null;
+let inactivityTimer  = null;
+let warnTimer        = null;
+let originalHtml     = '';
+
+// ── INACTIVITY ────────────────────────────────────────────────────────────────
+function resetInactivity() {
+  clearTimeout(inactivityTimer);
+  clearTimeout(warnTimer);
+  document.getElementById('inact-warn').style.display = 'none';
+  if (!sessionPat) return;
+  warnTimer = setTimeout(() => {
+    document.getElementById('inact-warn').style.display = 'block';
+  }, 4.5 * 60 * 1000);
+  inactivityTimer = setTimeout(() => {
+    lockEditor();
+  }, 5 * 60 * 1000);
+}
+
+function lockEditor() {
+  sessionPat = null;
+  isOwner = false;
+  document.getElementById('inact-warn').style.display = 'none';
+  document.getElementById('editor-wrap').classList.remove('visible');
+  document.getElementById('btn-commit').disabled = true;
+  document.getElementById('btn-token').style.display = 'none';
+  document.getElementById('btn-passwd').style.display = 'none';
+  showPwOverlay();
+  setStatus('Session expired — please re-authenticate.');
+}
+
+['mousemove','keydown','click','touchstart'].forEach(ev =>
+  document.addEventListener(ev, resetInactivity, {passive:true})
+);
+
+// ── CRYPTO ───────────────────────────────────────────────────────────────────
+async function _deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:enc.encode(salt), iterations:100000, hash:'SHA-256' },
+    keyMaterial, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+
+async function encryptPat(pat, password) {
+  const key = await _deriveKey(password, 'cantina-obscura-salt');
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const ct  = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(pat));
+  const buf = new Uint8Array(iv.length + ct.byteLength);
+  buf.set(iv); buf.set(new Uint8Array(ct), iv.length);
+  return btoa(String.fromCharCode(...buf));
+}
+
+async function decryptPat(b64, password) {
+  const key = await _deriveKey(password, 'cantina-obscura-salt');
+  const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv:buf.slice(0,12)}, key, buf.slice(12));
+  return new TextDecoder().decode(dec);
+}
+
+// ── GITHUB API ────────────────────────────────────────────────────────────────
+async function ghApi(method, path, opts={}) {
+  const res = await fetch('https://api.github.com' + path, {
+    method,
+    headers: {
+      Authorization: 'token ' + sessionPat,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: opts.data ? JSON.stringify(opts.data) : undefined
+  });
+  if (res.status === 401 || res.status === 403) {
+    sessionPat = null;
+    showPatOverlay();
+    throw new Error('Auth error: ' + res.status);
+  }
+  if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ── OVERLAY HELPERS ───────────────────────────────────────────────────────────
+function showPwOverlay() {
+  document.getElementById('pw-overlay').classList.remove('hidden');
+  document.getElementById('pat-overlay').classList.add('hidden');
+  document.getElementById('chpw-overlay').classList.add('hidden');
+  document.getElementById('commit-overlay').classList.add('hidden');
+  document.getElementById('pw-err').textContent = '';
+  document.getElementById('pw-input').value = '';
+  setTimeout(() => document.getElementById('pw-input').focus(), 50);
+}
+
+function showPatOverlay() {
+  document.getElementById('pw-overlay').classList.add('hidden');
+  document.getElementById('pat-overlay').classList.remove('hidden');
+  document.getElementById('pat-err').textContent = '';
+  document.getElementById('pat-input').value = '';
+  setTimeout(() => document.getElementById('pat-input').focus(), 50);
+}
+
+function showChangePw() {
+  document.getElementById('chpw-overlay').classList.remove('hidden');
+  document.getElementById('chpw-new').value = '';
+  document.getElementById('chpw-confirm').value = '';
+  document.getElementById('chpw-err').textContent = '';
+  setTimeout(() => document.getElementById('chpw-new').focus(), 50);
+}
+
+function closeChangePw() {
+  document.getElementById('chpw-overlay').classList.add('hidden');
+}
+
+function openCommitOverlay() {
+  document.getElementById('commit-err').textContent = '';
+  document.getElementById('commit-overlay').classList.remove('hidden');
+  setTimeout(() => document.getElementById('commit-msg-input').focus(), 50);
+}
+
+function closeCommitOverlay() {
+  document.getElementById('commit-overlay').classList.add('hidden');
+}
+
+// ── AUTH FLOWS ────────────────────────────────────────────────────────────────
+async function submitPassword() {
+  const pw  = document.getElementById('pw-input').value.trim();
+  const btn = document.getElementById('pw-btn');
+  const err = document.getElementById('pw-err');
+  if (!pw) { err.textContent = 'Password required.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'DECRYPTING…';
+  err.textContent = '';
+  try {
+    const cfgRes = await fetch(
+      'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + CONFIG_FILE,
+      { headers: { Accept: 'application/vnd.github+json' } }
+    );
+    if (!cfgRes.ok) throw new Error('Config not found. Ask the owner to set a password first.');
+    const cfg = await cfgRes.json();
+    const raw = JSON.parse(atob(cfg.content.replace(/\n/g,'')));
+    if (!raw.encryptedPat) throw new Error('No password set by owner yet.');
+    const pat = await decryptPat(raw.encryptedPat, pw);
+    sessionPat = pat;
+    const user = await ghApi('GET', '/user');
+    isOwner = (user.login === GH_OWNER);
+    if (isOwner) {
+      showOwnerButtons();
+    }
+    document.getElementById('pw-overlay').classList.add('hidden');
+    await initEditor();
+  } catch(e) {
+    err.textContent = e.message.includes('decrypt') || e.message.includes('operation') ?
+      'Incorrect password.' : e.message;
+    sessionPat = null;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ AUTHENTICATE';
+  }
+}
+
+async function submitPat() {
+  const pat = document.getElementById('pat-input').value.trim();
+  const btn = document.getElementById('pat-btn');
+  const err = document.getElementById('pat-err');
+  if (!pat) { err.textContent = 'Token required.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'VERIFYING…';
+  err.textContent = '';
+  sessionPat = pat;
+  try {
+    const user = await ghApi('GET', '/user');
+    isOwner = (user.login === GH_OWNER);
+    if (!isOwner) {
+      err.textContent = 'Token valid but not the repo owner. Use password login.';
+      sessionPat = null;
+      return;
+    }
+    showOwnerButtons();
+    document.getElementById('pat-overlay').classList.add('hidden');
+    await initEditor();
+  } catch(e) {
+    err.textContent = 'Token invalid or network error.';
+    sessionPat = null;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ VERIFY TOKEN';
+  }
+}
+
+async function submitChangePw() {
+  const pw1  = document.getElementById('chpw-new').value;
+  const pw2  = document.getElementById('chpw-confirm').value;
+  const btn  = document.getElementById('chpw-btn');
+  const err  = document.getElementById('chpw-err');
+  if (!pw1) { err.textContent = 'Enter a new password.'; return; }
+  if (pw1 !== pw2) { err.textContent = 'Passwords do not match.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'SAVING…';
+  err.textContent = '';
+  try {
+    const enc = await encryptPat(sessionPat, pw1);
+    // Get existing SHA if config exists
+    let sha;
+    try {
+      const cur = await ghApi('GET', '/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + CONFIG_FILE);
+      sha = cur.sha;
+    } catch(e) { /* new file */ }
+    const body = JSON.stringify({ encryptedPat: enc });
+    const b64  = btoa(unescape(encodeURIComponent(body)));
+    const payload = { message:'Update editor password config', content:b64 };
+    if (sha) payload.sha = sha;
+    await ghApi('PUT', '/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + CONFIG_FILE, { data: payload });
+    toast('Password saved!');
+    closeChangePw();
+  } catch(e) {
+    err.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▲ SAVE PASSWORD';
+  }
+}
+
+function showOwnerButtons() {
+  document.getElementById('btn-token').style.display  = '';
+  document.getElementById('btn-passwd').style.display = '';
+}
+
+// ── INIT & LOAD ───────────────────────────────────────────────────────────────
+async function initEditor() {
+  setStatus('Loading holofeed…');
+  document.getElementById('btn-commit').disabled = true;
+  try {
+    const data = await ghApi('GET', '/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + GH_FILE);
+    fileSha = data.sha;
+    originalHtml = decodeURIComponent(escape(atob(data.content.replace(/\n/g,''))));
+    if (!parseHtml(originalHtml)) {
+      setStatus('ERROR: Could not parse holofeed. Unexpected format?', 'err');
+      return;
+    }
+    document.getElementById('editor-wrap').classList.add('visible');
+    document.getElementById('btn-commit').disabled = false;
+    setStatus('Loaded: ' + GH_FILE + ' — ' + editorData.headlines.length + ' headlines, ' + editorData.ads.length + ' ads', 'ok');
+    renderAll();
+    resetInactivity();
+  } catch(e) {
+    setStatus('ERROR loading file: ' + e.message, 'err');
+  }
+}
+
+// ── COMMIT ────────────────────────────────────────────────────────────────────
+async function doCommit() {
+  const msg  = document.getElementById('commit-msg-input').value.trim() || 'Update holofeed content';
+  const btn  = document.getElementById('commit-btn');
+  const err  = document.getElementById('commit-err');
+  btn.disabled = true;
+  btn.textContent = 'COMMITTING…';
+  err.textContent = '';
+  try {
+    const modified = buildModifiedHtml();
+    const b64 = btoa(unescape(encodeURIComponent(modified)));
+    const result = await ghApi('PUT', '/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + GH_FILE, {
+      data: { message: msg, content: b64, sha: fileSha }
+    });
+    fileSha = result.content.sha;
+    originalHtml = modified;
+    closeCommitOverlay();
+    toast('Committed: ' + result.commit.sha.slice(0,7));
+    setStatus('Saved — commit ' + result.commit.sha.slice(0,7), 'ok');
+    resetInactivity();
+  } catch(e) {
+    err.textContent = 'Commit failed: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▲ COMMIT & PUSH';
+  }
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let editorData = {
+  headlines: [],
+  ads:       [],
+  racerNames:[],
+  tournNames:[],
+  stocks:    [],
+  timing:    {}
+};
+
+// ── PARSING ───────────────────────────────────────────────────────────────────
+function extractArray(html, varName) {
+  const re = new RegExp('const\\s+' + varName + '\\s*=\\s*\\[([\\s\\S]*?)\\];', 'm');
+  const m = html.match(re);
+  return m ? m[1] : null;
+}
+
+function parseObjectArray(raw) {
+  const items = [];
+  let depth = 0, start = -1;
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] === '{') { if (depth === 0) start = i; depth++; }
+    else if (raw[i] === '}') {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        try {
+          const obj = Function('"use strict"; return (' + raw.slice(start, i+1) + ')')();
+          items.push(obj);
+        } catch(e) { /* skip malformed */ }
+        start = -1;
+      }
+    }
+  }
+  return items;
+}
+
+function parseStringArray(raw) {
+  const items = [];
+  const re = /['"]([^'"]+)['"]/g;
+  let m;
+  while ((m = re.exec(raw)) !== null) items.push(m[1]);
+  return items;
+}
+
+function parseTimingValue(html, varName) {
+  const re = new RegExp('const\\s+' + varName + '\\s*=\\s*([\\d.]+)');
+  const m = html.match(re);
+  return m ? parseFloat(m[1]) : null;
+}
+
+function parseLapTimes(html) {
+  const re = /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/(\d+)\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/(\d+)/;
+  const m = html.match(re);
+  return m ? { slowLap: parseInt(m[1]), fastLap: parseInt(m[2]) } : { slowLap: 75, fastLap: 45 };
+}
+
+function parseHtml(html) {
+  try {
+    const hRaw = extractArray(html, 'HEADLINES');
+    const aRaw = extractArray(html, 'ADS');
+    const rRaw = extractArray(html, 'RACER_NAMES');
+    const tRaw = extractArray(html, 'TOURN_NAMES');
+    const sRaw = extractArray(html, 'STOCKS');
+    if (!hRaw || !aRaw || !rRaw || !tRaw || !sRaw) {
+      setStatus('ERROR: Could not find all expected arrays. Is this the right file?', 'err');
+      return false;
+    }
+    editorData.headlines  = parseObjectArray(hRaw);
+    editorData.ads        = parseObjectArray(aRaw);
+    editorData.racerNames = parseStringArray(rRaw);
+    editorData.tournNames = parseStringArray(tRaw);
+    editorData.stocks     = parseObjectArray(sRaw);
+    const laps = parseLapTimes(html);
+    editorData.timing = {
+      slowLap:       laps.slowLap,
+      fastLap:       laps.fastLap,
+      raceFlash:     parseTimingValue(html, 'FLASH')       || 10,
+      raceCountdown: parseTimingValue(html, 'COUNTDOWN')   || 20,
+      roundDur:      parseTimingValue(html, 'ROUND_DUR')   || 240,
+      flashDur:      parseTimingValue(html, 'FLASH_DUR')   || 240,
+      tournCycle:    parseTimingValue(html, 'TOURN_CYCLE') || 1200,
+    };
+    return true;
+  } catch(e) {
+    setStatus('Parse error: ' + e.message, 'err');
+    return false;
+  }
+}
+
+// ── SERIALIZATION ─────────────────────────────────────────────────────────────
+function serializeObj(obj) {
+  const parts = Object.entries(obj).map(([k,v]) => {
+    if (typeof v === 'string') return '    ' + k + ':"' + v.replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
+    return '    ' + k + ':' + v;
+  });
+  return '  {\n' + parts.join(',\n') + '\n  }';
+}
+
+function serializeArray(arr) {
+  return '[\n' + arr.map(serializeObj).join(',\n') + '\n]';
+}
+
+function serializeStringArray(arr) {
+  return '[\n' + arr.map(s => '  "' + s.replace(/"/g,'\\"') + '"').join(',\n') + '\n]';
+}
+
+function replaceArray(html, varName, newContent) {
+  const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)\\[[\\s\\S]*?\\];', 'm');
+  return html.replace(re, '$1' + newContent + ';');
+}
+
+function replaceTimingConst(html, varName, value) {
+  const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)[\\d.]+');
+  return html.replace(re, '$1' + value);
+}
+
+function replaceLapTimes(html, slowLap, fastLap) {
+  return html.replace(
+    /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/\d+\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/\d+/,
+    'const BS_MIN = (2*Math.PI)/' + slowLap + ', BS_MAX = (2*Math.PI)/' + fastLap
+  );
+}
+
+function buildModifiedHtml() {
+  let html = originalHtml;
+  html = replaceArray(html, 'HEADLINES', serializeArray(editorData.headlines));
+  html = replaceArray(html, 'ADS',       serializeArray(editorData.ads));
+  html = replaceArray(html, 'RACER_NAMES',  serializeStringArray(editorData.racerNames));
+  html = replaceArray(html, 'TOURN_NAMES',  serializeStringArray(editorData.tournNames));
+  html = replaceArray(html, 'STOCKS',    serializeArray(editorData.stocks));
+  html = replaceLapTimes(html, editorData.timing.slowLap, editorData.timing.fastLap);
+  html = html.replace(
+    /const\s+FLASH\s*=\s*\d+\s*,\s*COUNTDOWN\s*=\s*\d+/,
+    'const FLASH = ' + editorData.timing.raceFlash + ', COUNTDOWN = ' + editorData.timing.raceCountdown
+  );
+  html = replaceTimingConst(html, 'ROUND_DUR',   editorData.timing.roundDur);
+  html = replaceTimingConst(html, 'FLASH_DUR',   editorData.timing.flashDur);
+  html = replaceTimingConst(html, 'TOURN_CYCLE', editorData.timing.tournCycle);
+  return html;
+}
+
+// ── RENDERING ─────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderHeadlines();
+  renderAds();
+  renderChips('racers');
+  renderChips('tourn');
+  renderStocks();
+  renderTiming();
+}
+
+function renderHeadlines() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = '';
+  document.getElementById('news-count').textContent = editorData.headlines.length + ' stories';
+  editorData.headlines.forEach((h, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-num">#${i+1}</span>
+        <div class="card-fields">
+          <div>
+            <span class="field-label">HEADLINE</span>
+            <input type="text" value="${esc(h.h)}" oninput="editorData.headlines[${i}].h=this.value">
+          </div>
+          <div>
+            <span class="field-label">BODY TEXT</span>
+            <textarea oninput="editorData.headlines[${i}].b=this.value">${esc(h.b)}</textarea>
+          </div>
+          <div>
+            <span class="field-label">TAG</span>
+            <select onchange="editorData.headlines[${i}].tag=this.value">
+              <option value="standard" ${h.tag==='standard'?'selected':''}>standard — plain DATANET badge</option>
+              <option value="breaking" ${h.tag==='breaking'?'selected':''}>breaking — red BREAKING badge</option>
+            </select>
+          </div>
+        </div>
+        <button class="card-del" onclick="removeItem('headlines',${i})">✕ DEL</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function addHeadline() {
+  editorData.headlines.push({h:'New headline text here', b:'Body paragraph text here.', tag:'standard'});
+  renderHeadlines();
+  setTimeout(() => document.getElementById('news-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+function renderAds() {
+  const list = document.getElementById('ads-list');
+  list.innerHTML = '';
+  document.getElementById('ads-count').textContent = editorData.ads.length + ' ads';
+  editorData.ads.forEach((ad, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-num">#${i+1}</span>
+        <div class="card-fields">
+          <div>
+            <span class="field-label">AD HEADLINE / BUSINESS NAME</span>
+            <input type="text" value="${esc(ad.h)}" oninput="editorData.ads[${i}].h=this.value">
+          </div>
+          <div>
+            <span class="field-label">AD COPY</span>
+            <textarea oninput="editorData.ads[${i}].b=this.value">${esc(ad.b)}</textarea>
+          </div>
+        </div>
+        <button class="card-del" onclick="removeItem('ads',${i})">✕ DEL</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function addAd() {
+  editorData.ads.push({h:'NEW BUSINESS — TAGLINE HERE', b:'Ad copy text here.', tag:'ad'});
+  renderAds();
+  setTimeout(() => document.getElementById('ads-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+function renderChips(which) {
+  const arr = which === 'racers' ? editorData.racerNames : editorData.tournNames;
+  const container = document.getElementById(which + '-chips');
+  container.innerHTML = '';
+  arr.forEach((name, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `${esc(name)} <button class="chip-del" onclick="removeChip('${which}',${i})">✕</button>`;
+    container.appendChild(chip);
+  });
+  const countId = which === 'racers' ? 'racers-count' : 'tourn-count';
+  document.getElementById(countId).textContent = arr.length + ' names' + (which === 'racers' ? ' (min 6)' : ' (min 17)');
+}
+
+function addChip(which) {
+  const inputId = which === 'racers' ? 'racer-new-input' : 'tourn-new-input';
+  const input = document.getElementById(inputId);
+  const name = input.value.trim();
+  if (!name) return;
+  if (which === 'racers') editorData.racerNames.push(name);
+  else editorData.tournNames.push(name);
+  input.value = '';
+  renderChips(which);
+}
+
+function removeChip(which, i) {
+  if (which === 'racers') editorData.racerNames.splice(i, 1);
+  else editorData.tournNames.splice(i, 1);
+  renderChips(which);
+}
+
+function renderStocks() {
+  const list = document.getElementById('stocks-list');
+  list.innerHTML = '';
+  document.getElementById('stocks-count').textContent = editorData.stocks.length + ' listings';
+  editorData.stocks.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-num">#${i+1}</span>
+        <div class="card-fields">
+          <div class="field-row-3">
+            <div>
+              <span class="field-label">COMPANY NAME</span>
+              <input type="text" value="${esc(s.name)}" oninput="editorData.stocks[${i}].name=this.value">
+            </div>
+            <div>
+              <span class="field-label">SYMBOL</span>
+              <input type="text" value="${esc(s.sym)}" oninput="editorData.stocks[${i}].sym=this.value" style="text-transform:uppercase">
+            </div>
+            <div>
+              <span class="field-label">BASE PRICE (cr)</span>
+              <input type="number" value="${s.base}" min="1" oninput="editorData.stocks[${i}].base=parseFloat(this.value)||100">
+            </div>
+            <div>
+              <span class="field-label">VOLATILITY</span>
+              <input type="number" value="${s.vol}" min="0.001" max="0.2" step="0.001" oninput="editorData.stocks[${i}].vol=parseFloat(this.value)||0.02">
+            </div>
+          </div>
+        </div>
+        <button class="card-del" onclick="removeItem('stocks',${i})">✕ DEL</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function addStock() {
+  editorData.stocks.push({name:'New Corporation', sym:'NEW', base:500, vol:0.02});
+  renderStocks();
+  setTimeout(() => document.getElementById('stocks-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+const TIMING_CONFIG = [
+  { key:'slowLap',       label:'MAX LAP TIME (slowest)',   desc:"Slowest a racer's lap can be, in seconds.",                              unit:'seconds', min:10,  max:300  },
+  { key:'fastLap',       label:'MIN LAP TIME (fastest)',   desc:'Fastest a racer\'s lap can be, in seconds. Must be less than Max.',      unit:'seconds', min:5,   max:290  },
+  { key:'raceFlash',     label:'WINNER FLASH DURATION',    desc:"How long the winner's name flashes after winning.",                      unit:'seconds', min:1,   max:60   },
+  { key:'raceCountdown', label:'PRE-RACE COUNTDOWN',       desc:'Countdown in seconds before a new race starts.',                        unit:'seconds', min:1,   max:120  },
+  { key:'roundDur',      label:'HOLOCHESS ROUND LENGTH',   desc:'How long each tournament round lasts.',                                 unit:'seconds', min:30,  max:1800 },
+  { key:'flashDur',      label:'CHAMPION FLASH DURATION',  desc:"How long the tournament champion's name flashes.",                      unit:'seconds', min:10,  max:600  },
+  { key:'tournCycle',    label:'FULL TOURNAMENT CYCLE',    desc:'Total cycle length. Should equal (rounds × round length) + flash. Default: 4×240+240=1200.', unit:'seconds', min:100, max:7200 },
+];
+
+function renderTiming() {
+  const grid = document.getElementById('timing-grid');
+  grid.innerHTML = '';
+  TIMING_CONFIG.forEach(cfg => {
+    const card = document.createElement('div');
+    card.className = 'timing-card';
+    card.innerHTML = `
+      <div class="timing-title">${cfg.label}</div>
+      <div class="timing-desc">${cfg.desc}</div>
+      <div class="timing-input-row">
+        <input type="number" value="${editorData.timing[cfg.key]}" min="${cfg.min}" max="${cfg.max}"
+               oninput="editorData.timing['${cfg.key}']=parseFloat(this.value)||${editorData.timing[cfg.key]}">
+        <span class="timing-unit">${cfg.unit}</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function removeItem(arr, i) {
+  editorData[arr].splice(i, 1);
+  if (arr === 'headlines') renderHeadlines();
+  else if (arr === 'ads') renderAds();
+  else if (arr === 'stocks') renderStocks();
+}
+
+function showSection(event, name) {
+  document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sec-pane').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('sec-' + name).classList.add('active');
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = type || '';
+}
+
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isErr?' err':'');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.className = '', 3000);
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+// Show password overlay on load
+showPwOverlay();
+</script>
+</body>
+</html>
