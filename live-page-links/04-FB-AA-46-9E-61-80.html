@@ -191,6 +191,48 @@
     }
 
     /* ============================================================
+       HIGH CONTRAST TOGGLE BUTTON
+       ============================================================ */
+    .hc-toggle-btn {
+      font-family: var(--font-main);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      opacity: 0.7;
+    }
+    .hc-toggle-btn:hover {
+      background: var(--dim);
+      border-color: var(--text);
+      opacity: 1;
+    }
+    .hc-toggle-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      opacity: 1;
+    }
+
+    /* ── High contrast mode ──────────────────────────────────── */
+    body.hi-contrast {
+      --text:   #ffffff;
+      --bg:     #000000;
+      --border: #555555;
+      --dim:    #111111;
+    }
+    body.hi-contrast .mission-id    { opacity: 1; }
+    body.hi-contrast .section-label { opacity: 1; }
+    body.hi-contrast .page-scanlines { display: none; }
+    body.hi-contrast .page-scan-roll { display: none; }
+    body.hi-contrast .datapad       { animation: none; }
+    body.hi-contrast .hud-clock     { opacity: 0.9; }
+
+
+    /* ============================================================
        HOLONET BUTTON
        Change the href on the <a> tag in the HTML body to point
        to your Local HoloNet landing page URL.
@@ -510,6 +552,10 @@
         <!-- Aurebesh toggle Ã¢ÂÂ JS below handles the switching -->
         <button class="aurebesh-toggle-btn" id="aurebesh-toggle" onclick="toggleAurebesh()">
           Ã¢ÂÂ« AUREBESH
+        </button>
+        <!-- High contrast toggle -->
+        <button class="hc-toggle-btn" id="hc-toggle" onclick="toggleHiContrast()">
+          ◐ HI-CONTRAST
         </button>
       </div>
 
