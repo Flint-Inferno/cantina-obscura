@@ -1189,9 +1189,14 @@
 
   function diffRank(d) {
     if (!d) return 999;
-    const up = d.toUpperCase().trim();
-    const i  = DIFF_ORDER.indexOf(up);
-    return i >= 0 ? i : 500;
+    const t     = d.trim();
+    const chars = [...t]; // spread handles multi-byte unicode (★, ◆, etc.)
+    // If it's a repeated single symbol (e.g. * / ** / *** / ★★), sort by count
+    if (chars.length > 0 && chars.every(c => c === chars[0]))
+      return chars.length;
+    // Otherwise fall back to predefined text order
+    const i = DIFF_ORDER.indexOf(t.toUpperCase());
+    return i >= 0 ? i + 100 : 500;
   }
 
   function sortedBrowseFiles() {
