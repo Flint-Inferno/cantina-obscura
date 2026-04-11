@@ -7,7 +7,7 @@
        PAGE TITLE (shown in browser tab)
        Change this to match the mission name
        ============================================================ -->
-  <title>MISSION // DATAPAD</title>
+  <title>CANTINA CODE // DATAPAD</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
@@ -21,19 +21,19 @@
 
   <style>
     /* =============================================================
-       AUREBESH FONT — EMBEDDED AS BASE64
+       AUREBESH FONT â EMBEDDED AS BASE64
        ===============================================================
        HOW TO FILL THIS IN:
          1. Download a free Aurebesh .ttf font (search "Aurebesh font
-            free download" — Pixel Sagas has a good one).
+            free download" â Pixel Sagas has a good one).
          2. Go to https://transfonter.org or https://base64.guru/converter/encode/file
          3. Upload the .ttf file and convert it to base64.
          4. Replace the placeholder text below with your base64 string.
-            The string will be very long — that is normal.
+            The string will be very long â that is normal.
 
        WHY BASE64?
          The entire font is embedded inside this HTML file.
-         It works anywhere — no server needed, no external requests.
+         It works anywhere â no server needed, no external requests.
          Perfect for pages triggered by NFC tags.
        ============================================================= */
     @font-face {
@@ -44,43 +44,43 @@
     }
 
     /* =============================================================
-       COLOR SCHEME — EDIT THIS PER MISSION CARD CLASSIFICATION
+       COLOR SCHEME â EDIT THIS PER MISSION CARD CLASSIFICATION
        ---------------------------------------------------------------
        Uncomment ONE block below by removing the slashes, and comment
        out the others. Also update LOGO_COLOR in the <script> at the
        bottom of the file to match the --accent value you chose.
        ---------------------------------------------------------------
 
-       SCOUNDREL / NEUTRAL (amber-gold) — LOGO_COLOR: '#f0c060'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+       SCOUNDREL / NEUTRAL (amber-gold) â LOGO_COLOR: '#f0c060'
+         --bg: #0f0208; --text: #ff8cc0; --accent: #ff5fa0;
+         --border: #3a1028; --dim: #1a0514;
 
-       IMPERIAL (green terminal) — LOGO_COLOR: '#00cc00'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+       IMPERIAL (green terminal) â LOGO_COLOR: '#00cc00'
+         --bg: #0f0208; --text: #ff8cc0; --accent: #ff5fa0;
+         --border: #3a1028; --dim: #1a0514;
 
-       REPUBLIC / JEDI (blue holographic) — LOGO_COLOR: '#00aaff'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+       REPUBLIC / JEDI (blue holographic) â LOGO_COLOR: '#00aaff'
+         --bg: #0f0208; --text: #ff8cc0; --accent: #ff5fa0;
+         --border: #3a1028; --dim: #1a0514;
 
-       SITH / DARK SIDE (red) — LOGO_COLOR: '#cc0000'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+       SITH / DARK SIDE (red) â LOGO_COLOR: '#cc0000'
+         --bg: #0f0208; --text: #ff8cc0; --accent: #ff5fa0;
+         --border: #3a1028; --dim: #1a0514;
 
-       MANDALORIAN (steel-blue/grey) — LOGO_COLOR: '#7ec8e3'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+       MANDALORIAN (steel-blue/grey) â LOGO_COLOR: '#7ec8e3'
+         --bg: #0f0208; --text: #ff8cc0; --accent: #ff5fa0;
+         --border: #3a1028; --dim: #1a0514;
 
        ============================================================= */
 
-    /* EDIT: Paste your chosen color values here ↓ */
+    /* EDIT: Paste your chosen color values here â */
     :root {
-      --bg:          #0d0b07;
-      --text:        #d4a843;
-      --accent:      #f0c060;
-      --border:      #3a2e14;
-      --dim:         #1a1508;
-      --danger:      #f0c060;
+      --bg:          #0f0208;
+      --text:        #ff8cc0;
+      --accent:      #ff5fa0;
+      --border:      #3a1028;
+      --dim:         #1a0514;
+      --danger:      #ff5fa0;
       --font-main:   'Share Tech Mono', monospace;
       --font-title:  'Orbitron', sans-serif;
       --font-aurebesh: 'Aurebesh', sans-serif;
@@ -103,7 +103,7 @@
       justify-content: center;
     }
 
-    /* ── Outer frame ─────────────────────────────────────────── */
+    /* ââ Outer frame âââââââââââââââââââââââââââââââââââââââââââ */
     .datapad {
       max-width: 1100px;
       margin: 0 auto;
@@ -114,7 +114,7 @@
       position: relative;
     }
 
-    /* ── Watermark ───────────────────────────────────────────── */
+    /* ââ Watermark âââââââââââââââââââââââââââââââââââââââââââââ */
     #logo-watermark {
       position: absolute;
       top: 50%;
@@ -126,7 +126,7 @@
       z-index: 1;
     }
 
-    /* ── Top bar ─────────────────────────────────────────────── */
+    /* ââ Top bar âââââââââââââââââââââââââââââââââââââââââââââââ */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -161,7 +161,7 @@
     /* ============================================================
        AUREBESH TOGGLE BUTTON
        Switches ALL page text between standard fonts and Aurebesh.
-       No edits needed here — JS and CSS handle the switching.
+       No edits needed here â JS and CSS handle the switching.
        You can rename the button label text in the HTML body if
        you want (look for id="aurebesh-toggle").
        ============================================================ */
@@ -209,9 +209,9 @@
       transition: background 0.2s, border-color 0.2s;
     }
     .holonet-btn:hover { background: var(--dim); border-color: var(--accent); }
-    .holonet-btn::before { content: "◈ "; font-size: 0.65rem; }
+    .holonet-btn::before { content: "â "; font-size: 0.65rem; }
 
-    /* ── Mission title ───────────────────────────────────────── */
+    /* ââ Mission title âââââââââââââââââââââââââââââââââââââââââ */
     .mission-title {
       font-family: var(--font-title);
       font-size: clamp(1.6rem, 6vw, 2.8rem);
@@ -223,7 +223,7 @@
       margin-bottom: 0.4rem;
     }
 
-    /* ── Mission ID / subtitle line ──────────────────────────── */
+    /* ââ Mission ID / subtitle line ââââââââââââââââââââââââââââ */
     .mission-id {
       font-size: 0.7rem;
       letter-spacing: 0.14em;
@@ -232,7 +232,7 @@
       margin-bottom: 1.5rem;
     }
 
-    /* ── Section labels ──────────────────────────────────────── */
+    /* ââ Section labels ââââââââââââââââââââââââââââââââââââââââ */
     .section-label {
       font-size: 0.6rem;
       letter-spacing: 0.18em;
@@ -242,7 +242,7 @@
       margin-bottom: 0.5rem;
     }
 
-    /* ── Mission briefing block ──────────────────────────────── */
+    /* ââ Mission briefing block ââââââââââââââââââââââââââââââââ */
     .mission-block {
       border: 1px solid var(--border);
       border-left: 3px solid var(--accent);
@@ -261,10 +261,10 @@
     .mission-instructions li { margin-bottom: 0.4rem; }
     .mission-instructions li::marker { color: var(--accent); }
 
-    /* ── Divider ─────────────────────────────────────────────── */
+    /* ââ Divider âââââââââââââââââââââââââââââââââââââââââââââââ */
     .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
-    /* ── Wide layout grid ────────────────────────────────────── */
+    /* ââ Wide layout grid ââââââââââââââââââââââââââââââââââââââ */
     .datapad-layout { display: block; }
 
     .datapad-side {
@@ -296,7 +296,7 @@
       .datapad-side { flex-direction: column; }
     }
 
-    /* ── Turn-in instructions ────────────────────────────────── */
+    /* ââ Turn-in instructions ââââââââââââââââââââââââââââââââââ */
     .turnin-instructions {
       font-size: 0.82rem;
       line-height: 1.7;
@@ -305,7 +305,7 @@
     }
     .turnin-instructions p + p { margin-top: 0.6rem; }
 
-    /* ── Credit payout box ───────────────────────────────────── */
+    /* ââ Credit payout box âââââââââââââââââââââââââââââââââââââ */
     .credit-box {
       border: 1px solid var(--border);
       border-top: 3px solid var(--accent);
@@ -340,8 +340,8 @@
       margin-top: 0.25rem;
     }
 
-    /* ── Event logo (canvas) ─────────────────────────────────── */
-    /* The logo appears in two places at two sizes — see HTML below.
+    /* ââ Event logo (canvas) âââââââââââââââââââââââââââââââââââ */
+    /* The logo appears in two places at two sizes â see HTML below.
        Change --logo-color if you swap the page color scheme.       */
     .title-row {
       display: flex;
@@ -361,7 +361,7 @@
       opacity: 0.5;
     }
 
-    /* ── Footer strip ────────────────────────────────────────── */
+    /* ââ Footer strip ââââââââââââââââââââââââââââââââââââââââââ */
     .footer-strip {
       margin-top: 1.5rem;
       padding-top: 0.75rem;
@@ -374,7 +374,7 @@
       opacity: 0.3;
     }
 
-    /* ── Full-screen scanlines (fixed overlay) ───────────────── */
+    /* ââ Full-screen scanlines (fixed overlay) âââââââââââââââââ */
     .page-scanlines {
       position: fixed;
       inset: 0;
@@ -395,7 +395,7 @@
       94.3% { opacity: 1; }
     }
 
-    /* ── Full-screen rolling scan beam ──────────────────────── */
+    /* ââ Full-screen rolling scan beam ââââââââââââââââââââââââ */
     @keyframes scanroll {
       0%   { transform: translateY(-15vh); }
       100% { transform: translateY(110vh); }
@@ -417,7 +417,7 @@
       animation: scanroll 9s linear infinite;
     }
 
-    /* ── HUD clock (top-right, fixed) ────────────────────────── */
+    /* ââ HUD clock (top-right, fixed) ââââââââââââââââââââââââââ */
     .hud-clock {
       position: fixed;
       top: 0.75rem;
@@ -431,7 +431,7 @@
       pointer-events: none;
     }
 
-    /* ── CRT flicker ─────────────────────────────────────────── */
+    /* ââ CRT flicker âââââââââââââââââââââââââââââââââââââââââââ */
     @keyframes crt-flicker {
       0%, 100%  { opacity: 1; }
       92%       { opacity: 1; }
@@ -446,18 +446,18 @@
     /* =============================================================
        AUREBESH MODE STYLES
        ===============================================================
-       .aurebesh-accent  — ALWAYS renders in Aurebesh as decorative
+       .aurebesh-accent  â ALWAYS renders in Aurebesh as decorative
                            flavor text. Wrap any text in this class
                            to permanently display it in Aurebesh.
 
-       body.aurebesh-mode — toggled by the button. Switches all
+       body.aurebesh-mode â toggled by the button. Switches all
                            named text elements to Aurebesh font.
 
        To add a new text element to the full-page toggle, add its
        CSS selector to the body.aurebesh-mode block below.
        ============================================================= */
 
-    /* Permanently Aurebesh — decorative accent text */
+    /* Permanently Aurebesh â decorative accent text */
     .aurebesh-accent {
       font-family: var(--font-aurebesh);
       letter-spacing: 0.05em;
@@ -480,36 +480,36 @@
       letter-spacing: 0.05em;
     }
   </style>
-<meta name="logo-title" content="" data-color="#f0c060"><meta name="logo-footer" content="" data-color="#f0c060"><meta name="logo-watermark" content="" data-color="#f0c060"></head>
+<meta name="logo-title" content="" data-color="#ff5fa0"><meta name="logo-footer" content="" data-color="#ff5fa0"><meta name="logo-watermark" content="" data-color="#ff5fa0"></head>
 <body>
 
-  <!-- ── Full-screen overlays (outside card) ────────────────── -->
+  <!-- ââ Full-screen overlays (outside card) ââââââââââââââââââ -->
   <div class="page-scanlines"></div>
   <div class="page-scan-roll"></div>
 
-  <!-- ── HUD clock — top right ──────────────────────────────── -->
+  <!-- ââ HUD clock â top right ââââââââââââââââââââââââââââââââ -->
   <div class="hud-clock" id="hud-clock">00:00:00</div>
 
   <div class="datapad">
 
-    <!-- Watermark — no edits needed. Size is set in the logo script. -->
+    <!-- Watermark â no edits needed. Size is set in the logo script. -->
     <canvas id="logo-watermark"></canvas>
 
-    <!-- ── Top bar ──────────────────────────────────────────────
+    <!-- ââ Top bar ââââââââââââââââââââââââââââââââââââââââââââââ
          Left: classification tag + Aurebesh toggle button
          Right: HoloNet landing page button
 
          EDIT: Change the href on the <a> tag to your landing page.
          EDIT: Change the classify-tag text (e.g. "PRIORITY ALPHA").
          EDIT: You can rename the toggle button label if you like.
-    ─────────────────────────────────────────────────────────── -->
+    âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
     <div class="top-bar">
       <div class="top-bar-left">
         <span class="classify-tag">CLASSIFIED</span>
 
-        <!-- Aurebesh toggle — JS below handles the switching -->
+        <!-- Aurebesh toggle â JS below handles the switching -->
         <button class="aurebesh-toggle-btn" id="aurebesh-toggle" onclick="toggleAurebesh()">
-          ◫ AUREBESH
+          â« AUREBESH
         </button>
       </div>
 
@@ -518,50 +518,50 @@
       </a>
     </div>
 
-    <!-- ── Content layout (two-column on wide screens) ────────── -->
+    <!-- ââ Content layout (two-column on wide screens) ââââââââââ -->
     <div class="datapad-layout">
 
-      <!-- ── LEFT / MAIN: title + briefing ─────────────────────── -->
+      <!-- ââ LEFT / MAIN: title + briefing âââââââââââââââââââââââ -->
       <div class="datapad-main">
 
-        <!-- ── Mission Title ──────────────────────────────────────
+        <!-- ââ Mission Title ââââââââââââââââââââââââââââââââââââââ
              EDIT: Replace "MISSION TITLE HERE" with your mission name.
-        ─────────────────────────────────────────────────────────── -->
+        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
         <div class="title-row">
           <canvas id="logo-title"></canvas>
-          <h1 class="mission-title">MISSION TITLE HERE</h1>
+          <h1 class="mission-title">CANTINA CODE</h1>
         </div>
 
-        <!-- ── Mission ID line ────────────────────────────────────
+        <!-- ââ Mission ID line ââââââââââââââââââââââââââââââââââââ
              EDIT: Replace placeholders with mission code, faction, date.
-        ─────────────────────────────────────────────────────────── -->
+        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
         <p class="mission-id">MISSION ID: 04-0A-D7-45-9E-61-81 &nbsp;|&nbsp; ISSUED BY: [FACTION] &nbsp;|&nbsp; DIFFICULTY: [DATE/EVENT]&nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span></p>
 
-        <!-- ── Mission briefing block ─────────────────────────────
+        <!-- ââ Mission briefing block âââââââââââââââââââââââââââââ
              EDIT: Replace placeholder content with your mission objectives.
-        ─────────────────────────────────────────────────────────── -->
+        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
         <div class="mission-block">
           <p class="section-label">
             Mission Briefing
-            &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">◆ SECURE CHANNEL</span>
+            &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">â SECURE CHANNEL</span>
           </p>
           <div class="mission-instructions"><p>[ REPLACE THIS TEXT WITH MISSION OBJECTIVES ]</p>
 <p>You can use a simple paragraph, or a list like this:</p>
-<p>Objective one — describe the first task here</p>
-<p>Objective two — describe the second task here</p>
-<p>Objective three — add or remove items as needed</p></div>
+<p>Objective one â describe the first task here</p>
+<p>Objective two â describe the second task here</p>
+<p>Objective three â add or remove items as needed</p></div>
         </div>
 
       </div><!-- /.datapad-main -->
 
-      <!-- ── RIGHT / SIDE: payout + turn-in ────────────────────── -->
+      <!-- ââ RIGHT / SIDE: payout + turn-in ââââââââââââââââââââââ -->
       <div class="datapad-side">
 
-        <!-- ── Credit payout box ────────────────────────────────
+        <!-- ââ Credit payout box ââââââââââââââââââââââââââââââââ
              EDIT: Replace "$000" with the credit value.
              EDIT: Change "CREDITS" if you use a different currency
              name (e.g. "DATARIES", "SPICE UNITS").
-        ─────────────────────────────────────────────────────────── -->
+        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
         <div class="credit-box">
           <span class="credit-label">PAYOUT</span>
           <span class="credit-amount">$000</span>
@@ -570,9 +570,9 @@
 
         <hr class="divider">
 
-        <!-- ── Turn-in / redemption instructions ──────────────────
+        <!-- ââ Turn-in / redemption instructions ââââââââââââââââââ
              EDIT: Describe how the player redeems the card.
-        ─────────────────────────────────────────────────────────── -->
+        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
         <div class="turnin-section">
           <p class="section-label">How to Claim Your Payout</p>
           <div class="turnin-instructions"><p>[ REPLACE WITH TURN-IN INSTRUCTIONS ]</p>
@@ -584,9 +584,9 @@
 
     </div><!-- /.datapad-layout -->
 
-    <!-- ── Footer ────────────────────────────────────────────────
+    <!-- ââ Footer ââââââââââââââââââââââââââââââââââââââââââââââââ
          EDIT: Swap in your own flavor text on the left side.
-    ─────────────────────────────────────────────────────────── -->
+    âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
     <div class="footer-strip">
       <span>HOLONET SECURE CHANNEL // ENCRYPTED</span>
       <canvas id="logo-footer"></canvas>
@@ -622,17 +622,17 @@
       body.classList.toggle('aurebesh-mode');
       btn.classList.toggle('active');
       btn.textContent = body.classList.contains('aurebesh-mode')
-        ? '◫ BASIC'
-        : '◫ AUREBESH';
+        ? 'â« BASIC'
+        : 'â« AUREBESH';
     }
   </script>
   <!-- =============================================================
        EVENT LOGO SCRIPT
        Draws the lunar eclipse mark onto two canvas elements:
-         #logo-title  — beside the mission title (~32px tall)
-         #logo-footer — in the footer strip (~18px tall)
+         #logo-title  â beside the mission title (~32px tall)
+         #logo-footer â in the footer strip (~18px tall)
 
-       LOGO COLOR — EDIT THIS to match whichever --accent you chose
+       LOGO COLOR â EDIT THIS to match whichever --accent you chose
        above in the COLOR SCHEME section.
          Scoundrel/Neutral:  '#f0c060'
          Imperial:           '#00cc00'
@@ -641,9 +641,9 @@
          Mandalorian:        '#7ec8e3'
        ============================================================= -->
   <script>
-    const LOGO_COLOR = '#f0c060'; /* EDIT: match your --accent color */
+    const LOGO_COLOR = '#ff5fa0'; /* EDIT: match your --accent color */
 
-    /* ── Core drawing logic (from logo-final.html) ──────────── */
+    /* ââ Core drawing logic (from logo-final.html) ââââââââââââ */
     const VX = 130.56, VY = 106.56, VW = 152.44, VH = 130.87;
 
     function drawLogoAt(canvasId, heightPx, color) {
@@ -721,4 +721,4 @@
 
 
 
-<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#f0c060"},'logo-footer':{data:null,color:"#f0c060"},'logo-watermark':{data:null,color:"#f0c060"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
+<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#ff5fa0"},'logo-footer':{data:null,color:"#ff5fa0"},'logo-watermark':{data:null,color:"#ff5fa0"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
