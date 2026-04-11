@@ -363,7 +363,7 @@
       border: 1px solid var(--accent);
       border-radius: 4px;
       padding: 1.5rem 2rem;
-      width: 420px;
+      width: min(420px, calc(100vw - 2rem));
       display: flex; flex-direction: column; gap: 0.85rem;
     }
     #pat-box h2 {
@@ -405,7 +405,7 @@
       border: 1px solid var(--accent);
       border-radius: 4px;
       padding: 1.75rem 2rem;
-      width: 380px;
+      width: min(380px, calc(100vw - 2rem));
       display: flex; flex-direction: column; gap: 0.85rem;
     }
     #pw-box h2, #changepw-box h2 {
@@ -477,8 +477,8 @@
       border: 1px solid var(--accent);
       border-radius: 4px;
       padding: 1.25rem 1.5rem;
-      width: 480px;
-      max-height: 75vh;
+      width: min(480px, calc(100vw - 2rem));
+      max-height: 85vh;
       display: flex; flex-direction: column; gap: 0.65rem;
     }
     #browse-box h2 {
@@ -556,6 +556,81 @@
       flex-shrink: 0;
     }
     #browse-actions { display: flex; justify-content: flex-end; flex-shrink: 0; }
+
+    /* ── Topbar secondary group — transparent passthrough on desktop ── */
+    #topbar-actions { display: contents; }
+
+    /* ── Mobile tab bar — hidden on desktop ─────────────────────── */
+    #mobile-tabs { display: none; }
+
+    /* ── Mobile responsive ───────────────────────────────────────── */
+    @media (max-width: 700px) {
+      /* Single-column layout */
+      #main { grid-template-columns: 1fr; }
+      #preview-panel { display: none; }
+      #preview-panel.tab-active { display: block; }
+      #form-panel.tab-hidden { display: none; }
+
+      /* Topbar: two rows */
+      #topbar { flex-wrap: wrap; gap: 0.5rem; }
+      #topbar .logo { display: none; }
+      #topbar-filename { min-width: 0; }
+      #topbar-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        flex-basis: 100%;
+        padding-top: 0.35rem;
+        border-top: 1px solid var(--border);
+      }
+      #status-msg {
+        min-width: 0;
+        flex: 1;
+        text-align: left;
+        font-size: 0.65rem;
+      }
+
+      /* Mobile tab bar */
+      #mobile-tabs {
+        display: flex;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .mobile-tab {
+        flex: 1;
+        font-family: var(--font);
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        padding: 0.65rem 0.5rem;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--text);
+        opacity: 0.5;
+        cursor: pointer;
+        transition: color 0.15s, opacity 0.15s, border-color 0.15s;
+      }
+      .mobile-tab.active {
+        color: var(--accent);
+        opacity: 1;
+        border-bottom-color: var(--accent);
+      }
+
+      /* Touch targets */
+      .btn { padding: 0.55rem 0.9rem; font-size: 0.75rem; }
+      .color-row input[type="color"] { width: 36px; height: 30px; }
+      .browse-item { padding: 0.55rem 0.75rem; }
+      .sort-btn { padding: 0.4rem 0.75rem; font-size: 0.65rem; }
+      .mode-toggle button { padding: 0.4rem 0.75rem; }
+
+      /* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
+      .field input, .field textarea, .field select {
+        font-size: 1rem;
+        padding: 0.5rem 0.6rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -630,15 +705,23 @@
   <div id="topbar">
     <div class="logo">◈ MISSION EDITOR</div>
     <input type="text" id="topbar-filename" value="—" spellcheck="false" />
-    <div id="status-msg">LOADING...</div>
-    <input type="file" id="upload-input" accept=".html" style="display:none" onchange="openLocalFile(this)">
-    <button class="btn" onclick="document.getElementById('upload-input').click()">▲ OPEN</button>
-    <button class="btn" onclick="saveLocal()">⬇ SAVE</button>
-    <button class="btn" onclick="refreshPreview()">⟳ PREVIEW</button>
-    <button class="btn" onclick="openBrowse()">▤ BROWSE</button>
-    <button class="btn" id="changepw-btn" onclick="showChangePw()" style="display:none" title="Change collaborator password">⚿ PASSWORD</button>
-    <button class="btn" id="token-btn" onclick="openPat()" style="display:none" title="Set GitHub PAT">⚿ TOKEN</button>
+    <div id="topbar-actions">
+      <div id="status-msg">LOADING...</div>
+      <input type="file" id="upload-input" accept=".html" style="display:none" onchange="openLocalFile(this)">
+      <button class="btn" onclick="document.getElementById('upload-input').click()">▲ OPEN</button>
+      <button class="btn" onclick="saveLocal()">⬇ SAVE</button>
+      <button class="btn" onclick="refreshPreview()">⟳ PREVIEW</button>
+      <button class="btn" onclick="openBrowse()">▤ BROWSE</button>
+      <button class="btn" id="changepw-btn" onclick="showChangePw()" style="display:none" title="Change collaborator password">⚿ PASSWORD</button>
+      <button class="btn" id="token-btn" onclick="openPat()" style="display:none" title="Set GitHub PAT">⚿ TOKEN</button>
+    </div>
     <button class="btn primary" id="save-btn" onclick="saveFile()" disabled>▲ COMMIT</button>
+  </div>
+
+  <!-- ── Mobile tab bar (hidden on desktop) ────────────────────── -->
+  <div id="mobile-tabs">
+    <button class="mobile-tab active" id="tab-form" onclick="setMobileTab('form')">✏ EDIT</button>
+    <button class="mobile-tab" id="tab-preview" onclick="setMobileTab('preview')">◉ PREVIEW</button>
   </div>
 
   <!-- ── Main ─────────────────────────────────────────────────── -->
@@ -1178,6 +1261,15 @@
     document.getElementById('brief-label').textContent =
       mode === 'para' ? 'One paragraph per blank line' : 'One bullet per line';
     schedulePreview();
+  }
+
+  // ── Mobile tab toggle ────────────────────────────────────────
+  function setMobileTab(tab) {
+    document.getElementById('form-panel').classList.toggle('tab-hidden', tab !== 'form');
+    document.getElementById('preview-panel').classList.toggle('tab-active', tab === 'preview');
+    document.getElementById('tab-form').classList.toggle('active', tab === 'form');
+    document.getElementById('tab-preview').classList.toggle('active', tab === 'preview');
+    if (tab === 'preview') refreshPreview();
   }
 
   // ── Browse overlay ───────────────────────────────────────────
