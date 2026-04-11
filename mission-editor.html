@@ -105,16 +105,53 @@
       overflow: hidden;
     }
 
+    /* ── Left column wrapper ─────────────────────────────────── */
+    #left-col {
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    /* ── Left column tab bar ─────────────────────────────────── */
+    #left-tabs {
+      display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .left-tab {
+      flex: 1; padding: 0.5rem 0.75rem; font-size: 0.65rem;
+      background: none; border: none; border-bottom: 2px solid transparent;
+      color: var(--dim); cursor: pointer; font-family: inherit;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .left-tab:hover { color: var(--text); }
+    .left-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
     /* ── Left panel: form ────────────────────────────────────── */
     #form-panel {
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
+      overflow-y: auto; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.85rem; flex: 1;
     }
+    #form-panel.ltab-hidden { display: none; }
+
+    /* ── Left panel: security ────────────────────────────────── */
+    #security-panel {
+      display: none; overflow-y: auto; padding: 1rem;
+      flex-direction: column; gap: 1.1rem; flex: 1;
+    }
+    #security-panel.panel-active { display: flex; }
+    .sec-enable-row { display: flex; align-items: center; gap: 0.6rem; }
+    .sec-enable-row input[type="checkbox"] { width:1rem; height:1rem; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+    .sec-enable-row label { cursor:pointer; font-size:0.8rem; color:var(--text); letter-spacing:0.05em; user-select:none; }
+    #security-fields { display:flex; flex-direction:column; gap:1.1rem; }
+    #security-fields.sec-disabled { opacity:0.35; pointer-events:none; }
+    .sec-case-row { display:flex; align-items:center; gap:0.6rem; }
+    .sec-case-row input[type="checkbox"] { width:1rem; height:1rem; accent-color:var(--accent); cursor:pointer; }
+    .sec-case-row label { cursor:pointer; font-size:0.75rem; color:var(--text); user-select:none; }
+    .experimental-block { border-top:1px solid var(--border); padding-top:1rem; }
+    .experimental-block .section-heading { opacity:0.4; }
+    .experimental-block .sec-exp-row { display:flex; align-items:center; gap:0.6rem; opacity:0.35; margin-top:0.5rem; }
+    .experimental-block .sec-exp-row input { cursor:not-allowed; }
+    .experimental-block .sec-exp-row label { font-size:0.72rem; color:var(--dim); cursor:not-allowed; user-select:none; }
 
     .section-heading {
       font-size: 0.55rem;
@@ -392,9 +429,9 @@
     }
 
     /* ── Scrollbar ───────────────────────────────────────────── */
-    #form-panel::-webkit-scrollbar { width: 4px; }
-    #form-panel::-webkit-scrollbar-track { background: transparent; }
-    #form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    #form-panel::-webkit-scrollbar, #security-panel::-webkit-scrollbar { width: 4px; }
+    #form-panel::-webkit-scrollbar-track, #security-panel::-webkit-scrollbar-track { background: transparent; }
+    #form-panel::-webkit-scrollbar-thumb, #security-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     /* ── PAT overlay ─────────────────────────────────────────── */
     #pat-overlay {
@@ -644,9 +681,13 @@
     @media (max-width: 700px) {
       /* Single-column layout */
       #main { grid-template-columns: 1fr; }
+      #left-col { border-right: none; }
+      #left-tabs { display: none; }
       #preview-panel { display: none; }
       #preview-panel.tab-active { display: block; }
       #form-panel.tab-hidden { display: none; }
+      #security-panel.panel-active { display: none; }
+      #security-panel.tab-active { display: flex; }
 
       /* Topbar: two rows */
       #topbar { flex-wrap: wrap; gap: 0.5rem; }
@@ -812,14 +853,23 @@
   <!-- ── Mobile tab bar (hidden on desktop) ────────────────────── -->
   <div id="mobile-tabs">
     <button class="mobile-tab active" id="tab-form" onclick="setMobileTab('form')">✏ EDIT</button>
+    <button class="mobile-tab" id="tab-security" onclick="setMobileTab('security')">⚿ CODE</button>
     <button class="mobile-tab" id="tab-preview" onclick="setMobileTab('preview')">◉ PREVIEW</button>
   </div>
 
   <!-- ── Main ─────────────────────────────────────────────────── -->
   <div id="main">
 
-    <!-- LEFT: form -->
-    <div id="form-panel">
+    <!-- LEFT: form + security -->
+    <div id="left-col">
+
+      <!-- Desktop tab bar (hidden on mobile) -->
+      <div id="left-tabs">
+        <button class="left-tab active" id="ltab-content" onclick="setLeftTab('content')">✏ CONTENT</button>
+        <button class="left-tab" id="ltab-security" onclick="setLeftTab('security')">⚿ SECURITY</button>
+      </div>
+
+      <div id="form-panel">
 
       <!-- Page status -->
       <div>
@@ -973,7 +1023,48 @@
         </div>
       </div>
 
-    </div><!-- /#form-panel -->
+      </div><!-- /#form-panel -->
+
+      <!-- ── Security panel ──────────────────────────────────── -->
+      <div id="security-panel">
+
+        <div class="sec-enable-row">
+          <input type="checkbox" id="sec-enabled">
+          <label for="sec-enabled">ENABLE ACCESS CODE GATE</label>
+        </div>
+
+        <div id="security-fields" class="sec-disabled">
+          <div>
+            <div class="section-heading">Access Codes</div>
+            <div class="field">
+              <label>One code per line — player must enter one of these</label>
+              <textarea id="sec-codes" rows="4" placeholder="REDSTAR&#10;AUREK-7&#10;ECHO-BASE"></textarea>
+            </div>
+          </div>
+          <div class="sec-case-row">
+            <input type="checkbox" id="sec-case-sensitive">
+            <label for="sec-case-sensitive">Case sensitive</label>
+          </div>
+          <div>
+            <div class="section-heading">Success Message</div>
+            <div class="field">
+              <label>Shown when the correct code is entered</label>
+              <textarea id="sec-success-msg" rows="5" placeholder="Report to Handler Vex at Bay 7. Show this screen. Payout: 500 credits."></textarea>
+            </div>
+          </div>
+        </div><!-- /#security-fields -->
+
+        <div class="experimental-block">
+          <div class="section-heading">⚗ Experimental — coming soon</div>
+          <div class="sec-exp-row"><input type="checkbox" disabled><label>Multiple code tiers</label></div>
+          <div class="sec-exp-row"><input type="checkbox" disabled><label>Faction-specific codes</label></div>
+          <div class="sec-exp-row"><input type="checkbox" disabled><label>Agent ID pairing</label></div>
+          <div class="sec-exp-row"><input type="checkbox" disabled><label>Countdown timer unlock</label></div>
+        </div>
+
+      </div><!-- /#security-panel -->
+
+    </div><!-- /#left-col -->
 
     <!-- RIGHT: preview -->
     <div id="preview-panel">
@@ -1311,6 +1402,14 @@
     document.getElementById('save-btn').disabled = false;
     loadFile();
     document.getElementById('form-panel').addEventListener('input', () => { markDirty(); schedulePreview(); });
+    document.getElementById('sec-enabled').addEventListener('change', () => {
+      document.getElementById('security-fields').classList.toggle('sec-disabled', !document.getElementById('sec-enabled').checked);
+      markDirty(); schedulePreview();
+    });
+    ['sec-codes', 'sec-success-msg'].forEach(id =>
+      document.getElementById(id).addEventListener('input', () => { markDirty(); schedulePreview(); })
+    );
+    document.getElementById('sec-case-sensitive').addEventListener('change', () => { markDirty(); schedulePreview(); });
   }
 
   // ── Init ─────────────────────────────────────────────────────
@@ -1419,10 +1518,31 @@
   // ── Mobile tab toggle ────────────────────────────────────────
   function setMobileTab(tab) {
     document.getElementById('form-panel').classList.toggle('tab-hidden', tab !== 'form');
+    document.getElementById('security-panel').classList.toggle('tab-active', tab === 'security');
     document.getElementById('preview-panel').classList.toggle('tab-active', tab === 'preview');
     document.getElementById('tab-form').classList.toggle('active', tab === 'form');
+    document.getElementById('tab-security').classList.toggle('active', tab === 'security');
     document.getElementById('tab-preview').classList.toggle('active', tab === 'preview');
     if (tab === 'preview') refreshPreview();
+  }
+
+  // ── Left column tab switching (desktop) ──────────────────
+  function setLeftTab(tab) {
+    const showSec = tab === 'security';
+    document.getElementById('form-panel').classList.toggle('ltab-hidden', showSec);
+    document.getElementById('security-panel').classList.toggle('panel-active', showSec);
+    document.getElementById('ltab-content').classList.toggle('active', !showSec);
+    document.getElementById('ltab-security').classList.toggle('active', showSec);
+  }
+
+  // ── Security config helpers ───────────────────────────────
+  function getSecurityConfig() {
+    const enabled = document.getElementById('sec-enabled').checked;
+    const codes = (document.getElementById('sec-codes').value || '')
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    const caseSensitive = document.getElementById('sec-case-sensitive').checked;
+    const successMsg = document.getElementById('sec-success-msg').value;
+    return { enabled, codes, caseSensitive, successMsg };
   }
 
   // ── Browse overlay ───────────────────────────────────────────
@@ -1746,6 +1866,17 @@
       if (color && /^#[0-9a-fA-F]{6}$/.test(color)) setLogoColor(slot, color);
     });
 
+    // Security config
+    try {
+      const secEl = doc.getElementById('mission-security');
+      const sec = secEl ? JSON.parse(secEl.textContent) : {};
+      document.getElementById('sec-enabled').checked = !!sec.enabled;
+      document.getElementById('sec-codes').value = (sec.codes || []).join('\n');
+      document.getElementById('sec-case-sensitive').checked = !!sec.caseSensitive;
+      document.getElementById('sec-success-msg').value = sec.successMsg || '';
+      document.getElementById('security-fields').classList.toggle('sec-disabled', !sec.enabled);
+    } catch(_) {}
+
     // Read all 6 CSS color vars from the file and populate inputs
     const getVar = name => { const m = html.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{3,6})')); return m ? m[1] : null; };
     const bg     = getVar('--bg');
@@ -1887,6 +2018,17 @@
     // When data is set: tint image to per-slot color via source-in compositing
     scriptEl.textContent = `(function(){var _L={${logoMap}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();`;
     doc.body.appendChild(scriptEl);
+
+    // ── Security config ──────────────────────────────────────────
+    const secCfg = getSecurityConfig();
+    let secScript = doc.getElementById('mission-security');
+    if (!secScript) {
+      secScript = doc.createElement('script');
+      secScript.id = 'mission-security';
+      secScript.type = 'application/json';
+      doc.head.appendChild(secScript);
+    }
+    secScript.textContent = JSON.stringify(secCfg);
 
     return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
   }
