@@ -524,7 +524,8 @@
       letter-spacing: 0.05em;
     }
   </style>
-<meta name="logo-title" content="" data-color="#8844ff"><meta name="logo-footer" content="" data-color="#8844ff"><meta name="logo-watermark" content="" data-color="#8844ff"><meta name="mission-status" content="in-progress"></head>
+<meta name="logo-title" content="" data-color="#8844ff"><meta name="logo-footer" content="" data-color="#8844ff"><meta name="logo-watermark" content="" data-color="#8844ff"><meta name="mission-status" content="in-progress">  <script id="mission-security" type="application/json">{"enabled":false}</script>
+</head>
 <body>
 
   <!-- ââ Full-screen overlays (outside card) ââââââââââââââââââ -->
@@ -627,6 +628,21 @@
 <p>Example: Present this card to the handler at the                marked contact point to receive your credits.</p>
 <p>Example: Scan the QR code at the payout terminal                and confirm with your mission code.</p></div>
         </div>
+
+          <!-- ── Access code gate ──────────────────────────── -->
+          <div class="security-gate" id="security-gate" style="display:none">
+            <p class="section-label">ACCESS CODE REQUIRED</p>
+            <div class="security-input-row">
+              <input type="text" id="security-code-input" placeholder="ENTER CODE"
+                     autocomplete="off" spellcheck="false" autocapitalize="characters">
+              <button onclick="submitSecurityCode()">▶ SUBMIT</button>
+            </div>
+            <div class="security-error" id="security-error">✗ INVALID CODE</div>
+          </div>
+          <div class="security-success-reveal" id="security-success-reveal">
+            <div class="access-granted">✓ ACCESS GRANTED</div>
+            <div class="security-success-msg" id="security-success-msg"></div>
+          </div>
 
       </div><!-- /.datapad-side -->
 
