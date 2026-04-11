@@ -1397,9 +1397,9 @@
           .then(data => {
             if (!data) return;
             const html = atob(data.content.replace(/\n/g, ''));
-            const tm = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const mm = html.match(/<[^>]*class="mission-title"[^>]*>([^<]+)/i);
             const dm = html.match(/DIFFICULTY:\s*([^<&|]+)/i);
-            entry.title      = tm ? tm[1].trim() : entry.name;
+            entry.title      = mm ? mm[1].trim() : entry.name;
             entry.difficulty = dm ? dm[1].trim() : null;
             browseLoaded++;
             renderBrowseList();
