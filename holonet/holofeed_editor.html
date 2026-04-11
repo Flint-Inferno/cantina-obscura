@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HoloFeed Editor — Datanet Config Terminal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg: #04080a;
+  --panel: #070e12;
+  --panel2: #0b141a;
+  --border: #112230;
+  --border2: #1a3448;
+  --glow: #00ccff;
+  --glow-dim: #1a6a8a;
+  --amber: #f0c040;
+  --amber-dim: #8a6a10;
+  --danger: #ff4444;
+  --success: #44ff88;
+  --mono: 'Share Tech Mono', monospace;
+  --title: 'Orbitron', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--glow);
+  font-family: var(--mono);
+  min-height: 100vh;
+  padding: 0;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px);
+  pointer-events: none;
+  z-index: 9000;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  background: var(--panel2);
+  border-bottom: 2px solid var(--border2);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+#topbar-left { display: flex; flex-direction: column; gap: 2px; }
+
+#topbar-title {
+  font-family: var(--title);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--amber);
+  text-shadow: 0 0 12px rgba(240,192,64,0.4);
+}
+
+#topbar-sub {
+  font-size: 10px;
+  color: var(--glow-dim);
+  letter-spacing: 2px;
+}
+
+#topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.top-btn {
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 7px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid;
+}
+
+.btn-load {
+  background: none;
+  border-color: var(--glow-dim);
+  color: var(--glow-dim);
+}
+.btn-load:hover { border-color: var(--glow); color: var(--glow); box-shadow: 0 0 8px rgba(0,204,255,0.2); }
+
+.btn-save {
+  background: rgba(0,204,255,0.08);
+  border-color: var(--glow);
+  color: var(--glow);
+}
+.btn-save:hover { background: rgba(0,204,255,0.18); box-shadow: 0 0 12px rgba(0,204,255,0.3); }
+.btn-save:disabled { opacity: 0.3; cursor: not-allowed; }
+
+#file-input { display: none; }
+
+/* ── LOAD ZONE ── */
+#load-zone {
+  margin: 40px auto;
+  max-width: 600px;
+  text-align: center;
+  padding: 20px;
+}
+
+#drop-area {
+  border: 2px dashed var(--border2);
+  border-radius: 4px;
+  padding: 50px 30px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--panel);
+}
+#drop-area:hover, #drop-area.drag-over {
+  border-color: var(--glow);
+  background: rgba(0,204,255,0.05);
+  box-shadow: 0 0 20px rgba(0,204,255,0.1);
+}
+#drop-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.6; }
+#drop-title {
+  font-family: var(--title);
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+#drop-sub { font-size: 11px; color: var(--glow-dim); letter-spacing: 1px; }
+
+/* ── STATUS BAR ── */
+#status-bar {
+  background: var(--panel2);
+  border-top: 1px solid var(--border);
+  padding: 6px 20px;
+  font-size: 10px;
+  color: var(--glow-dim);
+  letter-spacing: 1px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+#status-msg { flex: 1; }
+#status-msg.ok { color: var(--success); }
+#status-msg.err { color: var(--danger); }
+
+/* ── EDITOR LAYOUT ── */
+#editor-wrap {
+  display: none;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  gap: 16px;
+}
+#editor-wrap.visible { display: block; }
+
+/* ── SECTION TABS ── */
+#section-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border2);
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.sec-tab {
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--glow-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+}
+.sec-tab:hover { color: var(--glow); }
+.sec-tab.active { color: var(--glow); border-bottom-color: var(--glow); }
+
+.sec-pane { display: none; }
+.sec-pane.active { display: block; }
+
+/* ── SECTION HEADER ── */
+.sec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.sec-title {
+  font-family: var(--title);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--amber);
+}
+.sec-count {
+  font-size: 10px;
+  color: var(--glow-dim);
+}
+
+/* ── CARDS ── */
+.card-list { display: flex; flex-direction: column; gap: 8px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--border2); }
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.card-num {
+  font-size: 9px;
+  color: var(--glow-dim);
+  min-width: 24px;
+  padding-top: 3px;
+  flex-shrink: 0;
+}
+
+.card-fields { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+
+.card-del {
+  background: none;
+  border: 1px solid #3a1010;
+  color: #884444;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.card-del:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ── INPUTS ── */
+input[type="text"], input[type="number"], textarea, select {
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  color: var(--glow);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 2px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--glow);
+  box-shadow: 0 0 6px rgba(0,204,255,0.15);
+}
+textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+select { cursor: pointer; }
+
+.field-label {
+  font-size: 9px;
+  color: var(--amber-dim);
+  letter-spacing: 1.5px;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.field-row-3 {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+/* ── ADD BUTTON ── */
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: 1px dashed var(--border2);
+  color: var(--glow-dim);
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+.add-btn:hover {
+  border-color: var(--glow);
+  color: var(--glow);
+  background: rgba(0,204,255,0.04);
+}
+
+/* ── NAME CHIPS ── */
+.chip-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  min-height: 50px;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--glow);
+  cursor: default;
+}
+.chip-del {
+  background: none;
+  border: none;
+  color: #664444;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 0.15s;
+}
+.chip-del:hover { color: var(--danger); }
+
+.chip-input-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.chip-input-row input { flex: 1; }
+.chip-add-btn {
+  background: rgba(0,204,255,0.08);
+  border: 1px solid var(--glow);
+  color: var(--glow);
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 11px;
+  padding: 5px 14px;
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.chip-add-btn:hover { background: rgba(0,204,255,0.18); }
+
+/* ── TIMING SECTION ── */
+.timing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.timing-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 12px;
+}
+.timing-title {
+  font-size: 9px;
+  color: var(--amber);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.timing-desc {
+  font-size: 9px;
+  color: var(--glow-dim);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.timing-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.timing-input-row input {
+  width: 80px;
+  flex-shrink: 0;
+}
+.timing-unit {
+  font-size: 10px;
+  color: var(--glow-dim);
+}
+
+/* ── HINT TEXT ── */
+.hint {
+  font-size: 9px;
+  color: var(--glow-dim);
+  line-height: 1.6;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.3);
+  border-left: 2px solid var(--border2);
+  margin-bottom: 12px;
+  border-radius: 0 2px 2px 0;
+}
+.hint strong { color: var(--amber); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel2);
+  border: 1px solid var(--glow);
+  color: var(--glow);
+  font-family: var(--mono);
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 8px 20px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 0 20px rgba(0,204,255,0.2);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 20px rgba(255,68,68,0.2); }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="topbar-left">
+    <div id="topbar-title">HoloFeed Editor</div>
+    <div id="topbar-sub">DATANET CONFIGURATION TERMINAL — v1.0</div>
+  </div>
+  <div id="topbar-actions">
+    <button class="top-btn btn-load" onclick="document.getElementById('file-input').click()">⬡ LOAD HOLOFEED.HTML</button>
+    <input type="file" id="file-input" accept=".html" onchange="loadFile(this)">
+    <button class="top-btn btn-save" id="save-btn" onclick="saveFile()" disabled>▼ EXPORT MODIFIED FILE</button>
+  </div>
+</div>
+
+<div id="status-bar">
+  <span id="status-msg">No file loaded. Click LOAD HOLOFEED.HTML to begin.</span>
+  <span id="status-file"></span>
+</div>
+
+<!-- Load zone shown before file is loaded -->
+<div id="load-zone">
+  <div id="drop-area" onclick="document.getElementById('file-input').click()"
+       ondragover="event.preventDefault();this.classList.add('drag-over')"
+       ondragleave="this.classList.remove('drag-over')"
+       ondrop="handleDrop(event)">
+    <div id="drop-icon">⬡</div>
+    <div id="drop-title">LOAD YOUR HOLOFEED.HTML</div>
+    <div id="drop-sub">Click to browse, or drag and drop the file here.<br><br>
+    The editor will parse the file and let you<br>edit all content without touching code.</div>
+  </div>
+</div>
+
+<!-- Main editor (hidden until file loaded) -->
+<div id="editor-wrap">
+
+  <div id="section-nav">
+    <button class="sec-tab active" onclick="showSection('news')">📰 HEADLINES</button>
+    <button class="sec-tab" onclick="showSection('ads')">📢 ADS</button>
+    <button class="sec-tab" onclick="showSection('racers')">🐎 RACER NAMES</button>
+    <button class="sec-tab" onclick="showSection('tournament')">♟ TOURN. NAMES</button>
+    <button class="sec-tab" onclick="showSection('stocks')">📈 STOCKS</button>
+    <button class="sec-tab" onclick="showSection('timing')">⏱ TIMING</button>
+  </div>
+
+  <!-- HEADLINES -->
+  <div class="sec-pane active" id="sec-news">
+    <div class="sec-header">
+      <span class="sec-title">HOLONEWS HEADLINES</span>
+      <span class="sec-count" id="news-count"></span>
+    </div>
+    <div class="hint">
+      <strong>Click a headline to expand/edit it.</strong> Each story has a headline, a body paragraph, and a tag.<br>
+      Tag options: <strong>standard</strong> (plain badge) or <strong>breaking</strong> (red BREAKING badge).<br>
+      Stories cycle automatically — order here doesn't matter, the feed shuffles them.
+    </div>
+    <div class="card-list" id="news-list"></div>
+    <button class="add-btn" onclick="addHeadline()">+ ADD NEW HEADLINE</button>
+  </div>
+
+  <!-- ADS -->
+  <div class="sec-pane" id="sec-ads">
+    <div class="sec-header">
+      <span class="sec-title">SPONSORED ADS</span>
+      <span class="sec-count" id="ads-count"></span>
+    </div>
+    <div class="hint">
+      Ads appear roughly <strong>once every 3 headlines</strong> in the feed, marked with an amber SPONSORED badge.<br>
+      The <strong>Cantina Obscura</strong> ad contains the free-drink easter egg — keep it if you want that to work.
+    </div>
+    <div class="card-list" id="ads-list"></div>
+    <button class="add-btn" onclick="addAd()">+ ADD NEW AD</button>
+  </div>
+
+  <!-- RACER NAMES -->
+  <div class="sec-pane" id="sec-racers">
+    <div class="sec-header">
+      <span class="sec-title">FATHIER RACER NAME POOL</span>
+      <span class="sec-count" id="racers-count"></span>
+    </div>
+    <div class="hint">
+      Each race picks <strong>6 names at random</strong> from this pool.<br>
+      You need <strong>at least 6 names</strong>. More names = more variety between races.<br>
+      These should feel like Star Wars creature/racing names.
+    </div>
+    <div class="chip-area" id="racers-chips"></div>
+    <div class="chip-input-row">
+      <input type="text" id="racer-new-input" placeholder="New racer name..." onkeydown="if(event.key==='Enter')addChip('racers')">
+      <button class="chip-add-btn" onclick="addChip('racers')">+ ADD</button>
+    </div>
+  </div>
+
+  <!-- TOURNAMENT NAMES -->
+  <div class="sec-pane" id="sec-tournament">
+    <div class="sec-header">
+      <span class="sec-title">SPEED HOLOCHESS PLAYER POOL</span>
+      <span class="sec-count" id="tourn-count"></span>
+    </div>
+    <div class="hint">
+      16 names are picked each tournament. The previous winner always carries over with a ★.<br>
+      You need <strong>at least 17 names</strong> so there's always someone new to replace the champion.<br>
+      Names should feel like alien Star Wars competitor names.
+    </div>
+    <div class="chip-area" id="tourn-chips"></div>
+    <div class="chip-input-row">
+      <input type="text" id="tourn-new-input" placeholder="New player name..." onkeydown="if(event.key==='Enter')addChip('tourn')">
+      <button class="chip-add-btn" onclick="addChip('tourn')">+ ADD</button>
+    </div>
+  </div>
+
+  <!-- STOCKS -->
+  <div class="sec-pane" id="sec-stocks">
+    <div class="sec-header">
+      <span class="sec-title">EXCHANGE LISTINGS</span>
+      <span class="sec-count" id="stocks-count"></span>
+    </div>
+    <div class="hint">
+      Each stock shows a live scrolling line graph on the Exchange tab.<br>
+      <strong>Symbol</strong>: short all-caps ticker (e.g. KDY). &nbsp;
+      <strong>Base price</strong>: starting credit value. &nbsp;
+      <strong>Volatility</strong>: price swing per tick — 0.01 = stable, 0.05 = very jumpy.
+    </div>
+    <div class="card-list" id="stocks-list"></div>
+    <button class="add-btn" onclick="addStock()">+ ADD NEW STOCK</button>
+  </div>
+
+  <!-- TIMING -->
+  <div class="sec-pane" id="sec-timing">
+    <div class="sec-header">
+      <span class="sec-title">TIMING & SPEED SETTINGS</span>
+    </div>
+    <div class="hint">
+      These control how fast things happen. All values are in <strong>seconds</strong> unless noted.
+    </div>
+    <div class="timing-grid" id="timing-grid"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────────────────
+let originalHtml = '';
+let fileName = 'holofeed_edited.html';
+
+let data = {
+  headlines: [],   // [{h, b, tag}]
+  ads: [],         // [{h, b}]
+  racerNames: [],  // [string]
+  tournNames: [],  // [string]
+  stocks: [],      // [{name, sym, base, vol}]
+  timing: {}       // {key: value}
+};
+
+// ── FILE LOADING ─────────────────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-area').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) readFile(f);
+}
+
+function loadFile(input) {
+  if (input.files[0]) readFile(input.files[0]);
+}
+
+function readFile(file) {
+  fileName = file.name.replace('.html', '_edited.html');
+  const reader = new FileReader();
+  reader.onload = e => {
+    originalHtml = e.target.result;
+    if (!parseHtml(originalHtml)) return;
+    document.getElementById('load-zone').style.display = 'none';
+    const ew = document.getElementById('editor-wrap');
+    ew.classList.add('visible');
+    document.getElementById('save-btn').disabled = false;
+    setStatus('Loaded: ' + file.name + ' — ' + data.headlines.length + ' headlines, ' + data.ads.length + ' ads', 'ok');
+    document.getElementById('status-file').textContent = file.name;
+    renderAll();
+  };
+  reader.readAsText(file);
+}
+
+// ── PARSING ───────────────────────────────────────────────────────────────────
+function extractArray(html, varName) {
+  // Match:  const VARNAME = [   ...content...   ];
+  const re = new RegExp('const\\s+' + varName + '\\s*=\\s*\\[([\\s\\S]*?)\\];', 'm');
+  const m = html.match(re);
+  return m ? m[1] : null;
+}
+
+function parseObjectArray(raw) {
+  // Parse array of JS objects like [{h:"...", b:"...", tag:'...'}]
+  // Strategy: find each { ... } block and eval it safely
+  const items = [];
+  let depth = 0, start = -1;
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] === '{') { if (depth === 0) start = i; depth++; }
+    else if (raw[i] === '}') {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        try {
+          // Use Function constructor to safely eval the object literal
+          const obj = Function('"use strict"; return (' + raw.slice(start, i+1) + ')')();
+          items.push(obj);
+        } catch(e) { /* skip malformed */ }
+        start = -1;
+      }
+    }
+  }
+  return items;
+}
+
+function parseStringArray(raw) {
+  // Pull out quoted strings from a JS array
+  const items = [];
+  const re = /['"]([^'"]+)['"]/g;
+  let m;
+  while ((m = re.exec(raw)) !== null) items.push(m[1]);
+  return items;
+}
+
+function parseTimingValue(html, varName) {
+  // Match numeric literals: const VARNAME = 123 or const VARNAME = 123,
+  const re = new RegExp('const\\s+' + varName + '\\s*=\\s*([\\d.]+)');
+  const m = html.match(re);
+  return m ? parseFloat(m[1]) : null;
+}
+
+function parseLapTimes(html) {
+  // BS_MIN = (2*Math.PI)/75  -> 75 is the slow lap seconds
+  // BS_MAX = (2*Math.PI)/45  -> 45 is the fast lap seconds
+  const re = /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/(\d+)\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/(\d+)/;
+  const m = html.match(re);
+  return m ? { slowLap: parseInt(m[1]), fastLap: parseInt(m[2]) } : { slowLap: 75, fastLap: 45 };
+}
+
+function parseHtml(html) {
+  try {
+    const hRaw = extractArray(html, 'HEADLINES');
+    const aRaw = extractArray(html, 'ADS');
+    const rRaw = extractArray(html, 'RACER_NAMES');
+    const tRaw = extractArray(html, 'TOURN_NAMES');
+    const sRaw = extractArray(html, 'STOCKS');
+
+    if (!hRaw || !aRaw || !rRaw || !tRaw || !sRaw) {
+      setStatus('ERROR: Could not find all expected arrays. Is this the right holofeed.html?', 'err');
+      toast('Parse error — wrong file?', true);
+      return false;
+    }
+
+    data.headlines = parseObjectArray(hRaw);
+    data.ads = parseObjectArray(aRaw);
+    data.racerNames = parseStringArray(rRaw);
+    data.tournNames = parseStringArray(tRaw);
+    data.stocks = parseObjectArray(sRaw);
+
+    const laps = parseLapTimes(html);
+    data.timing = {
+      slowLap: laps.slowLap,
+      fastLap: laps.fastLap,
+      raceFlash: parseTimingValue(html, 'FLASH') || 10,
+      raceCountdown: parseTimingValue(html, 'COUNTDOWN') || 20,
+      roundDur: parseTimingValue(html, 'ROUND_DUR') || 240,
+      flashDur: parseTimingValue(html, 'FLASH_DUR') || 240,
+      tournCycle: parseTimingValue(html, 'TOURN_CYCLE') || 1200,
+    };
+
+    return true;
+  } catch(e) {
+    setStatus('Parse error: ' + e.message, 'err');
+    return false;
+  }
+}
+
+// ── SERIALIZATION ─────────────────────────────────────────────────────────────
+function serializeObj(obj) {
+  // Produce JS object literal string from plain object
+  const parts = Object.entries(obj).map(([k,v]) => {
+    if (typeof v === 'string') return '    ' + k + ':"' + v.replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
+    return '    ' + k + ':' + v;
+  });
+  return '  {\n' + parts.join(',\n') + '\n  }';
+}
+
+function serializeArray(arr) {
+  return '[\n' + arr.map(serializeObj).join(',\n') + '\n]';
+}
+
+function serializeStringArray(arr) {
+  return '[\n' + arr.map(s => '  "' + s.replace(/"/g,'\\"') + '"').join(',\n') + '\n]';
+}
+
+function replaceArray(html, varName, newContent) {
+  const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)\\[[\\s\\S]*?\\];', 'm');
+  return html.replace(re, '$1' + newContent + ';');
+}
+
+function replaceTimingConst(html, varName, value) {
+  const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)[\\d.]+');
+  return html.replace(re, '$1' + value);
+}
+
+function replaceLapTimes(html, slowLap, fastLap) {
+  return html.replace(
+    /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/\d+\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/\d+/,
+    'const BS_MIN = (2*Math.PI)/' + slowLap + ', BS_MAX = (2*Math.PI)/' + fastLap
+  );
+}
+
+function buildModifiedHtml() {
+  let html = originalHtml;
+  html = replaceArray(html, 'HEADLINES', serializeArray(data.headlines));
+  html = replaceArray(html, 'ADS', serializeArray(data.ads));
+  html = replaceArray(html, 'RACER_NAMES', serializeStringArray(data.racerNames));
+  html = replaceArray(html, 'TOURN_NAMES', serializeStringArray(data.tournNames));
+  html = replaceArray(html, 'STOCKS', serializeArray(data.stocks));
+  html = replaceLapTimes(html, data.timing.slowLap, data.timing.fastLap);
+
+  // Timing — handle FLASH and COUNTDOWN which are inline in a function body
+  // They appear as: const FLASH = 10, COUNTDOWN = 20;
+  html = html.replace(
+    /const\s+FLASH\s*=\s*\d+\s*,\s*COUNTDOWN\s*=\s*\d+/,
+    'const FLASH = ' + data.timing.raceFlash + ', COUNTDOWN = ' + data.timing.raceCountdown
+  );
+  html = replaceTimingConst(html, 'ROUND_DUR', data.timing.roundDur);
+  html = replaceTimingConst(html, 'FLASH_DUR', data.timing.flashDur);
+  html = replaceTimingConst(html, 'TOURN_CYCLE', data.timing.tournCycle);
+  return html;
+}
+
+function saveFile() {
+  try {
+    const modified = buildModifiedHtml();
+    const blob = new Blob([modified], {type: 'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    a.click();
+    toast('File exported: ' + fileName);
+    setStatus('Exported ' + fileName, 'ok');
+  } catch(e) {
+    toast('Export error: ' + e.message, true);
+  }
+}
+
+// ── RENDERING ─────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderHeadlines();
+  renderAds();
+  renderChips('racers');
+  renderChips('tourn');
+  renderStocks();
+  renderTiming();
+}
+
+// HEADLINES
+function renderHeadlines() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = '';
+  document.getElementById('news-count').textContent = data.headlines.length + ' stories';
+  data.headlines.forEach((h, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-num">#${i+1}</span>
+        <div class="card-fields">
+          <div>
+            <span class="field-label">HEADLINE</span>
+            <input type="text" value="${esc(h.h)}" oninput="data.headlines[${i}].h=this.value">
+          </div>
+          <div>
+            <span class="field-label">BODY TEXT</span>
+            <textarea oninput="data.headlines[${i}].b=this.value">${esc(h.b)}</textarea>
+          </div>
+          <div>
+            <span class="field-label">TAG</span>
+            <select onchange="data.headlines[${i}].tag=this.value">
+              <option value="standard" ${h.tag==='standard'?'selected':''}>standard — plain DATANET badge</option>
+              <option value="breaking" ${h.tag==='breaking'?'selected':''}>breaking — red BREAKING badge</option>
+            </select>
+          </div>
+        </div>
+        <button class="card-del" onclick="removeItem('headlines',${i})">✕ DEL</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function addHeadline() {
+  data.headlines.push({h:'New headline text here', b:'Body paragraph text here.', tag:'standard'});
+  renderHeadlines();
+  // Scroll to bottom
+  setTimeout(() => document.getElementById('news-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+// ADS
+function renderAds() {
+  const list = document.getElementById('ads-list');
+  list.innerHTML = '';
+  document.getElementById('ads-count').textContent = data.ads.length + ' ads';
+  data.ads.forEach((ad, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-num">#${i+1}</span>
+        <div class="card-fields">
+          <div>
+            <span class="field-label">AD HEADLINE / BUSINESS NAME</span>
+            <input type="text" value="${esc(ad.h)}" oninput="data.ads[${i}].h=this.value">
+          </div>
+          <div>
+            <span class="field-label">AD COPY</span>
+            <textarea oninput="data.ads[${i}].b=this.value">${esc(ad.b)}</textarea>
+          </div>
+        </div>
+        <button class="card-del" onclick="removeItem('ads',${i})">✕ DEL</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function addAd() {
+  data.ads.push({h:'NEW BUSINESS — TAGLINE HERE', b:'Ad copy text here.', tag:'ad'});
+  renderAds();
+  setTimeout(() => document.getElementById('ads-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+// CHIPS (racers + tournament)
+function renderChips(which) {
+  const arr = which === 'racers' ? data.racerNames : data.tournNames;
+  const container = document.getElementById(which + '-chips');
+  container.innerHTML = '';
+  arr.forEach((name, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `${esc(name)} <button class="chip-del" onclick="removeChip('${which}',${i})">✕</button>`;
+    container.appendChild(chip);
+  });
+  const countId = which === 'racers' ? 'racers-count' : 'tourn-count';
+  document.getElementById(countId).textContent = arr.length + ' names' + (which === 'racers' ? ' (min 6)' : ' (min 17)');
+}
+
+function addChip(which) {
+  const inputId = which === 'racers' ? 'racer-new-input' : 'tourn-new-input';
+  const input = document.getElementById(inputId);
+  const name = input.value.trim();
+  if (!name) return;
+  if (which === 'racers') data.racerNames.push(name);
+  else data.tournNames.push(name);
+  input.value = '';
+  renderChips(which);
+}
+
+function removeChip(which, i) {
+  if (which === 'racers') data.racerNames.splice(i, 1);
+  else data.tournNames.splice(i, 1);
+  renderChips(which);
+}
+
+// STOCKS
+function renderStocks() {
+  const list = document.getElementById('stocks-list');
+  list.innerHTML = '';
+  document.getElementById('stocks-count').textContent = data.stocks.length + ' listings';
+  data.stocks.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-num">#${i+1}</span>
+        <div class="card-fields">
+          <div class="field-row-3">
+            <div>
+              <span class="field-label">COMPANY NAME</span>
+              <input type="text" value="${esc(s.name)}" oninput="data.stocks[${i}].name=this.value">
+            </div>
+            <div>
+              <span class="field-label">SYMBOL</span>
+              <input type="text" value="${esc(s.sym)}" oninput="data.stocks[${i}].sym=this.value" style="text-transform:uppercase">
+            </div>
+            <div>
+              <span class="field-label">BASE PRICE (cr)</span>
+              <input type="number" value="${s.base}" min="1" oninput="data.stocks[${i}].base=parseFloat(this.value)||100">
+            </div>
+            <div>
+              <span class="field-label">VOLATILITY</span>
+              <input type="number" value="${s.vol}" min="0.001" max="0.2" step="0.001" oninput="data.stocks[${i}].vol=parseFloat(this.value)||0.02">
+            </div>
+          </div>
+        </div>
+        <button class="card-del" onclick="removeItem('stocks',${i})">✕ DEL</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function addStock() {
+  data.stocks.push({name:'New Corporation', sym:'NEW', base:500, vol:0.02});
+  renderStocks();
+  setTimeout(() => document.getElementById('stocks-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+// TIMING
+const TIMING_CONFIG = [
+  { key:'slowLap',       label:'MAX LAP TIME (slowest)',  desc:'Slowest a racer\'s lap can be, in seconds.',     unit:'seconds', min:10, max:300 },
+  { key:'fastLap',       label:'MIN LAP TIME (fastest)',  desc:'Fastest a racer\'s lap can be, in seconds. Must be less than Max.',   unit:'seconds', min:5, max:290 },
+  { key:'raceFlash',     label:'WINNER FLASH DURATION',   desc:'How long the winner\'s name flashes after winning.',   unit:'seconds', min:1, max:60 },
+  { key:'raceCountdown', label:'PRE-RACE COUNTDOWN',      desc:'Countdown in seconds before a new race starts.',   unit:'seconds', min:1, max:120 },
+  { key:'roundDur',      label:'HOLOCHESS ROUND LENGTH',  desc:'How long each tournament round lasts.',            unit:'seconds', min:30, max:1800 },
+  { key:'flashDur',      label:'CHAMPION FLASH DURATION', desc:'How long the tournament champion\'s name flashes.', unit:'seconds', min:10, max:600 },
+  { key:'tournCycle',    label:'FULL TOURNAMENT CYCLE',   desc:'Total cycle length. Should equal (rounds × round length) + champion flash. Default: 4×240+240=1200.', unit:'seconds', min:100, max:7200 },
+];
+
+function renderTiming() {
+  const grid = document.getElementById('timing-grid');
+  grid.innerHTML = '';
+  TIMING_CONFIG.forEach(cfg => {
+    const card = document.createElement('div');
+    card.className = 'timing-card';
+    card.innerHTML = `
+      <div class="timing-title">${cfg.label}</div>
+      <div class="timing-desc">${cfg.desc}</div>
+      <div class="timing-input-row">
+        <input type="number" value="${data.timing[cfg.key]}" min="${cfg.min}" max="${cfg.max}"
+               oninput="data.timing['${cfg.key}']=parseFloat(this.value)||${data.timing[cfg.key]}">
+        <span class="timing-unit">${cfg.unit}</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function removeItem(arr, i) {
+  data[arr].splice(i, 1);
+  if (arr === 'headlines') renderHeadlines();
+  else if (arr === 'ads') renderAds();
+  else if (arr === 'stocks') renderStocks();
+}
+
+function showSection(name) {
+  document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sec-pane').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('sec-' + name).classList.add('active');
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = type || '';
+}
+
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isErr?' err':'');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.className = '', 3000);
+}
+</script>
+</body>
+</html>
