@@ -723,7 +723,7 @@
         <br/>
         <div class="field">
           <label>HoloNet Button URL</label>
-          <input type="text" id="f-holonet-url" placeholder="https://flint-inferno.github.io/cantina-obscura/holonet-main" />
+          <input type="text" id="f-holonet-url" placeholder="https://flint-inferno.github.io/cantina-obscura/holonet/holofeed-main.html" />
         </div>
       </div>
 
@@ -1402,7 +1402,7 @@
       templateHTML = atob(tplData.content.replace(/\n/g, ''));
       populateFields(templateHTML);
       document.getElementById('f-mission-code').value   = '';
-      document.getElementById('f-holonet-url').value    = 'https://flint-inferno.github.io/cantina-obscura/holonet-main';
+      document.getElementById('f-holonet-url').value    = 'https://flint-inferno.github.io/cantina-obscura/holonet/holofeed-main.html';
       setStatus('NEW FILE — using template', 'ok');
     } catch (e) {
       setStatus('TEMPLATE ERROR: ' + e.message, 'err');
@@ -1544,7 +1544,7 @@
 
     // HoloNet URL
     const holoBtn = doc.querySelector('.holonet-btn');
-    if (holoBtn) holoBtn.setAttribute('href', v('f-holonet-url') || 'https://flint-inferno.github.io/cantina-obscura/holonet-main');
+    if (holoBtn) holoBtn.setAttribute('href', v('f-holonet-url') || 'https://flint-inferno.github.io/cantina-obscura/holonet/holofeed-main.html');
 
     // Mission title
     const mTitle = doc.querySelector('.mission-title');
