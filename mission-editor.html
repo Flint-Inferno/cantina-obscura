@@ -189,6 +189,52 @@
       opacity: 1;
     }
 
+    /* Page status toggle */
+    .status-toggle {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.35rem;
+    }
+    .status-toggle button {
+      flex: 1;
+      font-family: var(--font);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      padding: 0.25rem 0.4rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      opacity: 0.4;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    #page-status-not-started.active { border-color: var(--dim);    color: var(--text);   opacity: 0.75; }
+    #page-status-in-progress.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    #page-status-complete.active    { border-color: var(--green);  color: var(--green);  opacity: 1; }
+
+    /* Browse status badge */
+    .browse-status-badge {
+      display: inline-block;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      padding: 0.1rem 0.35rem;
+      border-radius: 2px;
+      border: 1px solid;
+    }
+    .bstatus-not-started { color: var(--dim);    border-color: var(--dim);    opacity: 0.7; }
+    .bstatus-in-progress { color: var(--accent); border-color: var(--accent); opacity: 0.9; }
+    .bstatus-complete    { color: var(--green);  border-color: var(--green);  opacity: 0.9; }
+
+    /* Dirty (unsaved changes) flag */
+    #dirty-flag {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
     /* Color swatches */
     #faction-swatches {
       display: grid;
@@ -557,6 +603,37 @@
     }
     #browse-actions { display: flex; justify-content: flex-end; flex-shrink: 0; }
 
+    /* ── Commit confirm overlay ─────────────────────────────────── */
+    #commit-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #commit-overlay.hidden { display: none; }
+    #commit-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.5rem 2rem;
+      width: min(440px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    #commit-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+    }
+    #commit-box p {
+      font-size: 0.72rem;
+      line-height: 1.65;
+      color: var(--text);
+      opacity: 0.75;
+    }
+    #commit-box p strong { color: var(--accent); opacity: 1; font-style: normal; }
+    #commit-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
     /* ── Topbar secondary group — transparent passthrough on desktop ── */
     #topbar-actions { display: contents; }
 
@@ -623,7 +700,7 @@
       .color-row input[type="color"] { width: 36px; height: 30px; }
       .browse-item { padding: 0.55rem 0.75rem; }
       .sort-btn { padding: 0.4rem 0.75rem; font-size: 0.65rem; }
-      .mode-toggle button { padding: 0.4rem 0.75rem; }
+      .mode-toggle button, .status-toggle button { padding: 0.4rem 0.75rem; }
 
       /* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
       .field input, .field textarea, .field select {
@@ -677,6 +754,7 @@
         <button class="sort-btn active" onclick="setBrowseSort('name')">NAME</button>
         <button class="sort-btn" onclick="setBrowseSort('title')">TITLE</button>
         <button class="sort-btn" onclick="setBrowseSort('difficulty')">DIFFICULTY</button>
+        <button class="sort-btn" onclick="setBrowseSort('status')">STATUS</button>
         <button class="sort-btn" onclick="setBrowseSort('updated')">LAST UPDATED</button>
         <button class="sort-btn" onclick="setBrowseSort('size')">SIZE</button>
       </div>
@@ -684,6 +762,18 @@
       <div id="browse-status">Loading...</div>
       <div id="browse-actions">
         <button class="btn" onclick="closeBrowse()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Commit confirm overlay ───────────────────────────────── -->
+  <div id="commit-overlay" class="hidden">
+    <div id="commit-box">
+      <h2>▲ CONFIRM COMMIT</h2>
+      <p>This will push <strong id="commit-fname"></strong> to the live GitHub Pages site.<br>The change will be publicly visible immediately.</p>
+      <div id="commit-actions">
+        <button class="btn" onclick="cancelCommit()">CANCEL</button>
+        <button class="btn primary" onclick="confirmCommit()">PUSH LIVE</button>
       </div>
     </div>
   </div>
@@ -710,11 +800,12 @@
       <input type="file" id="upload-input" accept=".html" style="display:none" onchange="openLocalFile(this)">
       <button class="btn" onclick="document.getElementById('upload-input').click()">▲ OPEN</button>
       <button class="btn" onclick="saveLocal()">⬇ SAVE</button>
-      <button class="btn" onclick="refreshPreview()">⟳ PREVIEW</button>
+      <button class="btn" onclick="openLive()">↗ PREVIEW</button>
       <button class="btn" onclick="openBrowse()">▤ BROWSE</button>
       <button class="btn" id="changepw-btn" onclick="showChangePw()" style="display:none" title="Change collaborator password">⚿ PASSWORD</button>
       <button class="btn" id="token-btn" onclick="openPat()" style="display:none" title="Set GitHub PAT">⚿ TOKEN</button>
     </div>
+    <span id="dirty-flag" style="display:none">● UNSAVED</span>
     <button class="btn primary" id="save-btn" onclick="saveFile()" disabled>▲ COMMIT</button>
   </div>
 
@@ -729,6 +820,16 @@
 
     <!-- LEFT: form -->
     <div id="form-panel">
+
+      <!-- Page status -->
+      <div>
+        <div class="section-heading">Page Status</div>
+        <div class="status-toggle">
+          <button id="page-status-not-started" class="active" onclick="setPageStatus('not-started')">○ NOT STARTED</button>
+          <button id="page-status-in-progress" onclick="setPageStatus('in-progress')">◑ IN PROGRESS</button>
+          <button id="page-status-complete" onclick="setPageStatus('complete')">✓ COMPLETE</button>
+        </div>
+      </div>
 
       <!-- Faction -->
       <div>
@@ -1010,6 +1111,8 @@
 
   let currentFaction  = FACTIONS[0];
   let briefMode       = 'para';  // 'para' | 'list'
+  let pageStatus      = 'not-started'; // 'not-started' | 'in-progress' | 'complete'
+  let isDirty         = false;
   let templateHTML    = '';
   let fileName        = '';
   let fileSha         = null;   // GitHub blob SHA — required for PUT updates
@@ -1024,8 +1127,8 @@
   let isOwner         = false;
   let inactivityTimer = null;
   let warningTimer    = null;
-  const INACTIVITY_MS = 5 * 60 * 1000;   // 5 min
-  const WARNING_MS    = 4.5 * 60 * 1000; // warn at 4:30
+  const INACTIVITY_MS = 30 * 60 * 1000;    // 30 min
+  const WARNING_MS    = 29.5 * 60 * 1000; // warn at 29:30
   const CONFIG_FILE   = 'editor-config.json';
 
   // ── Crypto helpers ────────────────────────────────────────────
@@ -1207,7 +1310,7 @@
   function initEditorContent() {
     document.getElementById('save-btn').disabled = false;
     loadFile();
-    document.getElementById('form-panel').addEventListener('input', schedulePreview);
+    document.getElementById('form-panel').addEventListener('input', () => { markDirty(); schedulePreview(); });
   }
 
   // ── Init ─────────────────────────────────────────────────────
@@ -1263,6 +1366,56 @@
     schedulePreview();
   }
 
+  // ── Live preview ─────────────────────────────────────────────
+  function openLive() {
+    if (!fileName || fileName === 'untitled.html') {
+      setStatus('NO FILE LOADED', 'err');
+      return;
+    }
+    window.open(
+      `https://flint-inferno.github.io/cantina-obscura/${GH_FOLDER}/${encodeURIComponent(fileName)}`,
+      '_blank'
+    );
+  }
+
+  // ── Unsaved-changes tracking ──────────────────────────────────
+  function markDirty() {
+    if (isDirty) return;
+    isDirty = true;
+    document.getElementById('dirty-flag').style.display = '';
+  }
+  function markClean() {
+    isDirty = false;
+    document.getElementById('dirty-flag').style.display = 'none';
+  }
+
+  // ── Page status ───────────────────────────────────────────────
+  function _applyPageStatus(s) {
+    pageStatus = s || 'not-started';
+    ['not-started','in-progress','complete'].forEach(v => {
+      document.getElementById('page-status-' + v).classList.toggle('active', v === pageStatus);
+    });
+  }
+  function setPageStatus(s) {
+    _applyPageStatus(s);
+    markDirty();
+    schedulePreview();
+  }
+
+  // ── Commit confirm ────────────────────────────────────────────
+  function saveFile() {
+    if (!templateHTML) { setStatus('NOTHING TO COMMIT', 'err'); return; }
+    document.getElementById('commit-fname').textContent = fileName;
+    document.getElementById('commit-overlay').classList.remove('hidden');
+  }
+  function cancelCommit() {
+    document.getElementById('commit-overlay').classList.add('hidden');
+  }
+  async function confirmCommit() {
+    document.getElementById('commit-overlay').classList.add('hidden');
+    await _doSaveFile();
+  }
+
   // ── Mobile tab toggle ────────────────────────────────────────
   function setMobileTab(tab) {
     document.getElementById('form-panel').classList.toggle('tab-hidden', tab !== 'form');
@@ -1311,6 +1464,13 @@
           if (!a.updatedAt) return 1; if (!b.updatedAt) return -1;
           return b.updatedAt.localeCompare(a.updatedAt); // newest first
         });
+      case 'status': {
+        const rank = { 'not-started': 0, 'in-progress': 1, 'complete': 2 };
+        return copy.sort((a, b) => {
+          const dr = (rank[a.status] ?? 0) - (rank[b.status] ?? 0);
+          return dr !== 0 ? dr : a.name.localeCompare(b.name);
+        });
+      }
       case 'size':
         return copy.sort((a, b) => b.size - a.size); // largest first
       default: // name
@@ -1329,6 +1489,11 @@
       titleEl.className = 'browse-title' + (f.title ? '' : ' loading');
       titleEl.textContent = f.title || '...';
 
+      const statusLabels = { 'not-started': '○ NOT STARTED', 'in-progress': '◑ IN PROGRESS', 'complete': '✓ COMPLETE' };
+      const badgeEl = document.createElement('span');
+      badgeEl.className = `browse-status-badge bstatus-${f.status || 'not-started'}`;
+      badgeEl.textContent = statusLabels[f.status] || '○ NOT STARTED';
+
       const metaEl = document.createElement('div');
       metaEl.className = 'browse-meta';
       const parts = [];
@@ -1340,6 +1505,7 @@
       fnEl.className = 'browse-fname';
       fnEl.textContent = f.name + (f.size ? `  (${(f.size/1024).toFixed(1)} KB)` : '');
 
+      item.appendChild(badgeEl);
       item.appendChild(titleEl);
       item.appendChild(metaEl);
       item.appendChild(fnEl);
@@ -1358,11 +1524,12 @@
     browseSort = mode;
     document.querySelectorAll('.sort-btn').forEach(b => {
       b.classList.toggle('active', b.textContent.toLowerCase().replace(' ','_') === mode ||
-        (mode === 'updated' && b.textContent === 'LAST UPDATED') ||
-        (mode === 'name'   && b.textContent === 'NAME') ||
-        (mode === 'title'  && b.textContent === 'TITLE') ||
+        (mode === 'updated'    && b.textContent === 'LAST UPDATED') ||
+        (mode === 'name'       && b.textContent === 'NAME') ||
+        (mode === 'title'      && b.textContent === 'TITLE') ||
         (mode === 'difficulty' && b.textContent === 'DIFFICULTY') ||
-        (mode === 'size'   && b.textContent === 'SIZE'));
+        (mode === 'status'     && b.textContent === 'STATUS') ||
+        (mode === 'size'       && b.textContent === 'SIZE'));
     });
     renderBrowseList();
   }
@@ -1386,7 +1553,7 @@
       const rawFiles = (await res.json()).filter(f => f.type === 'file' && f.name.endsWith('.html'));
       if (!rawFiles.length) { status.textContent = 'No HTML files found.'; return; }
 
-      browseFiles = rawFiles.map(f => ({ name: f.name, size: f.size, url: f.url, title: null, difficulty: null, updatedAt: null }));
+      browseFiles = rawFiles.map(f => ({ name: f.name, size: f.size, url: f.url, title: null, difficulty: null, updatedAt: null, status: 'not-started' }));
       renderBrowseList();
       status.textContent = `${browseFiles.length} file(s) — loading details...`;
 
@@ -1399,8 +1566,11 @@
             const html = atob(data.content.replace(/\n/g, ''));
             const mm = html.match(/<[^>]*class="mission-title"[^>]*>([^<]+)/i);
             const dm = html.match(/DIFFICULTY:\s*([^<&|]+)/i);
+            const sm = html.match(/<meta[^>]*name="mission-status"[^>]*content="([^"]+)"/i)
+                    || html.match(/<meta[^>]*content="([^"]+)"[^>]*name="mission-status"/i);
             entry.title      = mm ? mm[1].trim() : entry.name;
             entry.difficulty = dm ? dm[1].trim() : null;
+            entry.status     = sm ? sm[1].trim() : 'not-started';
             browseLoaded++;
             renderBrowseList();
             if (browseLoaded === browseFiles.length)
@@ -1467,6 +1637,7 @@
         populateFields(templateHTML);
         setStatus('LOADED — ' + fileName, 'ok');
         document.getElementById('save-btn').disabled = false;
+        markClean();
         refreshPreview();
         return;
       }
@@ -1501,6 +1672,7 @@
     }
 
     document.getElementById('save-btn').disabled = false;
+    markClean();
     refreshPreview();
   }
 
@@ -1552,6 +1724,10 @@
     const unit = doc.querySelector('.credit-unit');
     document.getElementById('f-credits').value     = amt  ? amt.textContent.trim()  : '$000';
     document.getElementById('f-credit-unit').value = unit ? unit.textContent.trim() : 'CREDITS';
+
+    // Page status
+    const statusMeta = doc.querySelector('meta[name="mission-status"]');
+    _applyPageStatus(statusMeta ? statusMeta.getAttribute('content') : 'not-started');
 
     // Read logo meta tags
     LOGO_SLOTS.forEach(slot => {
@@ -1668,6 +1844,15 @@
     if (amt)  amt.textContent  = v('f-credits')     || '$000';
     if (unit) unit.textContent = v('f-credit-unit') || 'CREDITS';
 
+    // ── Page status meta ─────────────────────────────────────────
+    let sMeta = doc.querySelector('meta[name="mission-status"]');
+    if (!sMeta) {
+      sMeta = doc.createElement('meta');
+      sMeta.setAttribute('name', 'mission-status');
+      doc.head.appendChild(sMeta);
+    }
+    sMeta.setAttribute('content', pageStatus);
+
     // ── Logo meta tags (DOM operations on doc) ──────────────────
     LOGO_SLOTS.forEach(slot => {
       const logo  = logos[slot];
@@ -1730,7 +1915,7 @@
   }
 
   // ── Save to GitHub ───────────────────────────────────────────
-  async function saveFile() {
+  async function _doSaveFile() {
     const btn = document.getElementById('save-btn');
     btn.disabled = true;
     setStatus('COMMITTING...', '');
@@ -1784,6 +1969,7 @@
       const data = await res.json();
       fileSha      = data.content.sha;   // update sha for next save
       templateHTML = html;
+      markClean();
       setStatus('COMMITTED — ' + fileName, 'ok');
     } catch (e) {
       setStatus('COMMIT ERROR: ' + e.message, 'err');
