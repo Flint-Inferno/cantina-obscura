@@ -435,8 +435,23 @@
       border-radius: 2px;
       cursor: pointer;
       transition: border-color 0.1s, color 0.1s, background 0.1s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
     }
-    .browse-item:hover { border-color: var(--accent); color: var(--accent); background: rgba(240,192,96,0.06); }
+    .browse-item:hover { border-color: var(--accent); background: rgba(240,192,96,0.06); }
+    .browse-item:hover .browse-title { color: var(--accent); }
+    .browse-title {
+      font-size: 0.78rem;
+      color: var(--text);
+      transition: color 0.1s;
+    }
+    .browse-title.loading { opacity: 0.3; font-style: italic; }
+    .browse-fname {
+      font-size: 0.6rem;
+      opacity: 0.35;
+      letter-spacing: 0.08em;
+    }
     #browse-status {
       font-size: 0.65rem;
       opacity: 0.5;
@@ -890,10 +905,21 @@
         return;
       }
 
+      // Render list immediately with filenames; titles load in background
       files.forEach(f => {
         const item = document.createElement('div');
         item.className = 'browse-item';
-        item.textContent = f.name;
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'browse-title loading';
+        titleEl.textContent = '...';
+
+        const fnEl = document.createElement('div');
+        fnEl.className = 'browse-fname';
+        fnEl.textContent = f.name;
+
+        item.appendChild(titleEl);
+        item.appendChild(fnEl);
         item.onclick = () => {
           closeBrowse();
           fileName = f.name;
@@ -902,7 +928,23 @@
           loadFile();
         };
         list.appendChild(item);
+
+        // Fetch title in background
+        fetch(f.url, { headers: ghHeaders() })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (!data) return;
+            const html = atob(data.content.replace(/\n/g, ''));
+            const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+            titleEl.textContent = match ? match[1].trim() : f.name;
+            titleEl.classList.remove('loading');
+          })
+          .catch(() => {
+            titleEl.textContent = f.name;
+            titleEl.classList.remove('loading');
+          });
       });
+
       status.textContent = `${files.length} file(s) in ${GH_FOLDER}/`;
     } catch (e) {
       status.textContent = 'Error: ' + e.message;
