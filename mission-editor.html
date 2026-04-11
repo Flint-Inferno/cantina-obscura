@@ -1799,6 +1799,12 @@
     html = html.replace(/(--danger:\s*)#[0-9a-fA-F]+/g,  `$1${danger}`);
     // Replace LOGO_COLOR in script
     html = html.replace(/(const LOGO_COLOR\s*=\s*)'#[0-9a-fA-F]+'/, `$1'${accent}'`);
+    // Restore hi-contrast block to canonical accessibility values
+    // (global CSS var replaces above would otherwise clobber it)
+    html = html.replace(
+      /body\.hi-contrast\s*\{[^}]*\}/,
+      'body.hi-contrast {\n      --text:   #ffffff;\n      --bg:     #000000;\n      --border: #555555;\n      --dim:    #1a1a1a;\n      --accent: #e0e0e0;\n      --danger: #ff9999;\n    }'
+    );
 
     // Parse and modify DOM
     const doc  = new DOMParser().parseFromString(html, 'text/html');
