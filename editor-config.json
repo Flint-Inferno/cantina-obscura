@@ -1,1 +1,5 @@
-{"encryptedPat":"ZmJfQyWHOWKBnLo70E48ml6XtvME1luqiDisWyKMopaFhjs82jnpMrdQd+JRyHII/vIq9Xil5LbqtxTdCzs4Oiy1qCo="}
+{
+  "salt": "d18b10535aab3a3626de9f079870ecd6",
+  "iv": "6e5051eaf3d66ae913003a04",
+  "ciphertext": "oIXlJDApZ/t2StkXCQ8+75NYHK14M8s2QYOf4iX1ja5DllnqofC8GZpA5vmiUv9XPr8iPFe73KY="
+}
