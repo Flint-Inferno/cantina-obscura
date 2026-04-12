@@ -354,7 +354,7 @@
       margin-top: 1.5rem;
     }
     .datapad-side .credit-box { flex-shrink: 0; }
-    .datapad-side .turnin-section { flex: 1; min-width: 200px; }
+    .datapad-side .agent-section { flex: 1; min-width: 200px; }
 
     @media (min-width: 900px) {
       .datapad-layout {
@@ -374,14 +374,14 @@
       .datapad-side { flex-direction: column; }
     }
 
-    /* ── Turn-in instructions ────────────────────────────────── */
-    .turnin-instructions {
-      font-size: 0.82rem;
-      line-height: 1.7;
-      color: var(--text);
-      opacity: 0.85;
+    /* ── Agent section ───────────────────────────────────────── */
+    .agent-name {
+      font-size: 0.9rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      line-height: 1.6;
+      white-space: pre-line;
     }
-    .turnin-instructions p + p { margin-top: 0.6rem; }
 
     /* ── Credit payout box ───────────────────────────────────── */
     .credit-box {
@@ -546,7 +546,7 @@
     body.aurebesh-mode .mission-id,
     body.aurebesh-mode .section-label,
     body.aurebesh-mode .mission-instructions,
-    body.aurebesh-mode .turnin-instructions,
+    body.aurebesh-mode .agent-name,
     body.aurebesh-mode .credit-label,
     body.aurebesh-mode .credit-unit,
     body.aurebesh-mode .credit-amount,
@@ -654,14 +654,13 @@
 
         <hr class="divider">
 
-        <!-- ── Turn-in / redemption instructions ──────────────────
-             EDIT: Describe how the player redeems the card.
+        <!-- ── Mission Agent ──────────────────────────────────────
+             EDIT: Name(s) of the agent(s) the player reports to.
+             Multiple agents: one per line.
         ─────────────────────────────────────────────────────────── -->
-        <div class="turnin-section">
-          <p class="section-label">How to Claim Your Payout</p>
-          <div class="turnin-instructions"><p>[ REPLACE WITH TURN-IN INSTRUCTIONS ]</p>
-<p>Example: Present this card to the handler at the                marked contact point to receive your credits.</p>
-<p>Example: Scan the QR code at the payout terminal                and confirm with your mission code.</p></div>
+        <div class="agent-section">
+          <p class="section-label">Mission Agent</p>
+          <div class="agent-name">[ AGENT NAME ]</div>
         </div>
 
           <!-- ── Access code gate ──────────────────────────── -->
