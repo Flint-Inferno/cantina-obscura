@@ -355,7 +355,7 @@
       margin-top: 1.5rem;
     }
     .datapad-side .credit-box { flex-shrink: 0; }
-    .datapad-side .turnin-section { flex: 1; min-width: 200px; }
+    .datapad-side .agent-section { flex: 1; min-width: 200px; }
 
     @media (min-width: 900px) {
       .datapad-layout {
@@ -376,13 +376,13 @@
     }
 
     /* ââ Turn-in instructions ââââââââââââââââââââââââââââââââââ */
-    .turnin-instructions {
-      font-size: 0.82rem;
-      line-height: 1.7;
-      color: var(--text);
-      opacity: 0.85;
+    .agent-name {
+      font-size: 0.9rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      line-height: 1.6;
+      white-space: pre-line;
     }
-    .turnin-instructions p + p { margin-top: 0.6rem; }
 
     /* ââ Credit payout box âââââââââââââââââââââââââââââââââââââ */
     .credit-box {
@@ -547,7 +547,7 @@
     body.aurebesh-mode .mission-id,
     body.aurebesh-mode .section-label,
     body.aurebesh-mode .mission-instructions,
-    body.aurebesh-mode .turnin-instructions,
+    body.aurebesh-mode .agent-name,
     body.aurebesh-mode .credit-label,
     body.aurebesh-mode .credit-unit,
     body.aurebesh-mode .credit-amount,
@@ -653,9 +653,9 @@
         <!-- ââ Turn-in / redemption instructions ââââââââââââââââââ
              EDIT: Describe how the player redeems the card.
         âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
-        <div class="turnin-section">
-          <p class="section-label">How to Claim Your Payout</p>
-          <div class="turnin-instructions"><p>After the game, report to the mission handler. Briefly describe what happened.</p></div>
+        <div class="agent-section">
+          <p class="section-label">Mission Agent</p>
+          <div class="agent-name">[ AGENT NAME ]</div>
         </div>
 
       </div><!-- /.datapad-side -->
