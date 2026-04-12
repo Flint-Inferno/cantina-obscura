@@ -1014,12 +1014,12 @@
         </div>
       </div>
 
-      <!-- Turn-in -->
+      <!-- Mission Agent -->
       <div>
-        <div class="section-heading">Turn-In Instructions</div>
+        <div class="section-heading">Mission Agent(s)</div>
         <div class="field">
-          <label>One paragraph per blank line</label>
-          <textarea id="f-turnin" rows="5" placeholder="How does the player claim their payout?"></textarea>
+          <label>Who the player reports to — one per line</label>
+          <textarea id="f-agent" rows="2" placeholder="e.g. Mara Jade&#10;Docking Bay 94"></textarea>
         </div>
       </div>
 
@@ -1833,10 +1833,10 @@
       document.getElementById('f-briefing').value = htmlToPlainText(brief.innerHTML);
     }
 
-    // Turn-in
-    const turnin = doc.querySelector('.turnin-instructions');
+    // Agent
+    const turnin = doc.querySelector('.agent-name');
     if (turnin) {
-      document.getElementById('f-turnin').value = htmlToPlainText(turnin.innerHTML);
+      document.getElementById('f-agent').value = (turnin.textContent || '').trim();
     }
 
     // Credits
@@ -1971,9 +1971,9 @@
     const brief = doc.querySelector('.mission-instructions');
     if (brief) brief.innerHTML = plainTextToHTML(v('f-briefing'), briefMode);
 
-    // Turn-in
-    const turnin = doc.querySelector('.turnin-instructions');
-    if (turnin) turnin.innerHTML = plainTextToHTML(v('f-turnin'), 'para');
+    // Agent
+    const agentEl = doc.querySelector('.agent-name');
+    if (agentEl) agentEl.textContent = v('f-agent') || '[ AGENT NAME ]';
 
     // Credits
     const amt  = doc.querySelector('.credit-amount');
