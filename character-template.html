@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PERSONNEL FILE // CANTINA OBSCURA</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    @font-face {
+      font-family: 'Aurebesh';
+      src: url('../toypad-system-backup/AurebeshAF-Canon.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    /* ── Color scheme — edited per character by the editor ──────── */
+    :root {
+      --bg:          #0d0b07;
+      --text:        #d4a843;
+      --accent:      #f0c060;
+      --border:      #3a2e14;
+      --dim:         #1a1508;
+      --danger:      #f0c060;
+      --wm-color:    #f0c060;
+      --font-main:   'Share Tech Mono', monospace;
+      --font-title:  'Orbitron', sans-serif;
+      --font-aur:    'Aurebesh', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 4rem;
+      background-image: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px
+      );
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Outer card ─────────────────────────────────────────────── */
+    .datapad {
+      max-width: 900px;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.5rem;
+      background: rgba(20,15,5,0.88);
+      position: relative;
+      animation: crt-flicker 10s ease-in-out infinite;
+    }
+
+    /* ── Watermark ───────────────────────────────────────────────── */
+    #watermark-wrap {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.13;
+      mix-blend-mode: screen;
+    }
+    #watermark-canvas { display: block; }
+    #watermark-png {
+      display: none;
+      width: 260px;
+      height: 260px;
+      background-color: var(--wm-color);
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      filter: drop-shadow(0 0 18px var(--wm-color));
+    }
+
+    /* ── CRT scanlines (fixed overlay) ──────────────────────────── */
+    .page-scanlines {
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent 0px, transparent 2px,
+        rgba(0,0,0,0.09) 2px, rgba(0,0,0,0.09) 4px
+      );
+      pointer-events: none; z-index: 9000;
+      animation: scanline-flicker 7s ease-in-out infinite;
+    }
+    @keyframes scanline-flicker {
+      0%, 90%, 100% { opacity: 1; }
+      91%   { opacity: 0.6; }
+      91.4% { opacity: 1; }
+      94%   { opacity: 0.8; }
+      94.3% { opacity: 1; }
+    }
+
+    /* ── Rolling scan beam ───────────────────────────────────────── */
+    .page-scan-roll {
+      position: fixed; left: 0; right: 0; top: 0; height: 120px;
+      background: linear-gradient(to bottom,
+        transparent 0%, rgba(255,255,255,0.01) 35%,
+        rgba(255,255,255,0.025) 50%, rgba(255,255,255,0.01) 65%, transparent 100%
+      );
+      pointer-events: none; z-index: 9001;
+      animation: scanroll 9s linear infinite;
+    }
+    @keyframes scanroll {
+      0%   { transform: translateY(-15vh); }
+      100% { transform: translateY(110vh); }
+    }
+
+    /* ── HUD clock ───────────────────────────────────────────────── */
+    .hud-clock {
+      position: fixed; top: 0.75rem; right: 1.1rem;
+      font-family: var(--font-main); font-size: 0.65rem;
+      letter-spacing: 0.2em; color: var(--accent);
+      opacity: 0.55; z-index: 9002; pointer-events: none;
+    }
+
+    /* ── CRT flicker keyframe ────────────────────────────────────── */
+    @keyframes crt-flicker {
+      0%, 100%  { opacity: 1; }
+      92%       { opacity: 1; }
+      92.3%     { opacity: 0.91; }
+      92.6%     { opacity: 1; }
+      95.8%     { opacity: 0.97; }
+      96%       { opacity: 1; }
+    }
+
+    /* ── High contrast mode ──────────────────────────────────────── */
+    body.hi-contrast {
+      --text:   #ffffff;
+      --accent: #ffffff;
+      --border: #555555;
+    }
+    body.hi-contrast .page-scanlines { display: none; }
+    body.hi-contrast .page-scan-roll { display: none; }
+    body.hi-contrast .datapad        { animation: none; }
+    body.hi-contrast .hud-clock      { opacity: 0.9; }
+
+    /* ── Aurebesh mode ───────────────────────────────────────────── */
+    .aur { font-family: var(--font-aur); letter-spacing: 0.05em; }
+    body.aurebesh-mode .char-name,
+    body.aurebesh-mode .section-label,
+    body.aurebesh-mode .stat-label,
+    body.aurebesh-mode .stat-value,
+    body.aurebesh-mode .classify-tag,
+    body.aurebesh-mode .footer-strip,
+    body.aurebesh-mode .section-content,
+    body.aurebesh-mode .aurebesh-toggle-btn,
+    body.aurebesh-mode .hc-toggle-btn,
+    body.aurebesh-mode .back-link {
+      font-family: var(--font-aur);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Top bar ────────────────────────────────────────────────── */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .top-bar-left { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .back-link {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--text);
+      opacity: 0.6;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.2rem 0.6rem;
+      transition: opacity 0.2s, border-color 0.2s;
+    }
+    .back-link:hover { opacity: 1; border-color: var(--accent); }
+
+    .classify-tag {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      border-radius: 2px;
+      padding: 0.15rem 0.5rem;
+      opacity: 0.75;
+    }
+
+    .aurebesh-toggle-btn, .hc-toggle-btn {
+      font-family: var(--font-main);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.2rem 0.55rem;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .aurebesh-toggle-btn:hover, .hc-toggle-btn:hover { opacity: 1; border-color: var(--text); }
+    .aurebesh-toggle-btn.active, .hc-toggle-btn.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+    /* ── Profile header (portrait + stats) ─────────────────────── */
+    .profile-header {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Portrait */
+    .portrait-wrap {
+      flex-shrink: 0;
+      width: 160px;
+    }
+    .portrait-img {
+      width: 160px;
+      height: 213px; /* ~4:3 tall rect ratio */
+      object-fit: cover;
+      object-position: top center;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      display: block;
+      background: var(--dim);
+    }
+    .portrait-placeholder {
+      width: 160px;
+      height: 213px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--dim);
+    }
+    .portrait-placeholder svg { opacity: 0.2; width: 80px; height: 80px; }
+
+    /* Stats column */
+    .profile-stats {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      justify-content: flex-start;
+    }
+    .char-name {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+      margin-bottom: 0.15rem;
+    }
+    .char-name-aur {
+      font-family: var(--font-aur);
+      font-size: 0.75rem;
+      opacity: 0.35;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.6rem;
+    }
+    .stat-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+      font-size: 0.78rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding-bottom: 0.25rem;
+    }
+    .stat-label {
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      opacity: 0.45;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+    .stat-value { color: var(--text); }
+    .status-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      padding: 0.1rem 0.4rem;
+      border-radius: 2px;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+    .status-badge.deceased { border-color: var(--danger); color: var(--danger); opacity: 0.7; }
+    .status-badge.missing  { border-color: #888; color: #888; }
+
+    /* ── Section containers ──────────────────────────────────────── */
+    .section {
+      position: relative;
+      z-index: 2;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 2px;
+      padding: 0.75rem 1rem;
+    }
+    .section-label {
+      font-size: 0.55rem;
+      letter-spacing: 0.22em;
+      color: var(--accent);
+      opacity: 0.7;
+      margin-bottom: 0.6rem;
+      text-transform: uppercase;
+    }
+    .section-content {
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .section-content p { margin-bottom: 0.6rem; }
+    .section-content p:last-child { margin-bottom: 0; }
+    .section-content ul { padding-left: 1.1rem; }
+    .section-content li { margin-bottom: 0.3rem; }
+    .section-content a { color: var(--accent); text-decoration: underline; opacity: 0.85; }
+    .section-content a:hover { opacity: 1; }
+
+    /* Associates row */
+    .associates-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .associate-link {
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.15rem 0.55rem;
+      letter-spacing: 0.06em;
+      transition: border-color 0.15s, opacity 0.15s;
+      opacity: 0.8;
+    }
+    .associate-link:hover { border-color: var(--accent); opacity: 1; }
+
+    /* ── Divider ──────────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; position: relative; z-index: 2; }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    .footer-strip {
+      position: relative; z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.55rem;
+      letter-spacing: 0.18em;
+      opacity: 0.4;
+    }
+
+    /* ── GM hidden button ─────────────────────────────────────────── */
+    #gm-btn {
+      position: absolute;
+      bottom: 0.6rem; right: 0.75rem;
+      width: 10px; height: 10px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      opacity: 0.07;
+      cursor: pointer;
+      transition: opacity 0.3s;
+      z-index: 10;
+    }
+    #gm-btn:hover { opacity: 0.35; }
+
+    /* ── GM overlay (password prompt) ────────────────────────────── */
+    #gm-overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,4,3,0.95);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9500;
+    }
+    #gm-overlay.hidden { display: none; }
+    #gm-box {
+      background: #0d0b07;
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.75rem 2rem;
+      width: min(360px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    #gm-box h2 {
+      font-family: var(--font-title);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+    }
+    #gm-box p {
+      font-size: 0.68rem;
+      line-height: 1.6;
+      opacity: 0.6;
+    }
+    #gm-pw-input {
+      font-family: var(--font-main);
+      font-size: 0.8rem;
+      background: #060504;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.45rem 0.65rem;
+      width: 100%;
+      outline: none;
+      letter-spacing: 0.08em;
+    }
+    #gm-pw-input:focus { border-color: var(--accent); }
+    #gm-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+    .gm-btn-cancel, .gm-btn-enter {
+      font-family: var(--font-main);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      padding: 0.35rem 0.9rem;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .gm-btn-cancel {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+    }
+    .gm-btn-cancel:hover { border-color: var(--text); }
+    .gm-btn-enter {
+      background: transparent; color: var(--accent); border: 1px solid var(--accent);
+    }
+    .gm-btn-enter:hover { background: rgba(240,192,96,0.1); }
+
+    /* ── GM section (revealed after password) ────────────────────── */
+    #gm-layer {
+      display: none;
+      margin-top: 1rem;
+      border: 1px solid var(--danger);
+      border-left: 3px solid var(--danger);
+      border-radius: 2px;
+      padding: 0.75rem 1rem;
+      position: relative;
+      z-index: 2;
+    }
+    #gm-layer .section-label { color: var(--danger); }
+    .gm-field { margin-bottom: 1rem; }
+    .gm-field:last-child { margin-bottom: 0; }
+    .gm-field-label {
+      font-size: 0.52rem;
+      letter-spacing: 0.2em;
+      opacity: 0.5;
+      margin-bottom: 0.4rem;
+    }
+    .gm-field-content {
+      font-size: 0.82rem;
+      line-height: 1.7;
+    }
+    .gm-field-content p { margin-bottom: 0.5rem; }
+    .gm-field-content p:last-child { margin-bottom: 0; }
+    .gm-field-content a { color: var(--accent); text-decoration: underline; }
+
+    /* ── Mobile ───────────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      body { padding: 1rem 0.75rem 4rem; }
+      .datapad { padding: 1rem; }
+
+      .profile-header {
+        flex-direction: column;
+        align-items: center;
+      }
+      .portrait-wrap { width: 140px; }
+      .portrait-img, .portrait-placeholder { width: 140px; height: 187px; }
+
+      .profile-stats { align-items: flex-start; }
+      .char-name { font-size: 1.15rem; }
+
+      .associates-list { gap: 0.4rem; }
+    }
+  </style>
+
+  <!-- Editor metadata — read/written by character-editor.html -->
+  <meta name="char-slug"            content="">
+  <meta name="char-name"            content="CHARACTER NAME">
+  <meta name="char-aur-name"        content="CHARACTER NAME">
+  <meta name="char-species"         content="Unknown">
+  <meta name="char-homeworld"       content="Unknown">
+  <meta name="char-occupation"      content="Unknown">
+  <meta name="char-affiliation"     content="Independent">
+  <meta name="char-status"          content="active">
+  <meta name="char-portrait"        content="">
+  <meta name="char-watermark-color" content="#f0c060">
+  <meta name="char-watermark-data"  content="">
+  <meta name="gm-pw-hash"           content="">
+  <meta name="gm-content"           content="">
+</head>
+<body>
+
+  <!-- CRT overlays -->
+  <div class="page-scanlines"></div>
+  <div class="page-scan-roll"></div>
+  <div class="hud-clock" id="hud-clock">00:00:00</div>
+
+  <!-- GM password overlay -->
+  <div id="gm-overlay" class="hidden">
+    <div id="gm-box">
+      <h2>◈ RESTRICTED ACCESS</h2>
+      <p>Personnel authorization required.</p>
+      <input type="password" id="gm-pw-input" placeholder="Access code"
+             spellcheck="false"
+             onkeydown="if(event.key==='Enter')tryGmUnlock();if(event.key==='Escape')closeGmOverlay();">
+      <div id="gm-actions">
+        <button class="gm-btn-cancel" onclick="closeGmOverlay()">CANCEL</button>
+        <button class="gm-btn-enter"  onclick="tryGmUnlock()">ENTER</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="datapad">
+
+    <!-- Watermark -->
+    <div id="watermark-wrap">
+      <canvas id="watermark-canvas"></canvas>
+      <div   id="watermark-png"></div>
+    </div>
+
+    <!-- GM hidden button -->
+    <button id="gm-btn" title="" onclick="openGmOverlay()"></button>
+
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <a class="back-link" href="index.html">◄ ROSTER</a>
+        <span class="classify-tag">PERSONNEL FILE</span>
+        <button class="aurebesh-toggle-btn" id="aurebesh-toggle" onclick="toggleAurebesh()">◫ AUREBESH</button>
+        <button class="hc-toggle-btn"       id="hc-toggle"       onclick="toggleHiContrast()">◐ HI-CONTRAST</button>
+      </div>
+    </div>
+
+    <!-- Profile header -->
+    <div class="profile-header">
+      <div class="portrait-wrap" id="portrait-wrap">
+        <!-- Populated by JS based on char-portrait meta -->
+        <div class="portrait-placeholder" id="portrait-placeholder">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+            <circle cx="50" cy="35" r="20"/>
+            <path d="M10 90 Q10 60 50 60 Q90 60 90 90 Z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="char-name" id="char-name">CHARACTER NAME</div>
+        <div class="char-name-aur aur" id="char-name-aur">CHARACTER NAME</div>
+
+        <div class="stat-row">
+          <span class="stat-label">STATUS</span>
+          <span class="stat-value"><span class="status-badge" id="stat-status">ACTIVE</span></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">OCCUPATION</span>
+          <span class="stat-value" id="stat-occupation">Unknown</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">AFFILIATION</span>
+          <span class="stat-value" id="stat-affiliation">Independent</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">SPECIES</span>
+          <span class="stat-value" id="stat-species">Unknown</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">HOMEWORLD</span>
+          <span class="stat-value" id="stat-homeworld">Unknown</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background -->
+    <div class="section">
+      <div class="section-label">Background</div>
+      <div class="section-content" data-section="background">
+        <p>[ No background on file. ]</p>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="section">
+      <div class="section-label">Known Skills &amp; Abilities</div>
+      <div class="section-content" data-section="skills">
+        <ul><li>Unknown</li></ul>
+      </div>
+    </div>
+
+    <!-- Associates -->
+    <div class="section">
+      <div class="section-label">Known Associates</div>
+      <div class="section-content associates-list" data-section="associates">
+        <!-- Associate links inserted here -->
+      </div>
+    </div>
+
+    <!-- Location -->
+    <div class="section">
+      <div class="section-label">Last Known Location</div>
+      <div class="section-content" data-section="location">
+        <p>Unknown</p>
+      </div>
+    </div>
+
+    <!-- GM layer (hidden until password entered) -->
+    <div id="gm-layer">
+      <div class="section-label">◈ GM — RESTRICTED</div>
+      <div class="gm-field">
+        <div class="gm-field-label">MOTIVES</div>
+        <div class="gm-field-content" id="gm-motives"></div>
+      </div>
+      <div class="gm-field">
+        <div class="gm-field-label">SECRETS</div>
+        <div class="gm-field-content" id="gm-secrets"></div>
+      </div>
+      <div class="gm-field">
+        <div class="gm-field-label">PLOT HOOKS</div>
+        <div class="gm-field-content" id="gm-plot-hooks"></div>
+      </div>
+      <div class="gm-field">
+        <div class="gm-field-label">CAST NOTES</div>
+        <div class="gm-field-content" id="gm-cast-notes"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <hr class="divider">
+    <div class="footer-strip">
+      <span>CANTINA OBSCURA // HOLONET SECURE CHANNEL</span>
+      <span class="aur">CANTINA OBSCURA</span>
+    </div>
+
+  </div><!-- /.datapad -->
+
+  <script>
+    // ── HUD Clock ─────────────────────────────────────────────────
+    (function() {
+      function tick() {
+        const now = new Date();
+        const p = n => String(n).padStart(2,'0');
+        document.getElementById('hud-clock').textContent =
+          p(now.getSeconds()) + ':' + p(now.getMinutes()) + ':' + p(now.getHours());
+      }
+      tick(); setInterval(tick, 1000);
+    })();
+
+    // ── Aurebesh toggle ───────────────────────────────────────────
+    function toggleAurebesh() {
+      const body = document.body;
+      const btn  = document.getElementById('aurebesh-toggle');
+      body.classList.toggle('aurebesh-mode');
+      btn.classList.toggle('active');
+      btn.textContent = body.classList.contains('aurebesh-mode') ? '◫ BASIC' : '◫ AUREBESH';
+    }
+
+    // ── Hi-contrast toggle ────────────────────────────────────────
+    function toggleHiContrast() {
+      const body = document.body;
+      const btn  = document.getElementById('hc-toggle');
+      body.classList.toggle('hi-contrast');
+      const on = body.classList.contains('hi-contrast');
+      btn.classList.toggle('active', on);
+      btn.textContent = on ? '◐ STANDARD' : '◐ HI-CONTRAST';
+      try { localStorage.setItem('cantina-hc', on ? '1' : '0'); } catch(_) {}
+    }
+    (function() {
+      try {
+        if (localStorage.getItem('cantina-hc') === '1') {
+          document.body.classList.add('hi-contrast');
+          const btn = document.getElementById('hc-toggle');
+          if (btn) { btn.classList.add('active'); btn.textContent = '◐ STANDARD'; }
+        }
+      } catch(_) {}
+    })();
+
+    // ── Meta helpers ──────────────────────────────────────────────
+    function getMeta(name) {
+      return document.querySelector(`meta[name="${name}"]`)?.getAttribute('content') || '';
+    }
+
+    // ── Populate stats from meta tags ─────────────────────────────
+    (function() {
+      const name       = getMeta('char-name')       || 'CHARACTER NAME';
+      const aurName    = getMeta('char-aur-name')   || name;
+      const species    = getMeta('char-species')    || 'Unknown';
+      const homeworld  = getMeta('char-homeworld')  || 'Unknown';
+      const occupation = getMeta('char-occupation') || 'Unknown';
+      const affil      = getMeta('char-affiliation')|| 'Independent';
+      const status     = getMeta('char-status')     || 'active';
+      const portrait   = getMeta('char-portrait');
+
+      document.title = name + ' // CANTINA OBSCURA';
+      document.getElementById('char-name').textContent     = name;
+      document.getElementById('char-name-aur').textContent = aurName;
+      document.getElementById('stat-species').textContent    = species;
+      document.getElementById('stat-homeworld').textContent  = homeworld;
+      document.getElementById('stat-occupation').textContent = occupation;
+      document.getElementById('stat-affiliation').textContent= affil;
+
+      const badge = document.getElementById('stat-status');
+      const statusMap = { active: 'ACTIVE', missing: 'MISSING', deceased: 'DECEASED' };
+      badge.textContent = statusMap[status] || status.toUpperCase();
+      if (status === 'deceased') badge.classList.add('deceased');
+      if (status === 'missing')  badge.classList.add('missing');
+
+      // Portrait
+      if (portrait) {
+        const img = document.createElement('img');
+        img.className = 'portrait-img';
+        img.src = portrait;
+        img.alt = name;
+        document.getElementById('portrait-wrap').replaceChild(img, document.getElementById('portrait-placeholder'));
+      }
+    })();
+
+    // ── Watermark setup ───────────────────────────────────────────
+    (function() {
+      const wmData  = getMeta('char-watermark-data');
+      const wmColor = getMeta('char-watermark-color') || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f0c060';
+
+      document.documentElement.style.setProperty('--wm-color', wmColor);
+
+      if (wmData) {
+        // Custom PNG via CSS mask
+        const el = document.getElementById('watermark-png');
+        el.style.webkitMaskImage = `url("${wmData}")`;
+        el.style.maskImage       = `url("${wmData}")`;
+        el.style.backgroundColor = wmColor;
+        el.style.filter          = `drop-shadow(0 0 18px ${wmColor})`;
+        el.style.display         = 'block';
+        document.getElementById('watermark-canvas').style.display = 'none';
+      } else {
+        // Fallback: draw Cantina logo
+        drawDefaultWatermark(wmColor);
+      }
+    })();
+
+    // Default watermark: Cantina logo on canvas
+    function drawDefaultWatermark(color) {
+      const VX=130.56,VY=106.56,VW=152.44,VH=130.87;
+      const canvas = document.getElementById('watermark-canvas');
+      const heightPx = 260;
+      const size  = heightPx * (VW/VH);
+      const scale = size/VW;
+      const pad   = Math.ceil(24*scale);
+      canvas.width  = size + pad*2;
+      canvas.height = heightPx + pad*2;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const cx=v=>pad+(v-VX)*scale, cy=v=>pad+(v-VY)*scale, cr=v=>v*scale;
+      ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2.8*scale;
+      function glow(){ctx.shadowColor=color;ctx.shadowBlur=5;}
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(-10,-10,canvas.width+20,canvas.height+20);
+      ctx.arc(cx(243),cy(178),cr(40),0,Math.PI*2);
+      ctx.clip('evenodd');
+      glow();
+      ctx.beginPath(); ctx.arc(cx(196),cy(172),cr(65.44),0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx(174),cy(134),cr(9),0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx(152),cy(151),cr(5),0,Math.PI*2); ctx.fill();
+      const off=document.createElement('canvas');
+      off.width=canvas.width; off.height=canvas.height;
+      const o=off.getContext('2d');
+      o.fillStyle=color;
+      o.beginPath(); o.arc(cx(223),cy(183),cr(38),0,Math.PI*2); o.fill();
+      o.globalCompositeOperation='destination-out';
+      o.beginPath(); o.arc(cx(243),cy(178),cr(40),0,Math.PI*2); o.fill();
+      ctx.shadowColor=color; ctx.shadowBlur=5; ctx.drawImage(off,0,0);
+      ctx.restore();
+      ctx.shadowColor=color; ctx.shadowBlur=5;
+      ctx.beginPath(); ctx.arc(cx(243),cy(178),cr(40),0,Math.PI*2); ctx.stroke();
+    }
+
+    // ── GM layer ──────────────────────────────────────────────────
+    function openGmOverlay() {
+      const hash = getMeta('gm-pw-hash');
+      if (!hash) return; // no password set, no GM layer
+      document.getElementById('gm-pw-input').value = '';
+      document.getElementById('gm-overlay').classList.remove('hidden');
+      setTimeout(() => document.getElementById('gm-pw-input').focus(), 50);
+    }
+    function closeGmOverlay() {
+      document.getElementById('gm-overlay').classList.add('hidden');
+    }
+    async function tryGmUnlock() {
+      const pw     = document.getElementById('gm-pw-input').value;
+      const stored = getMeta('gm-pw-hash');
+      if (!pw || !stored) { closeGmOverlay(); return; }
+      const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+      const hash = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      closeGmOverlay();
+      if (hash !== stored) return; // wrong password — silent fail
+      const encoded = getMeta('gm-content');
+      if (!encoded) { document.getElementById('gm-layer').style.display=''; return; }
+      try {
+        const data = JSON.parse(atob(encoded));
+        ['motives','secrets','plot-hooks','cast-notes'].forEach(key => {
+          const el = document.getElementById('gm-' + key);
+          if (el) el.innerHTML = data[key.replace('-','_')] || '<p>—</p>';
+        });
+      } catch(_) {}
+      document.getElementById('gm-layer').style.display = '';
+    }
+  </script>
+
+</body>
+</html>
