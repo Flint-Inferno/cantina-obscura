@@ -25,6 +25,9 @@ EDITOR_PORT       = 8082
 CANTINA_REPO      = Path(__file__).parent / 'cantina-obscura'
 MISSION_EDITOR_HTML = Path(__file__).parent / 'mission_editor.html'
 FONT_PATH         = Path(__file__).parent / 'AurebeshAF-Canon.otf'
+GH_OWNER          = 'Flint-Inferno'
+GH_REPO           = 'cantina-obscura'
+PAT_FILE          = Path(__file__).parent / 'gh_pat.txt'
 SCANNER_BEEP      = Path.home() / '.claude' / 'scanner_beep.wav'
 def _scanner_beep():
     if SCANNER_BEEP.exists():
@@ -172,6 +175,94 @@ def find_pair_for_uid(uid, pairs):
     return None
 
 
+# ── GitHub API helpers ────────────────────────────────────────────────────────
+
+def _load_pat():
+    """Return cached GitHub PAT, or prompt and save it."""
+    if PAT_FILE.exists():
+        pat = PAT_FILE.read_text().strip()
+        if pat:
+            return pat
+    print(f"\n  GitHub Personal Access Token needed to create live pages.")
+    print(f"  (Saved to {PAT_FILE.name} for future use.)")
+    pat = input("  PAT: ").strip()
+    if pat:
+        PAT_FILE.write_text(pat)
+    return pat or None
+
+
+def create_github_live_page(name, pat):
+    """Create live-page-links/{name}.html on GitHub from the mission template.
+
+    Fetches mission-template.html from the repo via GitHub API and PUTs the
+    new file into live-page-links/.  Returns the GitHub Pages URL on success,
+    or None on failure.
+    """
+    import urllib.error
+
+    gh_base = f'https://api.github.com/repos/{GH_OWNER}/{GH_REPO}/contents'
+    headers = {
+        'Authorization': f'Bearer {pat}',
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+    }
+
+    def _gh_get(path):
+        req = urllib.request.Request(f'{gh_base}/{path}', headers=headers)
+        with urllib.request.urlopen(req) as r:
+            return json.loads(r.read())
+
+    # Fetch template (content is already base64 from the API)
+    print("  Fetching mission template from GitHub...")
+    try:
+        tmpl = _gh_get('mission-template.html')
+    except urllib.error.HTTPError as e:
+        print(f"  ERROR: Could not fetch template ({e.code}).")
+        return None
+    encoded = tmpl['content'].replace('\n', '')  # strip newlines in base64 block
+
+    filepath = f'live-page-links/{name}.html'
+
+    # Check if file already exists (need SHA to overwrite)
+    sha = None
+    try:
+        existing = _gh_get(filepath)
+        sha = existing.get('sha')
+        ans = input(f"  '{name}.html' already exists. Overwrite? (y/n): ").strip().lower()
+        if ans != 'y':
+            # Return existing URL without re-creating
+            return f'{GITHUB_PAGES_BASE}/live-page-links/{name}.html'
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            print(f"  ERROR checking existing file: {e.code}")
+            return None
+        # 404 — new file, proceed
+
+    # PUT the new file
+    body = {
+        'message': f'Add tandem live page: {name}.html',
+        'content': encoded,
+    }
+    if sha:
+        body['sha'] = sha
+
+    req = urllib.request.Request(
+        f'{gh_base}/{filepath}',
+        data=json.dumps(body).encode(),
+        method='PUT',
+        headers={**headers, 'Content-Type': 'application/json'},
+    )
+    try:
+        with urllib.request.urlopen(req) as r:
+            json.loads(r.read())
+        print(f"  Created: {filepath}")
+    except urllib.error.HTTPError as e:
+        print(f"  ERROR creating page: {e.code} {e.read().decode()[:200]}")
+        return None
+
+    return f'{GITHUB_PAGES_BASE}/live-page-links/{name}.html'
+
+
 # ── Enrollment helpers ────────────────────────────────────────────────────────
 
 def scan_tag(dev, prompt="Place a tag on the pad..."):
@@ -200,6 +291,8 @@ def ask_url(label="Paste URL", existing=None, uid=None):
     print(f"\n  {label}{hint}")
     print("  (A) Paste a link")
     print("  (B) Create / Edit a mission page")
+    if uid is None:
+        print("  (C) Create a named live page on GitHub  ← new tandem page")
     print("  (S) Skip / leave unchanged")
 
     while True:
@@ -239,8 +332,24 @@ def ask_url(label="Paste URL", existing=None, uid=None):
             input("\n  Edit the page in the browser, click ▲ COMMIT, then press Enter here...")
             return url
 
+        elif choice == 'C' and uid is None:
+            while True:
+                name = input("  Page name (letters, numbers, hyphens — e.g. jabba-palace): ").strip()
+                if name and all(c.isalnum() or c == '-' for c in name):
+                    break
+                print("  Use letters, numbers, and hyphens only.")
+            pat = _load_pat()
+            if not pat:
+                print("  No PAT provided — cancelling.")
+                continue
+            url = create_github_live_page(name, pat)
+            if url:
+                print(f"\n  Tandem page URL: {url}")
+                return url
+            print("  Failed to create the live page. Try again or choose another option.")
+
         else:
-            print("  Enter A, B, or S.")
+            print("  Enter A, B, C, or S." if uid is None else "  Enter A, B, or S.")
 
 
 def verify_url(dev, pad_id, url):
