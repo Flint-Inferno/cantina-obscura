@@ -680,11 +680,13 @@
     /* ── Mobile responsive ───────────────────────────────────────── */
     @media (max-width: 700px) {
       /* Single-column layout */
-      #main { grid-template-columns: 1fr; }
-      #left-col { border-right: none; }
+      #main { display: flex; flex-direction: column; }
+      #left-col { border-right: none; flex: 1; min-height: 0; }
+      #left-col.col-hidden { display: none; }
       #left-tabs { display: none; }
       #preview-panel { display: none; }
-      #preview-panel.tab-active { display: block; }
+      #preview-panel.tab-active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+      #preview-panel.tab-active #preview-frame { flex: 1; height: auto; }
       #form-panel.tab-hidden { display: none; }
       #security-panel.panel-active { display: none; }
       #security-panel.tab-active { display: flex; }
@@ -1520,6 +1522,7 @@
     document.getElementById('form-panel').classList.toggle('tab-hidden', tab !== 'form');
     document.getElementById('security-panel').classList.toggle('tab-active', tab === 'security');
     document.getElementById('preview-panel').classList.toggle('tab-active', tab === 'preview');
+    document.getElementById('left-col').classList.toggle('col-hidden', tab === 'preview');
     document.getElementById('tab-form').classList.toggle('active', tab === 'form');
     document.getElementById('tab-security').classList.toggle('active', tab === 'security');
     document.getElementById('tab-preview').classList.toggle('active', tab === 'preview');
