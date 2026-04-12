@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHARACTER EDITOR // CANTINA OBSCURA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #060608;
+      --panel:   #0d0d12;
+      --border:  #1e2030;
+      --accent:  #f0c060;
+      --text:    #a0a8c0;
+      --dim:     #3a3d50;
+      --green:   #00cc88;
+      --red:     #cc3333;
+      --font:    'Share Tech Mono', monospace;
+      --font-hd: 'Orbitron', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); font-size: 0.8rem;
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    #topbar {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 1rem; background: var(--panel);
+      border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap;
+    }
+    #topbar .logo {
+      font-family: var(--font-hd); font-size: 0.65rem;
+      letter-spacing: 0.15em; color: var(--accent); opacity: 0.8; white-space: nowrap;
+    }
+    #topbar-view-label {
+      font-size: 0.7rem; color: var(--accent); opacity: 0.6;
+      letter-spacing: 0.1em; flex: 1;
+    }
+    #status-msg {
+      font-size: 0.7rem; letter-spacing: 0.08em; opacity: 0.6; text-align: right; white-space: nowrap;
+    }
+    #status-msg.ok  { color: var(--green); opacity: 1; }
+    #status-msg.err { color: var(--red);   opacity: 1; }
+
+    .btn {
+      font-family: var(--font); font-size: 0.7rem; letter-spacing: 0.1em;
+      padding: 0.35rem 0.9rem; border-radius: 2px; cursor: pointer;
+      border: 1px solid var(--dim); background: transparent; color: var(--text);
+      transition: border-color 0.15s, color 0.15s, background 0.15s; white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--text); color: #fff; }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.primary:hover { background: rgba(240,192,96,0.1); }
+    .btn.primary:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+    .btn.danger  { border-color: var(--red); color: var(--red); }
+    .btn.danger:hover { background: rgba(204,51,51,0.1); }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    #main { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── LEFT: form/roster panel ─────────────────────────────── */
+    #form-panel {
+      background: var(--panel); border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 1rem; display: flex;
+      flex-direction: column; gap: 0.85rem; width: 380px; flex-shrink: 0;
+    }
+    #form-panel::-webkit-scrollbar { width: 4px; }
+    #form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── RIGHT: preview panel ────────────────────────────────── */
+    #preview-panel {
+      flex: 1; background: #000; overflow: hidden; position: relative;
+    }
+    #preview-label {
+      position: absolute; top: 0.5rem; left: 0.75rem;
+      font-size: 0.55rem; letter-spacing: 0.15em;
+      color: var(--accent); opacity: 0.35; z-index: 10; pointer-events: none;
+    }
+    #preview-frame { width: 100%; height: 100%; border: none; background: #000; }
+
+    /* ── Form shared ─────────────────────────────────────────── */
+    .section-heading {
+      font-size: 0.55rem; letter-spacing: 0.2em; color: var(--accent);
+      opacity: 0.5; border-bottom: 1px solid var(--border);
+      padding-bottom: 0.25rem; text-transform: uppercase;
+    }
+    .field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .field label { font-size: 0.6rem; letter-spacing: 0.14em; opacity: 0.55; text-transform: uppercase; }
+    .field input, .field textarea, .field select {
+      font-family: var(--font); font-size: 0.78rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.35rem 0.5rem; width: 100%; outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--dim); color: #d0d8f0;
+    }
+    .field select option { background: #111; }
+    .field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+    /* ── Color row ───────────────────────────────────────────── */
+    .color-row {
+      display: flex; align-items: center; gap: 0.4rem; margin-top: 0.25rem;
+    }
+    .color-row label { font-size: 0.58rem; letter-spacing: 0.1em; opacity: 0.5; width: 60px; flex-shrink: 0; }
+    .color-row input[type="color"] {
+      width: 26px; height: 20px; padding: 1px 2px;
+      border: 1px solid var(--border); background: var(--bg);
+      cursor: pointer; border-radius: 2px; flex-shrink: 0;
+    }
+    .color-row input[type="text"] {
+      font-family: var(--font); font-size: 0.72rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.18rem 0.4rem; flex: 1; outline: none; min-width: 0;
+    }
+    .color-row input[type="text"]:focus { border-color: var(--dim); }
+
+    /* ── Portrait / watermark upload rows ───────────────────── */
+    .upload-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .upload-btn {
+      font-family: var(--font); font-size: 0.62rem; letter-spacing: 0.08em;
+      padding: 0.2rem 0.55rem; border: 1px solid var(--dim);
+      background: transparent; color: var(--text); border-radius: 2px;
+      cursor: pointer; white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .upload-btn:hover { border-color: var(--text); color: #fff; }
+    .preview-thumb {
+      width: 36px; height: 48px; object-fit: cover; object-position: top;
+      border: 1px solid var(--border); border-radius: 1px;
+      display: none; background: #000; flex-shrink: 0;
+    }
+    .clear-btn {
+      font-family: var(--font); font-size: 0.6rem;
+      padding: 0.15rem 0.4rem; border: 1px solid var(--dim);
+      background: transparent; color: var(--red); border-radius: 2px;
+      cursor: pointer; display: none;
+    }
+    .clear-btn:hover { border-color: var(--red); }
+    .wm-preview-swatch {
+      width: 36px; height: 36px; border-radius: 2px;
+      border: 1px solid var(--border); display: none; flex-shrink: 0;
+    }
+
+    /* ── Rich-text toolbar + editor ─────────────────────────── */
+    .rt-wrap { display: flex; flex-direction: column; gap: 0; }
+    .rt-toolbar {
+      display: flex; flex-wrap: wrap; gap: 2px;
+      padding: 0.25rem 0.3rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-bottom: none; border-radius: 2px 2px 0 0;
+    }
+    .rt-btn {
+      font-family: var(--font); font-size: 0.68rem;
+      padding: 0.15rem 0.45rem; border: 1px solid transparent;
+      background: transparent; color: var(--text);
+      border-radius: 2px; cursor: pointer; letter-spacing: 0.06em;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .rt-btn:hover { border-color: var(--dim); background: rgba(255,255,255,0.04); }
+    .rt-btn.active { border-color: var(--accent); color: var(--accent); }
+    .rt-btn b { font-weight: bold; }
+    .rt-btn i { font-style: italic; }
+    .rt-color-wrap { position: relative; display: inline-flex; align-items: center; }
+    .rt-color-input {
+      position: absolute; width: 26px; height: 22px; opacity: 0;
+      cursor: pointer; left: 0; top: 0;
+    }
+    .rt-field {
+      font-family: var(--font); font-size: 0.78rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 0 0 2px 2px;
+      padding: 0.35rem 0.5rem; min-height: 80px;
+      outline: none; line-height: 1.6;
+      transition: border-color 0.15s;
+    }
+    .rt-field:focus { border-color: var(--dim); }
+    .rt-field a { color: var(--accent); text-decoration: underline; }
+
+    /* ── Associates manager ──────────────────────────────────── */
+    #associates-list { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem; }
+    .assoc-row {
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .assoc-name-input {
+      font-family: var(--font); font-size: 0.75rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.25rem 0.45rem; flex: 1; outline: none;
+    }
+    .assoc-url-input {
+      font-family: var(--font); font-size: 0.68rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.25rem 0.45rem; flex: 1; outline: none; opacity: 0.65;
+    }
+    .assoc-del-btn {
+      font-size: 0.65rem; padding: 0.2rem 0.4rem;
+      border: 1px solid var(--dim); background: transparent;
+      color: var(--red); border-radius: 2px; cursor: pointer; flex-shrink: 0;
+    }
+
+    /* ── Roster view ─────────────────────────────────────────── */
+    #roster-view { display: flex; flex-direction: column; gap: 0.5rem; }
+    #roster-char-list { display: flex; flex-direction: column; gap: 0.3rem; }
+    .rchar-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border); border-radius: 2px;
+      background: var(--bg); cursor: pointer;
+      transition: border-color 0.12s;
+    }
+    .rchar-row:hover { border-color: var(--accent); }
+    .rchar-thumb {
+      width: 28px; height: 37px; object-fit: cover; object-position: top;
+      border: 1px solid var(--border); border-radius: 1px;
+      background: var(--dim); flex-shrink: 0;
+    }
+    .rchar-info { flex: 1; min-width: 0; }
+    .rchar-name { font-size: 0.8rem; letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rchar-occ  { font-size: 0.6rem; opacity: 0.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rchar-reorder { display: flex; flex-direction: column; gap: 1px; }
+    .reorder-btn {
+      font-size: 0.55rem; padding: 0.05rem 0.3rem;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text); border-radius: 1px; cursor: pointer; line-height: 1;
+      transition: border-color 0.12s;
+    }
+    .reorder-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .rchar-del {
+      font-size: 0.62rem; padding: 0.2rem 0.4rem;
+      border: 1px solid var(--dim); background: transparent;
+      color: var(--red); border-radius: 2px; cursor: pointer; flex-shrink: 0;
+    }
+    .rchar-del:hover { border-color: var(--red); }
+
+    /* ── Overlays ─────────────────────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.94);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    .overlay.hidden { display: none; }
+    .overlay-box {
+      background: var(--panel); border: 1px solid var(--accent);
+      border-radius: 4px; padding: 1.5rem 2rem;
+      width: min(420px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    .overlay-box h2 {
+      font-family: var(--font-hd); font-size: 0.7rem;
+      letter-spacing: 0.2em; color: var(--accent);
+    }
+    .overlay-box p { font-size: 0.7rem; line-height: 1.6; opacity: 0.7; }
+    .overlay-box p strong { color: var(--accent); opacity: 1; }
+    .overlay-input {
+      font-family: var(--font); font-size: 0.78rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.4rem 0.6rem; width: 100%; outline: none;
+    }
+    .overlay-input:focus { border-color: var(--accent); }
+    .overlay-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+    .overlay-status { font-size: 0.65rem; min-height: 1rem; color: var(--red); }
+    .overlay-status.ok { color: var(--green); }
+
+    /* Link picker tabs */
+    #link-picker-tabs { display: flex; gap: 0.3rem; }
+    .lp-tab {
+      font-family: var(--font); font-size: 0.6rem; letter-spacing: 0.1em;
+      padding: 0.2rem 0.6rem; border: 1px solid var(--border);
+      background: transparent; color: var(--text); opacity: 0.5;
+      border-radius: 2px; cursor: pointer; transition: all 0.12s;
+    }
+    .lp-tab.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    #link-picker-list {
+      max-height: 180px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 0.2rem;
+    }
+    #link-picker-list::-webkit-scrollbar { width: 4px; }
+    #link-picker-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .lp-item {
+      font-size: 0.75rem; padding: 0.3rem 0.5rem;
+      border: 1px solid transparent; border-radius: 2px;
+      cursor: pointer; transition: all 0.1s;
+    }
+    .lp-item:hover { border-color: var(--accent); color: var(--accent); }
+    #link-manual-input {
+      font-family: var(--font); font-size: 0.75rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.35rem 0.5rem; width: 100%; outline: none; display: none;
+    }
+    #link-manual-input:focus { border-color: var(--dim); }
+
+    /* GM section in editor */
+    .gm-section-wrap {
+      border: 1px solid rgba(204,51,51,0.3);
+      border-left: 3px solid var(--red);
+      border-radius: 2px; padding: 0.65rem 0.75rem;
+    }
+    .gm-section-heading {
+      font-size: 0.55rem; letter-spacing: 0.2em; color: var(--red);
+      opacity: 0.7; border-bottom: 1px solid rgba(204,51,51,0.2);
+      padding-bottom: 0.25rem; margin-bottom: 0.6rem; text-transform: uppercase;
+    }
+    #gm-pw-row {
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem;
+    }
+    #gm-pw-row label { font-size: 0.58rem; opacity: 0.5; letter-spacing: 0.1em; flex-shrink: 0; }
+    #f-gm-password {
+      font-family: var(--font); font-size: 0.75rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.3rem 0.45rem; flex: 1; outline: none;
+    }
+    #f-gm-password:disabled { opacity: 0.3; cursor: not-allowed; }
+    #gm-pw-lock-note { font-size: 0.58rem; opacity: 0.35; letter-spacing: 0.06em; }
+
+    /* Mobile tabs */
+    #mobile-tabs { display: none; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 720px) {
+      #main { flex-direction: column; }
+      #form-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex-shrink: 0; max-height: 55vh; }
+      #preview-panel { height: 45vh; }
+      #preview-panel.tab-active { display: block; height: calc(100vh - 44px - 44px); }
+      #preview-panel.tab-hidden { display: none; }
+      #form-panel.tab-hidden { display: none; }
+      #form-panel.tab-active { max-height: none; flex: 1; }
+      #mobile-tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+      .mobile-tab {
+        flex: 1; font-family: var(--font); font-size: 0.72rem; letter-spacing: 0.12em;
+        padding: 0.65rem; border: none; border-bottom: 2px solid transparent;
+        background: transparent; color: var(--text); opacity: 0.5; cursor: pointer;
+        transition: all 0.15s;
+      }
+      .mobile-tab.active { color: var(--accent); opacity: 1; border-bottom-color: var(--accent); }
+      .btn { padding: 0.55rem 0.75rem; font-size: 0.72rem; }
+      .field input, .field textarea, .field select { font-size: 1rem; padding: 0.5rem 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── PAT overlay ──────────────────────────────────────────── -->
+  <div id="pat-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>⚿ GITHUB TOKEN</h2>
+      <p>Enter a classic GitHub PAT with <code>repo</code> scope.<br>Stored in localStorage only — never sent anywhere except GitHub's API.</p>
+      <input type="password" class="overlay-input" id="pat-input" placeholder="ghp_..." spellcheck="false">
+      <div class="overlay-actions">
+        <button class="btn" onclick="closePat()">CANCEL</button>
+        <button class="btn primary" onclick="savePat()">SAVE TOKEN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Commit confirm overlay ───────────────────────────────── -->
+  <div id="commit-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>▲ CONFIRM COMMIT</h2>
+      <p>Push <strong id="commit-desc"></strong> to GitHub Pages?<br>Changes go live immediately.</p>
+      <div class="overlay-actions">
+        <button class="btn" onclick="cancelCommit()">CANCEL</button>
+        <button class="btn primary" onclick="confirmCommit()">PUSH LIVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete confirm overlay ───────────────────────────────── -->
+  <div id="delete-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>✕ DELETE CHARACTER</h2>
+      <p>Remove <strong id="delete-name"></strong> from the roster?<br>Their bio file will remain on GitHub but be removed from the roster index.</p>
+      <div class="overlay-actions">
+        <button class="btn" onclick="cancelDelete()">CANCEL</button>
+        <button class="btn danger" onclick="confirmDelete()">REMOVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Link picker overlay ──────────────────────────────────── -->
+  <div id="link-overlay" class="overlay hidden">
+    <div class="overlay-box" style="width:min(460px,calc(100vw - 2rem));">
+      <h2>↗ INSERT LINK</h2>
+      <div id="link-picker-tabs">
+        <button class="lp-tab active" onclick="setLpTab('characters')">CHARACTERS</button>
+        <button class="lp-tab"        onclick="setLpTab('missions')">MISSIONS</button>
+        <button class="lp-tab"        onclick="setLpTab('manual')">MANUAL URL</button>
+      </div>
+      <div id="link-picker-list"></div>
+      <input type="url" id="link-manual-input" placeholder="https://..." spellcheck="false">
+      <div class="overlay-actions">
+        <button class="btn" onclick="cancelLink()">CANCEL</button>
+        <button class="btn primary" onclick="confirmLink()">INSERT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Change GM password overlay ───────────────────────────── -->
+  <div id="changegmpw-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>◈ CHANGE GM PASSWORD</h2>
+      <p>Sets the password cast members use to view restricted info on this character's bio page.</p>
+      <input type="password" class="overlay-input" id="changegmpw-input"   placeholder="New password" spellcheck="false">
+      <input type="password" class="overlay-input" id="changegmpw-confirm" placeholder="Confirm password" spellcheck="false">
+      <div class="overlay-status" id="changegmpw-status"></div>
+      <div class="overlay-actions">
+        <button class="btn" onclick="closeGmPwOverlay()">CANCEL</button>
+        <button class="btn primary" onclick="confirmGmPwChange()">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Top bar ──────────────────────────────────────────────── -->
+  <div id="topbar">
+    <div class="logo">◈ CHARACTER EDITOR</div>
+    <span id="topbar-view-label">ROSTER</span>
+    <div id="status-msg">LOADING...</div>
+    <button class="btn" id="token-btn"  onclick="openPat()" title="Set GitHub PAT">⚿ TOKEN</button>
+    <button class="btn primary" id="save-roster-btn" onclick="saveRoster()" disabled>▲ SAVE ROSTER</button>
+    <button class="btn primary" id="save-char-btn"   onclick="saveCharacter()" style="display:none" disabled>▲ SAVE CHARACTER</button>
+  </div>
+
+  <!-- ── Mobile tab bar ───────────────────────────────────────── -->
+  <div id="mobile-tabs">
+    <button class="mobile-tab active" id="tab-form"    onclick="setMobileTab('form')">✏ EDIT</button>
+    <button class="mobile-tab"        id="tab-preview" onclick="setMobileTab('preview')">◉ PREVIEW</button>
+  </div>
+
+  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <div id="main">
+
+    <!-- LEFT: roster view OR bio editor -->
+    <div id="form-panel">
+
+      <!-- ── ROSTER VIEW ────────────────────────────────────── -->
+      <div id="roster-view">
+        <div>
+          <div class="section-heading">Character Roster</div>
+          <div style="margin-top:0.5rem;margin-bottom:0.5rem;">
+            <button class="btn primary" onclick="newCharacter()" style="width:100%">+ NEW CHARACTER</button>
+          </div>
+          <div id="roster-char-list">
+            <div style="opacity:0.35;font-size:0.72rem;padding:1rem 0;text-align:center;">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BIO EDITOR (hidden until character opened) ──────── -->
+      <div id="bio-view" style="display:none;">
+
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
+          <button class="btn" onclick="backToRoster()" style="font-size:0.65rem;padding:0.25rem 0.6rem;">◄ ROSTER</button>
+          <span style="font-size:0.6rem;opacity:0.4;letter-spacing:0.1em;" id="bio-editing-label">EDITING: —</span>
+        </div>
+
+        <!-- Identity -->
+        <div>
+          <div class="section-heading">Identity</div>
+          <div class="field" style="margin-top:0.5rem;">
+            <label>Character Name</label>
+            <input type="text" id="f-name" placeholder="Name" spellcheck="false">
+          </div>
+          <div class="field" style="margin-top:0.5rem;">
+            <label>Name in Aurebesh (same text, different font)</label>
+            <input type="text" id="f-aur-name" placeholder="Same as name — or override" spellcheck="false">
+          </div>
+          <div class="field-row" style="margin-top:0.5rem;">
+            <div class="field">
+              <label>File Slug</label>
+              <input type="text" id="f-slug" placeholder="greedo" spellcheck="false">
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select id="f-status">
+                <option value="active">Active</option>
+                <option value="missing">Missing</option>
+                <option value="deceased">Deceased</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row" style="margin-top:0.5rem;">
+            <div class="field">
+              <label>Species</label>
+              <input type="text" id="f-species" placeholder="Human" spellcheck="false">
+            </div>
+            <div class="field">
+              <label>Homeworld</label>
+              <input type="text" id="f-homeworld" placeholder="Unknown" spellcheck="false">
+            </div>
+          </div>
+          <div class="field-row" style="margin-top:0.5rem;">
+            <div class="field">
+              <label>Occupation</label>
+              <input type="text" id="f-occupation" placeholder="Smuggler" spellcheck="false">
+            </div>
+            <div class="field">
+              <label>Affiliation</label>
+              <input type="text" id="f-affiliation" placeholder="Independent" spellcheck="false">
+            </div>
+          </div>
+        </div>
+
+        <!-- Portrait -->
+        <div>
+          <div class="section-heading">Portrait</div>
+          <div class="upload-row" style="margin-top:0.5rem;">
+            <label class="upload-btn" for="portrait-file-input">▲ UPLOAD PORTRAIT</label>
+            <input type="file" id="portrait-file-input" accept="image/*" style="display:none" onchange="handlePortraitUpload(this)">
+            <img id="portrait-thumb" class="preview-thumb" alt="">
+            <button class="clear-btn" id="portrait-clear-btn" onclick="clearPortrait()">✕</button>
+          </div>
+          <div style="font-size:0.58rem;opacity:0.35;margin-top:0.3rem;letter-spacing:0.06em;">Committed to characters/portraits/{slug}.jpg</div>
+        </div>
+
+        <!-- Visual style -->
+        <div>
+          <div class="section-heading">Visual Style</div>
+          <div style="margin-top:0.4rem;margin-bottom:0.25rem;font-size:0.58rem;opacity:0.45;letter-spacing:0.1em;">BACKGROUND COLOR</div>
+          <div class="color-row">
+            <label>--bg</label>
+            <input type="color" id="color-bg" value="#0d0b07">
+            <input type="text"  id="hex-bg"   value="#0d0b07" maxlength="7" placeholder="#0d0b07">
+          </div>
+          <div class="color-row">
+            <label>--text</label>
+            <input type="color" id="color-text" value="#d4a843">
+            <input type="text"  id="hex-text"   value="#d4a843" maxlength="7" placeholder="#d4a843">
+          </div>
+          <div class="color-row">
+            <label>--accent</label>
+            <input type="color" id="color-accent" value="#f0c060">
+            <input type="text"  id="hex-accent"   value="#f0c060" maxlength="7" placeholder="#f0c060">
+          </div>
+          <div class="color-row">
+            <label>--border</label>
+            <input type="color" id="color-border" value="#3a2e14">
+            <input type="text"  id="hex-border"   value="#3a2e14" maxlength="7" placeholder="#3a2e14">
+          </div>
+          <div class="color-row">
+            <label>--dim</label>
+            <input type="color" id="color-dim" value="#1a1508">
+            <input type="text"  id="hex-dim"   value="#1a1508" maxlength="7" placeholder="#1a1508">
+          </div>
+
+          <div style="margin-top:0.75rem;margin-bottom:0.25rem;font-size:0.58rem;opacity:0.45;letter-spacing:0.1em;">WATERMARK</div>
+          <div class="upload-row">
+            <label class="upload-btn" for="wm-file-input">▲ UPLOAD PNG</label>
+            <input type="file" id="wm-file-input" accept="image/png,image/svg+xml,image/*" style="display:none" onchange="handleWmUpload(this)">
+            <div id="wm-preview-swatch" class="wm-preview-swatch"></div>
+            <button class="clear-btn" id="wm-clear-btn" onclick="clearWatermark()">✕ PNG</button>
+          </div>
+          <div class="color-row" style="margin-top:0.4rem;">
+            <label>Color</label>
+            <input type="color" id="color-wm" value="#f0c060">
+            <input type="text"  id="hex-wm"   value="#f0c060" maxlength="7" placeholder="#f0c060">
+          </div>
+        </div>
+
+        <!-- Background section -->
+        <div>
+          <div class="section-heading">Background</div>
+          <div class="rt-wrap" style="margin-top:0.5rem;" data-section="background">
+            <div class="rt-toolbar">
+              <button class="rt-btn" onclick="rtCmd('bold')"      title="Bold"><b>B</b></button>
+              <button class="rt-btn" onclick="rtCmd('italic')"    title="Italic"><i>I</i></button>
+              <button class="rt-btn" onclick="rtCmd('underline')" title="Underline"><u>U</u></button>
+              <div class="rt-color-wrap" title="Text color">
+                <button class="rt-btn">A</button>
+                <input type="color" class="rt-color-input" onchange="rtColor(this.value)">
+              </div>
+              <button class="rt-btn" onclick="openLinkPicker()" title="Link">↗ LINK</button>
+            </div>
+            <div class="rt-field" id="rt-background" contenteditable="true" spellcheck="false"
+                 data-placeholder="Character background..."
+                 onfocus="setActiveRt(this)" oninput="schedulePreview()">
+              <p>[ No background on file. ]</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skills section -->
+        <div>
+          <div class="section-heading">Known Skills &amp; Abilities</div>
+          <div class="rt-wrap" style="margin-top:0.5rem;" data-section="skills">
+            <div class="rt-toolbar">
+              <button class="rt-btn" onclick="rtCmd('bold')"          title="Bold"><b>B</b></button>
+              <button class="rt-btn" onclick="rtCmd('italic')"        title="Italic"><i>I</i></button>
+              <button class="rt-btn" onclick="rtCmd('underline')"     title="Underline"><u>U</u></button>
+              <div class="rt-color-wrap" title="Text color">
+                <button class="rt-btn">A</button>
+                <input type="color" class="rt-color-input" onchange="rtColor(this.value)">
+              </div>
+              <button class="rt-btn" onclick="openLinkPicker()" title="Link">↗ LINK</button>
+              <button class="rt-btn" id="skills-list-btn" onclick="toggleSkillsList()" title="Toggle bullet list">≡ LIST</button>
+            </div>
+            <div class="rt-field" id="rt-skills" contenteditable="true" spellcheck="false"
+                 data-placeholder="Known abilities..."
+                 onfocus="setActiveRt(this)" oninput="schedulePreview()">
+              <ul><li>Unknown</li></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Associates -->
+        <div>
+          <div class="section-heading">Known Associates</div>
+          <div id="associates-list" style="margin-top:0.4rem;"></div>
+          <button class="btn" onclick="addAssociate()" style="margin-top:0.4rem;font-size:0.62rem;padding:0.2rem 0.6rem;">+ ADD ASSOCIATE</button>
+        </div>
+
+        <!-- Location -->
+        <div>
+          <div class="section-heading">Last Known Location</div>
+          <div class="field" style="margin-top:0.5rem;">
+            <textarea id="f-location" rows="2" placeholder="Last known whereabouts..."></textarea>
+          </div>
+        </div>
+
+        <!-- GM notes -->
+        <div class="gm-section-wrap">
+          <div class="gm-section-heading">◈ GM — RESTRICTED</div>
+          <div id="gm-pw-row">
+            <label>GM PASSWORD</label>
+            <input type="password" id="f-gm-password" placeholder="Set password..." spellcheck="false" disabled>
+            <button class="btn" id="gm-pw-change-btn" onclick="openGmPwOverlay()" style="font-size:0.6rem;padding:0.2rem 0.5rem;display:none;">CHANGE</button>
+          </div>
+          <span id="gm-pw-lock-note">PAT required to change GM password</span>
+
+          <div class="field" style="margin-top:0.5rem;">
+            <label>Motives</label>
+            <div class="rt-wrap" data-section="gm-motives">
+              <div class="rt-toolbar">
+                <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
+                <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
+                <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
+                <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
+              </div>
+              <div class="rt-field" id="rt-gm-motives" contenteditable="true" spellcheck="false"
+                   onfocus="setActiveRt(this)" oninput="schedulePreview()">
+                <p>—</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:0.5rem;">
+            <label>Secrets</label>
+            <div class="rt-wrap" data-section="gm-secrets">
+              <div class="rt-toolbar">
+                <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
+                <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
+                <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
+                <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
+              </div>
+              <div class="rt-field" id="rt-gm-secrets" contenteditable="true" spellcheck="false"
+                   onfocus="setActiveRt(this)" oninput="schedulePreview()">
+                <p>—</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:0.5rem;">
+            <label>Plot Hooks</label>
+            <div class="rt-wrap" data-section="gm-plot-hooks">
+              <div class="rt-toolbar">
+                <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
+                <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
+                <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
+                <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
+              </div>
+              <div class="rt-field" id="rt-gm-plot-hooks" contenteditable="true" spellcheck="false"
+                   onfocus="setActiveRt(this)" oninput="schedulePreview()">
+                <p>—</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:0.5rem;">
+            <label>Cast Notes</label>
+            <div class="rt-wrap" data-section="gm-cast-notes">
+              <div class="rt-toolbar">
+                <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
+                <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
+                <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
+                <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
+              </div>
+              <div class="rt-field" id="rt-gm-cast-notes" contenteditable="true" spellcheck="false"
+                   onfocus="setActiveRt(this)" oninput="schedulePreview()">
+                <p>—</p>
+              </div>
+            </div>
+          </div>
+        </div><!-- /.gm-section-wrap -->
+
+      </div><!-- /#bio-view -->
+    </div><!-- /#form-panel -->
+
+    <!-- RIGHT: preview -->
+    <div id="preview-panel">
+      <div id="preview-label">LIVE PREVIEW</div>
+      <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+  </div><!-- /#main -->
+
+  <script>
+  // ═══════════════════════════════════════════════════════════
+  //  CONSTANTS
+  // ═══════════════════════════════════════════════════════════
+  const GH_OWNER    = 'Flint-Inferno';
+  const GH_REPO     = 'cantina-obscura';
+  const GH_CHARS    = 'characters';
+  const GH_MISSIONS = 'live-page-links';
+  const CHAR_TEMPLATE_PATH = 'character-template.html';
+  const ROSTER_PATH        = 'characters/index.html';
+
+  // ═══════════════════════════════════════════════════════════
+  //  STATE
+  // ═══════════════════════════════════════════════════════════
+  let roster         = [];   // [{slug, name, occupation, portrait}]
+  let rosterDirty    = false;
+  let currentSlug    = null; // slug of character being edited
+  let charSha        = null; // GitHub SHA for current bio file
+  let portraitData   = null; // {data: 'data:...'} — loaded portrait
+  let portraitChanged= false;
+  let wmData         = null; // watermark PNG data URL
+  let rosterSha      = null; // GitHub SHA for roster index
+  let charTemplateHTML = '';
+  let previewDebounce  = null;
+  let activeRtField    = null;
+  let savedSelection   = null; // saved before link picker opens
+  let lpTab            = 'characters';
+  let lpItems          = [];
+  let gmPwHash         = ''; // current SHA-256 hash of GM password
+  let commitQueue      = null; // {type: 'char'|'roster'}
+  let pendingDeleteSlug= null;
+  let isOwner          = false;
+
+  // ═══════════════════════════════════════════════════════════
+  //  INIT
+  // ═══════════════════════════════════════════════════════════
+  window.addEventListener('DOMContentLoaded', async () => {
+    initColorSync();
+    const pat = localStorage.getItem('gh_pat');
+    if (!pat) {
+      openPat();
+    } else {
+      await checkOwner(pat);
+      await loadRoster();
+      await loadCharTemplate();
+    }
+    document.getElementById('form-panel').addEventListener('input', () => schedulePreview());
+  });
+
+  async function checkOwner(pat) {
+    try {
+      const res = await fetch('https://api.github.com/user', { headers: ghHeaders() });
+      if (res.ok) {
+        const user = await res.json();
+        isOwner = (user.login === GH_OWNER);
+      }
+    } catch(_) {}
+    updateOwnerUI();
+  }
+
+  function updateOwnerUI() {
+    document.getElementById('token-btn').style.display = '';
+    if (isOwner) {
+      document.getElementById('f-gm-password').disabled = false;
+      document.getElementById('gm-pw-change-btn').style.display = '';
+      document.getElementById('gm-pw-lock-note').style.display  = 'none';
+    } else {
+      document.getElementById('f-gm-password').disabled = true;
+      document.getElementById('gm-pw-change-btn').style.display = 'none';
+      document.getElementById('gm-pw-lock-note').style.display  = '';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  GITHUB API HELPERS
+  // ═══════════════════════════════════════════════════════════
+  function ghHeaders() {
+    return {
+      'Authorization': 'Bearer ' + (localStorage.getItem('gh_pat') || ''),
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+  }
+  function ghUrl(path) {
+    return `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
+  }
+  function b64enc(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  function b64encBinary(dataUrl) {
+    // dataUrl = 'data:image/jpeg;base64,...' — extract the base64 part
+    return dataUrl.split(',')[1];
+  }
+
+  async function ghGet(path) {
+    const res = await fetch(ghUrl(path), { headers: ghHeaders() });
+    if (!res.ok) { if (res.status === 404) return null; throw new Error(`HTTP ${res.status}`); }
+    return res.json();
+  }
+  async function ghPut(path, content, sha, message, isBinary = false) {
+    const body = { message, content: isBinary ? b64encBinary(content) : b64enc(content) };
+    if (sha) body.sha = sha;
+    const res = await fetch(ghUrl(path), {
+      method: 'PUT',
+      headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message || `HTTP ${res.status}`); }
+    return (await res.json()).content.sha;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PAT OVERLAY
+  // ═══════════════════════════════════════════════════════════
+  function openPat() {
+    document.getElementById('pat-input').value = localStorage.getItem('gh_pat') || '';
+    document.getElementById('pat-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('pat-input').focus(), 50);
+  }
+  function closePat() { document.getElementById('pat-overlay').classList.add('hidden'); }
+  async function savePat() {
+    const val = document.getElementById('pat-input').value.trim();
+    if (val) localStorage.setItem('gh_pat', val);
+    closePat();
+    await checkOwner(val);
+    await loadRoster();
+    await loadCharTemplate();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  LOAD ROSTER FROM GITHUB
+  // ═══════════════════════════════════════════════════════════
+  async function loadRoster() {
+    setStatus('LOADING ROSTER...', '');
+    try {
+      const data = await ghGet(ROSTER_PATH);
+      if (data) {
+        rosterSha = data.sha;
+        const html = atob(data.content.replace(/\n/g,''));
+        parseRosterFromHTML(html);
+      }
+      renderRosterList();
+      setStatus('READY', 'ok');
+      document.getElementById('save-roster-btn').disabled = false;
+    } catch(e) {
+      setStatus('LOAD ERROR: ' + e.message, 'err');
+    }
+  }
+
+  function parseRosterFromHTML(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const entries = doc.querySelectorAll('.roster-entry');
+    roster = Array.from(entries).map(el => {
+      const href = el.getAttribute('href') || '';
+      const slug = href.replace(/\.html$/, '').replace(/^.*\//, '');
+      const img  = el.querySelector('img.roster-thumb');
+      const name = el.querySelector('.entry-name')?.textContent.trim() || slug;
+      const occ  = el.querySelector('.entry-occupation')?.textContent.trim() || '';
+      return { slug, name, occupation: occ, portrait: img ? img.src : '' };
+    });
+  }
+
+  function renderRosterList() {
+    const list = document.getElementById('roster-char-list');
+    if (!roster.length) {
+      list.innerHTML = '<div style="opacity:0.35;font-size:0.72rem;padding:1rem 0;text-align:center;">No characters yet — add one above.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    roster.forEach((char, idx) => {
+      const row = document.createElement('div');
+      row.className = 'rchar-row';
+
+      // Thumbnail
+      const thumb = document.createElement('img');
+      thumb.className = 'rchar-thumb';
+      thumb.src = char.portrait || '';
+      thumb.alt = '';
+      thumb.onerror = () => { thumb.style.opacity = '0'; };
+      row.appendChild(thumb);
+
+      // Info
+      const info = document.createElement('div');
+      info.className = 'rchar-info';
+      info.innerHTML = `<div class="rchar-name">${esc(char.name)}</div><div class="rchar-occ">${esc(char.occupation)}</div>`;
+      info.style.cursor = 'pointer';
+      info.onclick = () => openCharEditor(char.slug);
+      row.appendChild(info);
+
+      // Reorder buttons
+      const reorder = document.createElement('div');
+      reorder.className = 'rchar-reorder';
+      const upBtn  = document.createElement('button');
+      upBtn.className  = 'reorder-btn'; upBtn.textContent = '▲'; upBtn.title = 'Move up';
+      upBtn.onclick = (e) => { e.stopPropagation(); moveChar(idx, -1); };
+      const dnBtn  = document.createElement('button');
+      dnBtn.className  = 'reorder-btn'; dnBtn.textContent = '▼'; dnBtn.title = 'Move down';
+      dnBtn.onclick = (e) => { e.stopPropagation(); moveChar(idx, 1); };
+      if (idx === 0) upBtn.disabled = true;
+      if (idx === roster.length - 1) dnBtn.disabled = true;
+      reorder.appendChild(upBtn); reorder.appendChild(dnBtn);
+      row.appendChild(reorder);
+
+      // Delete button
+      const del = document.createElement('button');
+      del.className = 'rchar-del'; del.textContent = '✕'; del.title = 'Remove from roster';
+      del.onclick = (e) => { e.stopPropagation(); openDeleteConfirm(char.slug, char.name); };
+      row.appendChild(del);
+
+      list.appendChild(row);
+    });
+  }
+
+  function moveChar(idx, dir) {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= roster.length) return;
+    [roster[idx], roster[newIdx]] = [roster[newIdx], roster[idx]];
+    rosterDirty = true;
+    renderRosterList();
+    schedulePreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  LOAD CHARACTER TEMPLATE
+  // ═══════════════════════════════════════════════════════════
+  async function loadCharTemplate() {
+    try {
+      const data = await ghGet(CHAR_TEMPLATE_PATH);
+      if (data) charTemplateHTML = atob(data.content.replace(/\n/g,''));
+    } catch(e) {
+      setStatus('TEMPLATE LOAD ERROR: ' + e.message, 'err');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  ROSTER VIEW ↔ BIO VIEW SWITCHING
+  // ═══════════════════════════════════════════════════════════
+  function showRosterView() {
+    document.getElementById('roster-view').style.display = '';
+    document.getElementById('bio-view').style.display    = 'none';
+    document.getElementById('topbar-view-label').textContent = 'ROSTER';
+    document.getElementById('save-roster-btn').style.display = '';
+    document.getElementById('save-char-btn').style.display   = 'none';
+    currentSlug = null;
+    charSha     = null;
+    refreshPreview();
+  }
+
+  function showBioView(slug) {
+    document.getElementById('roster-view').style.display = 'none';
+    document.getElementById('bio-view').style.display    = '';
+    document.getElementById('topbar-view-label').textContent = 'BIO — ' + slug.toUpperCase();
+    document.getElementById('save-roster-btn').style.display = 'none';
+    document.getElementById('save-char-btn').style.display   = '';
+    document.getElementById('save-char-btn').disabled = false;
+    document.getElementById('bio-editing-label').textContent = 'EDITING: ' + slug;
+  }
+
+  function backToRoster() {
+    showRosterView();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  NEW CHARACTER
+  // ═══════════════════════════════════════════════════════════
+  function newCharacter() {
+    clearBioForm();
+    currentSlug = 'new-character';
+    charSha     = null;
+    portraitData    = null;
+    portraitChanged = false;
+    wmData = null;
+    showBioView('new-character');
+    refreshPreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  OPEN EXISTING CHARACTER FOR EDITING
+  // ═══════════════════════════════════════════════════════════
+  async function openCharEditor(slug) {
+    setStatus('LOADING ' + slug + '...', '');
+    showBioView(slug);
+    currentSlug     = slug;
+    charSha         = null;
+    portraitData    = null;
+    portraitChanged = false;
+    wmData          = null;
+    clearBioForm();
+
+    try {
+      const data = await ghGet(GH_CHARS + '/' + slug + '.html');
+      if (data) {
+        charSha = data.sha;
+        const html = atob(data.content.replace(/\n/g,''));
+        populateBioFields(html);
+      }
+    } catch(e) {
+      setStatus('LOAD ERROR: ' + e.message, 'err');
+    }
+
+    setStatus('LOADED — ' + slug, 'ok');
+    refreshPreview();
+  }
+
+  function clearBioForm() {
+    document.getElementById('f-name').value        = '';
+    document.getElementById('f-aur-name').value    = '';
+    document.getElementById('f-slug').value        = '';
+    document.getElementById('f-status').value      = 'active';
+    document.getElementById('f-species').value     = '';
+    document.getElementById('f-homeworld').value   = '';
+    document.getElementById('f-occupation').value  = '';
+    document.getElementById('f-affiliation').value = '';
+    document.getElementById('f-location').value    = '';
+    document.getElementById('f-gm-password').value = '';
+    document.getElementById('rt-background').innerHTML    = '<p>[ No background on file. ]</p>';
+    document.getElementById('rt-skills').innerHTML        = '<ul><li>Unknown</li></ul>';
+    document.getElementById('rt-gm-motives').innerHTML    = '<p>—</p>';
+    document.getElementById('rt-gm-secrets').innerHTML    = '<p>—</p>';
+    document.getElementById('rt-gm-plot-hooks').innerHTML = '<p>—</p>';
+    document.getElementById('rt-gm-cast-notes').innerHTML = '<p>—</p>';
+    document.getElementById('associates-list').innerHTML  = '';
+    clearPortrait();
+    clearWatermark();
+    gmPwHash = '';
+  }
+
+  function populateBioFields(html) {
+    const doc  = new DOMParser().parseFromString(html, 'text/html');
+    const meta = name => doc.querySelector(`meta[name="${name}"]`)?.getAttribute('content') || '';
+
+    document.getElementById('f-slug').value        = meta('char-slug')        || currentSlug;
+    document.getElementById('f-name').value        = meta('char-name')        || '';
+    document.getElementById('f-aur-name').value    = meta('char-aur-name')    || '';
+    document.getElementById('f-status').value      = meta('char-status')      || 'active';
+    document.getElementById('f-species').value     = meta('char-species')     || '';
+    document.getElementById('f-homeworld').value   = meta('char-homeworld')   || '';
+    document.getElementById('f-occupation').value  = meta('char-occupation')  || '';
+    document.getElementById('f-affiliation').value = meta('char-affiliation') || '';
+
+    gmPwHash = meta('gm-pw-hash');
+    if (gmPwHash) document.getElementById('f-gm-password').value = '••••••••';
+
+    // CSS colors
+    const getVar = name => { const m = html.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{3,8})')); return m ? m[1] : null; };
+    setColorVal('bg',     getVar('--bg')     || '#0d0b07');
+    setColorVal('text',   getVar('--text')   || '#d4a843');
+    setColorVal('accent', getVar('--accent') || '#f0c060');
+    setColorVal('border', getVar('--border') || '#3a2e14');
+    setColorVal('dim',    getVar('--dim')    || '#1a1508');
+
+    // Watermark
+    const wmColor = meta('char-watermark-color') || '#f0c060';
+    const wmImg   = meta('char-watermark-data');
+    setColorVal('wm', wmColor);
+    if (wmImg) {
+      wmData = wmImg;
+      showWmPreview(wmColor);
+    }
+
+    // Portrait
+    const portrait = meta('char-portrait');
+    if (portrait) {
+      // Show thumbnail from GitHub Pages URL
+      const thumb = document.getElementById('portrait-thumb');
+      thumb.src = `https://${GH_OWNER.toLowerCase()}.github.io/${GH_REPO}/${GH_CHARS}/${portrait}`;
+      thumb.style.display = 'block';
+      document.getElementById('portrait-clear-btn').style.display = '';
+    }
+
+    // Rich text sections
+    const setRt = (id, selector) => {
+      const el = doc.querySelector(selector);
+      if (el) document.getElementById(id).innerHTML = el.innerHTML;
+    };
+    setRt('rt-background', '[data-section="background"]');
+    setRt('rt-skills',     '[data-section="skills"]');
+
+    // Location
+    const locEl = doc.querySelector('[data-section="location"]');
+    if (locEl) document.getElementById('f-location').value = locEl.textContent.trim();
+
+    // Associates
+    const assocEl = doc.querySelector('[data-section="associates"]');
+    if (assocEl) {
+      const links = assocEl.querySelectorAll('a.associate-link');
+      links.forEach(a => addAssociate(a.textContent.trim(), a.getAttribute('href') || ''));
+    }
+
+    // GM content (decode)
+    const gmEnc = meta('gm-content');
+    if (gmEnc) {
+      try {
+        const gmData = JSON.parse(atob(gmEnc));
+        if (gmData.motives)    document.getElementById('rt-gm-motives').innerHTML    = gmData.motives;
+        if (gmData.secrets)    document.getElementById('rt-gm-secrets').innerHTML    = gmData.secrets;
+        if (gmData.plot_hooks) document.getElementById('rt-gm-plot-hooks').innerHTML = gmData.plot_hooks;
+        if (gmData.cast_notes) document.getElementById('rt-gm-cast-notes').innerHTML = gmData.cast_notes;
+      } catch(_) {}
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  COLOR INPUTS
+  // ═══════════════════════════════════════════════════════════
+  const COLOR_IDS = ['bg','text','accent','border','dim','wm'];
+  function setColorVal(id, hex) {
+    document.getElementById('color-' + id).value = hex;
+    document.getElementById('hex-' + id).value   = hex;
+  }
+  function getColorVal(id) {
+    const hex = document.getElementById('hex-' + id).value.trim();
+    return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : document.getElementById('color-' + id).value;
+  }
+  function initColorSync() {
+    COLOR_IDS.forEach(id => {
+      const picker = document.getElementById('color-' + id);
+      const hex    = document.getElementById('hex-' + id);
+      if (!picker || !hex) return;
+      picker.addEventListener('input', () => { hex.value = picker.value; schedulePreview(); });
+      hex.addEventListener('input', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value;
+        schedulePreview();
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PORTRAIT UPLOAD
+  // ═══════════════════════════════════════════════════════════
+  function handlePortraitUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      portraitData    = { data: e.target.result };
+      portraitChanged = true;
+      const thumb = document.getElementById('portrait-thumb');
+      thumb.src = e.target.result;
+      thumb.style.display = 'block';
+      document.getElementById('portrait-clear-btn').style.display = '';
+      schedulePreview();
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+  function clearPortrait() {
+    portraitData    = null;
+    portraitChanged = false;
+    const thumb = document.getElementById('portrait-thumb');
+    thumb.src = ''; thumb.style.display = 'none';
+    document.getElementById('portrait-clear-btn').style.display = 'none';
+    schedulePreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  WATERMARK UPLOAD
+  // ═══════════════════════════════════════════════════════════
+  function handleWmUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      wmData = e.target.result;
+      showWmPreview(getColorVal('wm'));
+      schedulePreview();
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+  function showWmPreview(color) {
+    const swatch = document.getElementById('wm-preview-swatch');
+    swatch.style.display = 'block';
+    swatch.style.backgroundColor = color;
+    swatch.style.filter = `drop-shadow(0 0 6px ${color})`;
+    document.getElementById('wm-clear-btn').style.display = '';
+  }
+  function clearWatermark() {
+    wmData = null;
+    const swatch = document.getElementById('wm-preview-swatch');
+    swatch.style.display = 'none';
+    document.getElementById('wm-clear-btn').style.display = 'none';
+    document.getElementById('wm-file-input').value = '';
+    schedulePreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  ASSOCIATES
+  // ═══════════════════════════════════════════════════════════
+  function addAssociate(name = '', url = '') {
+    const list = document.getElementById('associates-list');
+    const row  = document.createElement('div');
+    row.className = 'assoc-row';
+    row.innerHTML = `
+      <input type="text" class="assoc-name-input" placeholder="Name" value="${esc(name)}" spellcheck="false" oninput="schedulePreview()">
+      <input type="text" class="assoc-url-input"  placeholder="URL (optional)" value="${esc(url)}" spellcheck="false" oninput="schedulePreview()">
+      <button class="assoc-del-btn" onclick="this.closest('.assoc-row').remove();schedulePreview();">✕</button>`;
+    list.appendChild(row);
+    schedulePreview();
+  }
+  function getAssociates() {
+    return Array.from(document.querySelectorAll('.assoc-row')).map(row => ({
+      name: row.querySelector('.assoc-name-input').value.trim(),
+      url:  row.querySelector('.assoc-url-input').value.trim(),
+    })).filter(a => a.name);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  RICH TEXT TOOLBAR
+  // ═══════════════════════════════════════════════════════════
+  function setActiveRt(el) { activeRtField = el; }
+
+  function rtCmd(cmd) {
+    if (!activeRtField) return;
+    activeRtField.focus();
+    document.execCommand(cmd, false, null);
+    schedulePreview();
+  }
+  function rtColor(hex) {
+    if (!activeRtField) return;
+    activeRtField.focus();
+    document.execCommand('foreColor', false, hex);
+    schedulePreview();
+  }
+
+  function toggleSkillsList() {
+    const field = document.getElementById('rt-skills');
+    const btn   = document.getElementById('skills-list-btn');
+    field.focus();
+    const hasList = field.querySelector('ul, ol');
+    if (hasList) {
+      document.execCommand('insertUnorderedList', false, null); // toggles off
+    } else {
+      document.execCommand('insertUnorderedList', false, null); // toggles on
+    }
+    schedulePreview();
+  }
+
+  // Save selection before opening overlay (overlay steals focus)
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) savedSelection = sel.getRangeAt(0).cloneRange();
+  }
+  function restoreSelection() {
+    if (!savedSelection || !activeRtField) return;
+    activeRtField.focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedSelection);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  LINK PICKER
+  // ═══════════════════════════════════════════════════════════
+  function openLinkPicker() {
+    saveSelection();
+    document.getElementById('link-overlay').classList.remove('hidden');
+    setLpTab('characters');
+  }
+  function cancelLink() {
+    document.getElementById('link-overlay').classList.add('hidden');
+    restoreSelection();
+  }
+  async function setLpTab(tab) {
+    lpTab = tab;
+    document.querySelectorAll('.lp-tab').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === tab || (tab === 'manual' && b.textContent === 'MANUAL URL')));
+    const list   = document.getElementById('link-picker-list');
+    const manual = document.getElementById('link-manual-input');
+    manual.style.display = tab === 'manual' ? '' : 'none';
+    list.style.display   = tab !== 'manual' ? '' : 'none';
+    if (tab === 'manual') { setTimeout(() => manual.focus(), 50); return; }
+    list.innerHTML = '<div style="opacity:0.35;padding:0.5rem;font-size:0.7rem;">Loading...</div>';
+    try {
+      const folder = tab === 'characters' ? GH_CHARS : GH_MISSIONS;
+      const data   = await ghGet(folder);
+      const files  = (data || []).filter(f => f.type === 'file' && f.name.endsWith('.html') && f.name !== 'index.html');
+      lpItems = files.map(f => {
+        const slug = f.name.replace(/\.html$/, '');
+        const url  = tab === 'characters'
+          ? `https://flint-inferno.github.io/${GH_REPO}/${GH_CHARS}/${f.name}`
+          : `https://flint-inferno.github.io/${GH_REPO}/${GH_MISSIONS}/${f.name}`;
+        return { label: slug, url };
+      });
+      list.innerHTML = '';
+      if (!lpItems.length) { list.innerHTML = '<div style="opacity:0.35;padding:0.5rem;font-size:0.7rem;">None found.</div>'; return; }
+      lpItems.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'lp-item';
+        el.textContent = item.label;
+        el.onclick = () => insertLpItem(item.label, item.url);
+        list.appendChild(el);
+      });
+    } catch(e) {
+      list.innerHTML = `<div style="color:var(--red);padding:0.5rem;font-size:0.7rem;">Error: ${esc(e.message)}</div>`;
+    }
+  }
+  function insertLpItem(label, url) {
+    document.getElementById('link-overlay').classList.add('hidden');
+    restoreSelection();
+    if (!activeRtField) return;
+    const sel = window.getSelection();
+    const displayText = (sel && !sel.isCollapsed) ? null : label; // use selection if any
+    document.execCommand('createLink', false, url);
+    // Style the created link
+    setTimeout(() => {
+      activeRtField.querySelectorAll('a').forEach(a => {
+        if (a.href === url) a.className = 'associate-link';
+      });
+      schedulePreview();
+    }, 50);
+  }
+  function confirmLink() {
+    const manual = document.getElementById('link-manual-input').value.trim();
+    if (lpTab === 'manual' && manual) {
+      document.getElementById('link-overlay').classList.add('hidden');
+      restoreSelection();
+      document.execCommand('createLink', false, manual);
+      schedulePreview();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  GM PASSWORD
+  // ═══════════════════════════════════════════════════════════
+  function openGmPwOverlay() {
+    document.getElementById('changegmpw-input').value   = '';
+    document.getElementById('changegmpw-confirm').value = '';
+    document.getElementById('changegmpw-status').textContent = '';
+    document.getElementById('changegmpw-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('changegmpw-input').focus(), 50);
+  }
+  function closeGmPwOverlay() {
+    document.getElementById('changegmpw-overlay').classList.add('hidden');
+  }
+  async function confirmGmPwChange() {
+    const pw1 = document.getElementById('changegmpw-input').value;
+    const pw2 = document.getElementById('changegmpw-confirm').value;
+    const st  = document.getElementById('changegmpw-status');
+    if (!pw1)       { st.textContent = 'Enter a password.'; return; }
+    if (pw1 !== pw2){ st.textContent = 'Passwords do not match.'; return; }
+    const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw1));
+    gmPwHash   = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    document.getElementById('f-gm-password').value = '••••••••';
+    closeGmPwOverlay();
+    schedulePreview();
+  }
+
+  // ═════════════���═════════════════════════════════════════════
+  //  BUILD BIO HTML
+  // ═══════════════════════════════════════════════════════════
+  function buildBioHTML() {
+    if (!charTemplateHTML) return '';
+    let html = charTemplateHTML;
+    const slug       = (document.getElementById('f-slug').value.trim()        || 'character').toLowerCase().replace(/[^a-z0-9-]/g,'-');
+    const name       = document.getElementById('f-name').value.trim()         || 'CHARACTER NAME';
+    const aurName    = document.getElementById('f-aur-name').value.trim()     || name;
+    const status     = document.getElementById('f-status').value              || 'active';
+    const species    = document.getElementById('f-species').value.trim()      || 'Unknown';
+    const homeworld  = document.getElementById('f-homeworld').value.trim()    || 'Unknown';
+    const occupation = document.getElementById('f-occupation').value.trim()   || 'Unknown';
+    const affil      = document.getElementById('f-affiliation').value.trim()  || 'Independent';
+    const location   = document.getElementById('f-location').value.trim()     || 'Unknown';
+
+    const bg     = getColorVal('bg');
+    const text   = getColorVal('text');
+    const accent = getColorVal('accent');
+    const border = getColorVal('border');
+    const dim    = getColorVal('dim');
+    const wmColor= getColorVal('wm');
+
+    // CSS vars
+    html = html.replace(/(--bg:\s*)#[0-9a-fA-F]+/g,      `$1${bg}`);
+    html = html.replace(/(--text:\s*)#[0-9a-fA-F]+/g,    `$1${text}`);
+    html = html.replace(/(--accent:\s*)#[0-9a-fA-F]+/g,  `$1${accent}`);
+    html = html.replace(/(--border:\s*)#[0-9a-fA-F]+/g,  `$1${border}`);
+    html = html.replace(/(--dim:\s*)#[0-9a-fA-F]+/g,     `$1${dim}`);
+    html = html.replace(/(--wm-color:\s*)#[0-9a-fA-F]+/g,`$1${wmColor}`);
+
+    // Parse DOM and update
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    const setMeta = (name, value) => {
+      let m = doc.querySelector(`meta[name="${name}"]`);
+      if (!m) { m = doc.createElement('meta'); m.setAttribute('name', name); doc.head.appendChild(m); }
+      m.setAttribute('content', value);
+    };
+
+    setMeta('char-slug',            slug);
+    setMeta('char-name',            name);
+    setMeta('char-aur-name',        aurName);
+    setMeta('char-species',         species);
+    setMeta('char-homeworld',       homeworld);
+    setMeta('char-occupation',      occupation);
+    setMeta('char-affiliation',     affil);
+    setMeta('char-status',          status);
+    setMeta('char-portrait',        portraitData ? `portraits/${slug}.jpg` : (doc.querySelector('meta[name="char-portrait"]')?.content || ''));
+    setMeta('char-watermark-color', wmColor);
+    setMeta('char-watermark-data',  wmData || '');
+    setMeta('gm-pw-hash',           gmPwHash);
+
+    // GM content: encode
+    const gmObj = {
+      motives:    document.getElementById('rt-gm-motives').innerHTML,
+      secrets:    document.getElementById('rt-gm-secrets').innerHTML,
+      plot_hooks: document.getElementById('rt-gm-plot-hooks').innerHTML,
+      cast_notes: document.getElementById('rt-gm-cast-notes').innerHTML,
+    };
+    setMeta('gm-content', btoa(unescape(encodeURIComponent(JSON.stringify(gmObj)))));
+
+    doc.title = name + ' // CANTINA OBSCURA';
+
+    // Content sections
+    const setSect = (selector, html) => {
+      const el = doc.querySelector(selector);
+      if (el) el.innerHTML = html;
+    };
+    setSect('[data-section="background"]', document.getElementById('rt-background').innerHTML);
+    setSect('[data-section="skills"]',     document.getElementById('rt-skills').innerHTML);
+    setSect('[data-section="location"]',   `<p>${esc(location)}</p>`);
+
+    // Associates
+    const assocEl = doc.querySelector('[data-section="associates"]');
+    if (assocEl) {
+      const associates = getAssociates();
+      assocEl.innerHTML = associates.length
+        ? associates.map(a => a.url
+            ? `<a class="associate-link" href="${esc(a.url)}">${esc(a.name)}</a>`
+            : `<span class="associate-link">${esc(a.name)}</span>`).join('\n')
+        : '';
+    }
+
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  BUILD ROSTER HTML
+  // ═══════════════════════════════════════════════════════════
+  async function buildRosterHTML() {
+    // Fetch current roster page as base
+    let html = '';
+    try {
+      const data = await ghGet(ROSTER_PATH);
+      if (data) html = atob(data.content.replace(/\n/g,''));
+    } catch(_) {}
+    if (!html) return null;
+
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const list = doc.querySelector('#roster-list');
+    if (!list) return null;
+
+    if (!roster.length) {
+      list.innerHTML = '\n      <!-- ROSTER_ENTRIES_START -->\n      <div class="roster-empty">NO PERSONNEL ON FILE</div>\n      <!-- ROSTER_ENTRIES_END -->\n    ';
+    } else {
+      const entries = roster.map(char => {
+        const portraitPath = `portraits/${char.slug}.jpg`;
+        const thumb = char.portrait
+          ? `<img class="roster-thumb" src="${portraitPath}" alt="${esc(char.name)}" onerror="this.style.opacity='0'">`
+          : `<div class="roster-thumb-placeholder"><svg viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="35" r="20"/><path d="M10 90 Q10 60 50 60 Q90 60 90 90 Z"/></svg></div>`;
+        return `
+      <a class="roster-entry" href="${char.slug}.html">
+        <div class="roster-thumb-wrap">
+          ${thumb}
+          <div class="roster-thumb-crt"></div>
+        </div>
+        <div class="roster-info">
+          <div class="entry-name">${esc(char.name)}</div>
+          <div class="entry-occupation">${esc(char.occupation)}</div>
+        </div>
+        <span class="entry-arrow">►</span>
+      </a>`;
+      }).join('');
+      list.innerHTML = '\n      <!-- ROSTER_ENTRIES_START -->' + entries + '\n      <!-- ROSTER_ENTRIES_END -->\n    ';
+    }
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  LIVE PREVIEW
+  // ═══════════════════════════════════════════════════════════
+  function schedulePreview() {
+    clearTimeout(previewDebounce);
+    previewDebounce = setTimeout(refreshPreview, 350);
+  }
+  function refreshPreview() {
+    const frame = document.getElementById('preview-frame');
+    if (currentSlug) {
+      // Bio preview
+      const html = buildBioHTML();
+      if (html) frame.srcdoc = html;
+    } else {
+      // Roster preview — build inline
+      buildRosterHTML().then(html => { if (html) frame.srcdoc = html; }).catch(()=>{});
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SAVE CHARACTER
+  // ═══════════════════════════════════════════════════════════
+  function saveCharacter() {
+    const slug = (document.getElementById('f-slug').value.trim() || 'character').toLowerCase().replace(/[^a-z0-9-]/g,'-');
+    const name = document.getElementById('f-name').value.trim() || slug;
+    const files = [`characters/${slug}.html`];
+    if (portraitChanged && portraitData) files.push(`characters/portraits/${slug}.jpg`);
+    document.getElementById('commit-desc').innerHTML = `<strong>${files.join(', ')}</strong>`;
+    commitQueue = { type: 'char', slug, name };
+    document.getElementById('commit-overlay').classList.remove('hidden');
+  }
+  function cancelCommit() {
+    document.getElementById('commit-overlay').classList.add('hidden');
+    commitQueue = null;
+  }
+  async function confirmCommit() {
+    document.getElementById('commit-overlay').classList.add('hidden');
+    if (!commitQueue) return;
+    if (commitQueue.type === 'char') await doSaveChar(commitQueue.slug, commitQueue.name);
+    else if (commitQueue.type === 'roster') await doSaveRoster();
+    commitQueue = null;
+  }
+
+  async function doSaveChar(slug, name) {
+    const btn = document.getElementById('save-char-btn');
+    btn.disabled = true;
+    setStatus('COMMITTING...', '');
+    try {
+      const html = buildBioHTML();
+      if (!html) throw new Error('Failed to build bio HTML');
+
+      // Always fetch latest SHA
+      const existing = await ghGet(GH_CHARS + '/' + slug + '.html');
+      const sha = existing ? existing.sha : null;
+      charSha = await ghPut(GH_CHARS + '/' + slug + '.html', html, sha, `Update character bio: ${name}`);
+
+      // Upload portrait if changed
+      if (portraitChanged && portraitData) {
+        const pSha = await ghGet(GH_CHARS + '/portraits/' + slug + '.jpg').then(d => d?.sha).catch(()=>null);
+        await ghPut(GH_CHARS + '/portraits/' + slug + '.jpg', portraitData.data, pSha, `Update portrait: ${slug}`, true);
+        portraitChanged = false;
+      }
+
+      // Update roster entry in memory
+      const occupation = document.getElementById('f-occupation').value.trim();
+      const ridx = roster.findIndex(r => r.slug === slug);
+      const entry = { slug, name, occupation, portrait: portraitData ? `portraits/${slug}.jpg` : (ridx >= 0 ? roster[ridx].portrait : '') };
+      if (ridx >= 0) roster[ridx] = entry;
+      else { roster.push(entry); rosterDirty = true; }
+
+      setStatus('COMMITTED — ' + slug + '.html', 'ok');
+      renderRosterList();
+    } catch(e) {
+      setStatus('COMMIT ERROR: ' + e.message, 'err');
+    }
+    btn.disabled = false;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SAVE ROSTER
+  // ═══════════════════════════════════════════════════════════
+  function saveRoster() {
+    document.getElementById('commit-desc').innerHTML = `<strong>characters/index.html</strong>`;
+    commitQueue = { type: 'roster' };
+    document.getElementById('commit-overlay').classList.remove('hidden');
+  }
+  async function doSaveRoster() {
+    const btn = document.getElementById('save-roster-btn');
+    btn.disabled = true;
+    setStatus('SAVING ROSTER...', '');
+    try {
+      const html = await buildRosterHTML();
+      if (!html) throw new Error('Failed to build roster HTML');
+      const existing = await ghGet(ROSTER_PATH);
+      const sha = existing ? existing.sha : null;
+      rosterSha = await ghPut(ROSTER_PATH, html, sha, 'Update character roster');
+      rosterDirty = false;
+      setStatus('ROSTER SAVED', 'ok');
+    } catch(e) {
+      setStatus('ROSTER ERROR: ' + e.message, 'err');
+    }
+    btn.disabled = false;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  DELETE CHARACTER
+  // ═══════════════════════════════════════════════════════════
+  function openDeleteConfirm(slug, name) {
+    pendingDeleteSlug = slug;
+    document.getElementById('delete-name').textContent = name;
+    document.getElementById('delete-overlay').classList.remove('hidden');
+  }
+  function cancelDelete() {
+    document.getElementById('delete-overlay').classList.add('hidden');
+    pendingDeleteSlug = null;
+  }
+  function confirmDelete() {
+    document.getElementById('delete-overlay').classList.add('hidden');
+    if (!pendingDeleteSlug) return;
+    roster = roster.filter(r => r.slug !== pendingDeleteSlug);
+    rosterDirty = true;
+    renderRosterList();
+    pendingDeleteSlug = null;
+    setStatus('REMOVED FROM ROSTER — save roster to commit', 'ok');
+    schedulePreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  MOBILE TABS
+  // ═══════════════════════════════════════════════════════════
+  function setMobileTab(tab) {
+    document.getElementById('form-panel').classList.toggle('tab-hidden',    tab !== 'form');
+    document.getElementById('form-panel').classList.toggle('tab-active',    tab === 'form');
+    document.getElementById('preview-panel').classList.toggle('tab-hidden', tab !== 'preview');
+    document.getElementById('preview-panel').classList.toggle('tab-active', tab === 'preview');
+    document.getElementById('tab-form').classList.toggle('active',    tab === 'form');
+    document.getElementById('tab-preview').classList.toggle('active', tab === 'preview');
+    if (tab === 'preview') refreshPreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  UTILITIES
+  // ═══════════════════════════════════════════════════════════
+  function setStatus(msg, cls) {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg; el.className = cls;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  </script>
+
+</body>
+</html>
