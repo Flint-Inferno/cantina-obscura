@@ -459,6 +459,39 @@
             <div style="opacity:0.35;font-size:0.72rem;padding:1rem 0;text-align:center;">Loading...</div>
           </div>
         </div>
+
+        <!-- Roster Visual Style -->
+        <div style="margin-top:1rem;">
+          <div class="section-heading">Roster Page Style</div>
+          <div style="margin-top:0.4rem;margin-bottom:0.25rem;font-size:0.58rem;opacity:0.45;letter-spacing:0.1em;">PRESETS</div>
+          <div id="roster-color-presets" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.6rem;"></div>
+          <div style="margin-bottom:0.25rem;font-size:0.58rem;opacity:0.45;letter-spacing:0.1em;">COLORS</div>
+          <div class="color-row">
+            <label>--bg</label>
+            <input type="color" id="rcolor-bg" value="#070c18">
+            <input type="text"  id="rhex-bg"   value="#070c18" maxlength="7" placeholder="#070c18">
+          </div>
+          <div class="color-row">
+            <label>--text</label>
+            <input type="color" id="rcolor-text" value="#7ab0d8">
+            <input type="text"  id="rhex-text"   value="#7ab0d8" maxlength="7" placeholder="#7ab0d8">
+          </div>
+          <div class="color-row">
+            <label>--accent</label>
+            <input type="color" id="rcolor-accent" value="#a0ccf0">
+            <input type="text"  id="rhex-accent"   value="#a0ccf0" maxlength="7" placeholder="#a0ccf0">
+          </div>
+          <div class="color-row">
+            <label>--border</label>
+            <input type="color" id="rcolor-border" value="#1a2e50">
+            <input type="text"  id="rhex-border"   value="#1a2e50" maxlength="7" placeholder="#1a2e50">
+          </div>
+          <div class="color-row">
+            <label>--dim</label>
+            <input type="color" id="rcolor-dim" value="#0c1628">
+            <input type="text"  id="rhex-dim"   value="#0c1628" maxlength="7" placeholder="#0c1628">
+          </div>
+        </div>
       </div>
 
       <!-- ── BIO EDITOR (hidden until character opened) ──────── -->
@@ -764,6 +797,8 @@
   window.addEventListener('DOMContentLoaded', async () => {
     initColorSync();
     buildPresetButtons();
+    initRosterColorSync();
+    buildRosterPresetButtons();
     const pat = localStorage.getItem('gh_pat');
     if (!pat) {
       openPat();
@@ -866,6 +901,7 @@
         rosterSha = data.sha;
         const html = atob(data.content.replace(/\n/g,''));
         parseRosterFromHTML(html);
+        loadRosterColors(html);
       }
       renderRosterList();
       setStatus('READY', 'ok');
@@ -1172,6 +1208,53 @@
       document.getElementById('color-' + id).dispatchEvent(new Event('input'));
     });
   }
+  // ── Roster color helpers ───────────────────────────────────
+  const ROSTER_COLOR_IDS = ['bg','text','accent','border','dim'];
+  function setRosterColorVal(id, hex) {
+    document.getElementById('rcolor-' + id).value = hex;
+    document.getElementById('rhex-'   + id).value = hex;
+  }
+  function getRosterColorVal(id) {
+    const hex = document.getElementById('rhex-' + id).value.trim();
+    return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : document.getElementById('rcolor-' + id).value;
+  }
+  function initRosterColorSync() {
+    ROSTER_COLOR_IDS.forEach(id => {
+      const picker = document.getElementById('rcolor-' + id);
+      const hex    = document.getElementById('rhex-'   + id);
+      picker.addEventListener('input', () => { hex.value = picker.value; schedulePreview(); });
+      hex.addEventListener('input', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; schedulePreview(); }
+      });
+    });
+  }
+  function buildRosterPresetButtons() {
+    const container = document.getElementById('roster-color-presets');
+    COLOR_PRESETS.forEach(p => {
+      const btn = document.createElement('button');
+      btn.textContent = p.name;
+      btn.style.cssText = `font-family:var(--font-main);font-size:0.58rem;letter-spacing:0.1em;padding:0.2rem 0.5rem;border:1px solid ${p.border};border-radius:2px;background:${p.bg};color:${p.accent};cursor:pointer;opacity:0.8;transition:opacity 0.15s;`;
+      btn.onmouseenter = () => btn.style.opacity = '1';
+      btn.onmouseleave = () => btn.style.opacity = '0.8';
+      btn.onclick = () => applyRosterPreset(p);
+      container.appendChild(btn);
+    });
+  }
+  function applyRosterPreset(p) {
+    ROSTER_COLOR_IDS.forEach(id => setRosterColorVal(id, p[id]));
+    ROSTER_COLOR_IDS.forEach(id => {
+      document.getElementById('rcolor-' + id).dispatchEvent(new Event('input'));
+    });
+  }
+  function loadRosterColors(html) {
+    const getVar = name => { const m = html.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{3,8})')); return m ? m[1] : null; };
+    setRosterColorVal('bg',     getVar('--bg')     || '#070c18');
+    setRosterColorVal('text',   getVar('--text')   || '#7ab0d8');
+    setRosterColorVal('accent', getVar('--accent') || '#a0ccf0');
+    setRosterColorVal('border', getVar('--border') || '#1a2e50');
+    setRosterColorVal('dim',    getVar('--dim')    || '#0c1628');
+  }
+
   function getColorVal(id) {
     const hex = document.getElementById('hex-' + id).value.trim();
     return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : document.getElementById('color-' + id).value;
@@ -1535,7 +1618,14 @@
       }).join('');
       list.innerHTML = '\n      <!-- ROSTER_ENTRIES_START -->' + entries + '\n      <!-- ROSTER_ENTRIES_END -->\n    ';
     }
-    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    // Apply roster color vars
+    let out = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    out = out.replace(/(--bg:\s*)#[0-9a-fA-F]+/,      `$1${getRosterColorVal('bg')}`);
+    out = out.replace(/(--text:\s*)#[0-9a-fA-F]+/,    `$1${getRosterColorVal('text')}`);
+    out = out.replace(/(--accent:\s*)#[0-9a-fA-F]+/,  `$1${getRosterColorVal('accent')}`);
+    out = out.replace(/(--border:\s*)#[0-9a-fA-F]+/,  `$1${getRosterColorVal('border')}`);
+    out = out.replace(/(--dim:\s*)#[0-9a-fA-F]+/,     `$1${getRosterColorVal('dim')}`);
+    return out;
   }
 
   // ═══════════════════════════════════════════════════════════
