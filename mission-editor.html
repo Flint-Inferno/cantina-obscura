@@ -2062,6 +2062,13 @@
     if (!templateHTML) return;
     const html = buildHTML();
     const frame = document.getElementById('preview-frame');
+    frame.onload = function() {
+      try {
+        const enabled = document.getElementById('sec-enabled').checked;
+        const gate = frame.contentDocument.getElementById('security-gate');
+        if (gate) gate.style.display = enabled ? '' : 'none';
+      } catch(_) {}
+    };
     frame.srcdoc = html;
   }
 
