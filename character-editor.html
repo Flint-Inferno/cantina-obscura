@@ -531,31 +531,34 @@
         <!-- Visual style -->
         <div>
           <div class="section-heading">Visual Style</div>
+          <div style="margin-top:0.4rem;margin-bottom:0.25rem;font-size:0.58rem;opacity:0.45;letter-spacing:0.1em;">PRESETS</div>
+          <div id="color-presets" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.6rem;"></div>
+
           <div style="margin-top:0.4rem;margin-bottom:0.25rem;font-size:0.58rem;opacity:0.45;letter-spacing:0.1em;">BACKGROUND COLOR</div>
           <div class="color-row">
             <label>--bg</label>
-            <input type="color" id="color-bg" value="#0d0b07">
-            <input type="text"  id="hex-bg"   value="#0d0b07" maxlength="7" placeholder="#0d0b07">
+            <input type="color" id="color-bg" value="#070c18">
+            <input type="text"  id="hex-bg"   value="#070c18" maxlength="7" placeholder="#070c18">
           </div>
           <div class="color-row">
             <label>--text</label>
-            <input type="color" id="color-text" value="#d4a843">
-            <input type="text"  id="hex-text"   value="#d4a843" maxlength="7" placeholder="#d4a843">
+            <input type="color" id="color-text" value="#7ab0d8">
+            <input type="text"  id="hex-text"   value="#7ab0d8" maxlength="7" placeholder="#7ab0d8">
           </div>
           <div class="color-row">
             <label>--accent</label>
-            <input type="color" id="color-accent" value="#f0c060">
-            <input type="text"  id="hex-accent"   value="#f0c060" maxlength="7" placeholder="#f0c060">
+            <input type="color" id="color-accent" value="#a0ccf0">
+            <input type="text"  id="hex-accent"   value="#a0ccf0" maxlength="7" placeholder="#a0ccf0">
           </div>
           <div class="color-row">
             <label>--border</label>
-            <input type="color" id="color-border" value="#3a2e14">
-            <input type="text"  id="hex-border"   value="#3a2e14" maxlength="7" placeholder="#3a2e14">
+            <input type="color" id="color-border" value="#1a2e50">
+            <input type="text"  id="hex-border"   value="#1a2e50" maxlength="7" placeholder="#1a2e50">
           </div>
           <div class="color-row">
             <label>--dim</label>
-            <input type="color" id="color-dim" value="#1a1508">
-            <input type="text"  id="hex-dim"   value="#1a1508" maxlength="7" placeholder="#1a1508">
+            <input type="color" id="color-dim" value="#0c1628">
+            <input type="text"  id="hex-dim"   value="#0c1628" maxlength="7" placeholder="#0c1628">
           </div>
 
           <div style="margin-top:0.75rem;margin-bottom:0.25rem;font-size:0.58rem;opacity:0.45;letter-spacing:0.1em;">WATERMARK</div>
@@ -567,8 +570,8 @@
           </div>
           <div class="color-row" style="margin-top:0.4rem;">
             <label>Color</label>
-            <input type="color" id="color-wm" value="#f0c060">
-            <input type="text"  id="hex-wm"   value="#f0c060" maxlength="7" placeholder="#f0c060">
+            <input type="color" id="color-wm" value="#a0ccf0">
+            <input type="text"  id="hex-wm"   value="#a0ccf0" maxlength="7" placeholder="#a0ccf0">
           </div>
         </div>
 
@@ -760,6 +763,7 @@
   // ═══════════════════════════════════════════════════════════
   window.addEventListener('DOMContentLoaded', async () => {
     initColorSync();
+    buildPresetButtons();
     const pat = localStorage.getItem('gh_pat');
     if (!pat) {
       openPat();
@@ -1067,14 +1071,14 @@
 
     // CSS colors
     const getVar = name => { const m = html.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{3,8})')); return m ? m[1] : null; };
-    setColorVal('bg',     getVar('--bg')     || '#0d0b07');
-    setColorVal('text',   getVar('--text')   || '#d4a843');
-    setColorVal('accent', getVar('--accent') || '#f0c060');
-    setColorVal('border', getVar('--border') || '#3a2e14');
-    setColorVal('dim',    getVar('--dim')    || '#1a1508');
+    setColorVal('bg',     getVar('--bg')     || '#070c18');
+    setColorVal('text',   getVar('--text')   || '#7ab0d8');
+    setColorVal('accent', getVar('--accent') || '#a0ccf0');
+    setColorVal('border', getVar('--border') || '#1a2e50');
+    setColorVal('dim',    getVar('--dim')    || '#0c1628');
 
     // Watermark
-    const wmColor = meta('char-watermark-color') || '#f0c060';
+    const wmColor = meta('char-watermark-color') || '#a0ccf0';
     const wmImg   = meta('char-watermark-data');
     setColorVal('wm', wmColor);
     if (wmImg) {
@@ -1131,6 +1135,42 @@
   function setColorVal(id, hex) {
     document.getElementById('color-' + id).value = hex;
     document.getElementById('hex-' + id).value   = hex;
+  }
+
+  const COLOR_PRESETS = [
+    { name: 'LAPIS',    bg:'#070c18', text:'#7ab0d8', accent:'#a0ccf0', border:'#1a2e50', dim:'#0c1628', wm:'#a0ccf0' },
+    { name: 'AMBER',    bg:'#0d0b07', text:'#d4a843', accent:'#f0c060', border:'#3a2e14', dim:'#1a1508', wm:'#f0c060' },
+    { name: 'CRIMSON',  bg:'#100608', text:'#d46060', accent:'#f08080', border:'#3a1414', dim:'#1a0808', wm:'#f08080' },
+    { name: 'VIRIDIAN', bg:'#060f0a', text:'#60c48a', accent:'#80e0a8', border:'#143a22', dim:'#081a10', wm:'#80e0a8' },
+    { name: 'VIOLET',   bg:'#0c0814', text:'#a880d8', accent:'#c8a0f0', border:'#2a1a40', dim:'#160c28', wm:'#c8a0f0' },
+    { name: 'RUST',     bg:'#100a05', text:'#d48050', accent:'#f0a060', border:'#3a2010', dim:'#1a1008', wm:'#f0a060' },
+    { name: 'GHOST',    bg:'#08080a', text:'#9090a8', accent:'#c0c0d0', border:'#222230', dim:'#101018', wm:'#c0c0d0' },
+  ];
+
+  function buildPresetButtons() {
+    const container = document.getElementById('color-presets');
+    COLOR_PRESETS.forEach(p => {
+      const btn = document.createElement('button');
+      btn.textContent = p.name;
+      btn.style.cssText = `font-family:var(--font-main);font-size:0.58rem;letter-spacing:0.1em;padding:0.2rem 0.5rem;border:1px solid ${p.border};border-radius:2px;background:${p.bg};color:${p.accent};cursor:pointer;opacity:0.8;transition:opacity 0.15s;`;
+      btn.onmouseenter = () => btn.style.opacity = '1';
+      btn.onmouseleave = () => btn.style.opacity = '0.8';
+      btn.onclick = () => applyPreset(p);
+      container.appendChild(btn);
+    });
+  }
+
+  function applyPreset(p) {
+    setColorVal('bg',     p.bg);
+    setColorVal('text',   p.text);
+    setColorVal('accent', p.accent);
+    setColorVal('border', p.border);
+    setColorVal('dim',    p.dim);
+    setColorVal('wm',     p.wm);
+    // trigger sync so preview iframe picks up the change
+    ['bg','text','accent','border','dim'].forEach(id => {
+      document.getElementById('color-' + id).dispatchEvent(new Event('input'));
+    });
   }
   function getColorVal(id) {
     const hex = document.getElementById('hex-' + id).value.trim();
