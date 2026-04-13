@@ -1251,6 +1251,7 @@
       km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
     );
   }
+  function b64dec(b64) { return decodeURIComponent(escape(atob(b64.replace(/\n/g, '')))); }
   function _hex(buf) { return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
   function _unhex(h) { return new Uint8Array(h.match(/.{2}/g).map(x=>parseInt(x,16))); }
 
@@ -1782,7 +1783,7 @@
           .then(r => r.ok ? r.json() : null)
           .then(data => {
             if (!data) return;
-            const html = atob(data.content.replace(/\n/g, ''));
+            const html = b64dec(data.content);
             const mm = html.match(/<[^>]*class="mission-title"[^>]*>([^<]+)/i);
             const dm = html.match(/DIFFICULTY:\s*([^<&|]+)/i);
             const sm = html.match(/<meta[^>]*name="mission-status"[^>]*content="([^"]+)"/i)
@@ -1843,7 +1844,7 @@
       );
       if (!res.ok) return;
       const data = await res.json();
-      const html = atob(data.content.replace(/\n/g,''));
+      const html = b64dec(data.content);
       const doc  = new DOMParser().parseFromString(html, 'text/html');
       charRoster = [];
       doc.querySelectorAll('.roster-entry').forEach(entry => {
@@ -1926,7 +1927,7 @@
       if (res.ok) {
         const data = await res.json();
         fileSha      = data.sha;
-        templateHTML = atob(data.content.replace(/\n/g, ''));
+        templateHTML = b64dec(data.content);
         populateFields(templateHTML);
         setStatus('LOADED — ' + fileName, 'ok');
         document.getElementById('save-btn').disabled = false;
