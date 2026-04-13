@@ -105,53 +105,16 @@
       overflow: hidden;
     }
 
-    /* ── Left column wrapper ─────────────────────────────────── */
-    #left-col {
-      display: flex; flex-direction: column;
-      overflow: hidden;
-      border-right: 1px solid var(--border);
-      background: var(--panel);
-    }
-
-    /* ── Left column tab bar ─────────────────────────────────── */
-    #left-tabs {
-      display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .left-tab {
-      flex: 1; padding: 0.5rem 0.75rem; font-size: 0.65rem;
-      background: none; border: none; border-bottom: 2px solid transparent;
-      color: var(--dim); cursor: pointer; font-family: inherit;
-      letter-spacing: 0.08em; text-transform: uppercase;
-    }
-    .left-tab:hover { color: var(--text); }
-    .left-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
     /* ── Left panel: form ────────────────────────────────────── */
     #form-panel {
-      overflow-y: auto; padding: 1rem;
-      display: flex; flex-direction: column; gap: 0.85rem; flex: 1;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
     }
-    #form-panel.ltab-hidden { display: none; }
-
-    /* ── Left panel: security ────────────────────────────────── */
-    #security-panel {
-      display: none; overflow-y: auto; padding: 1rem;
-      flex-direction: column; gap: 1.1rem; flex: 1;
-    }
-    #security-panel.panel-active { display: flex; }
-    .sec-enable-row { display: flex; align-items: center; gap: 0.6rem; }
-    .sec-enable-row input[type="checkbox"] { width:1rem; height:1rem; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
-    .sec-enable-row label { cursor:pointer; font-size:0.8rem; color:var(--text); letter-spacing:0.05em; user-select:none; }
-    #security-fields { display:flex; flex-direction:column; gap:1.1rem; }
-    #security-fields.sec-disabled { opacity:0.35; pointer-events:none; }
-    .sec-case-row { display:flex; align-items:center; gap:0.6rem; }
-    .sec-case-row input[type="checkbox"] { width:1rem; height:1rem; accent-color:var(--accent); cursor:pointer; }
-    .sec-case-row label { cursor:pointer; font-size:0.75rem; color:var(--text); user-select:none; }
-    .experimental-block { border-top:1px solid var(--border); padding-top:1rem; }
-    .experimental-block .section-heading { opacity:0.4; }
-    .experimental-block .sec-exp-row { display:flex; align-items:center; gap:0.6rem; opacity:0.35; margin-top:0.5rem; }
-    .experimental-block .sec-exp-row input { cursor:not-allowed; }
-    .experimental-block .sec-exp-row label { font-size:0.72rem; color:var(--dim); cursor:not-allowed; user-select:none; }
 
     .section-heading {
       font-size: 0.55rem;
@@ -429,9 +392,9 @@
     }
 
     /* ── Scrollbar ───────────────────────────────────────────── */
-    #form-panel::-webkit-scrollbar, #security-panel::-webkit-scrollbar { width: 4px; }
-    #form-panel::-webkit-scrollbar-track, #security-panel::-webkit-scrollbar-track { background: transparent; }
-    #form-panel::-webkit-scrollbar-thumb, #security-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    #form-panel::-webkit-scrollbar { width: 4px; }
+    #form-panel::-webkit-scrollbar-track { background: transparent; }
+    #form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     /* ── PAT overlay ─────────────────────────────────────────── */
     #pat-overlay {
@@ -648,6 +611,13 @@
       z-index: 999;
     }
     #commit-overlay.hidden { display: none; }
+    #agent-picker-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #agent-picker-overlay.hidden { display: none; }
     #commit-box {
       background: var(--panel);
       border: 1px solid var(--accent);
@@ -680,16 +650,10 @@
     /* ── Mobile responsive ───────────────────────────────────────── */
     @media (max-width: 700px) {
       /* Single-column layout */
-      #main { display: flex; flex-direction: column; }
-      #left-col { border-right: none; flex: 1; min-height: 0; }
-      #left-col.col-hidden { display: none; }
-      #left-tabs { display: none; }
+      #main { grid-template-columns: 1fr; }
       #preview-panel { display: none; }
-      #preview-panel.tab-active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-      #preview-panel.tab-active #preview-frame { flex: 1; height: auto; }
+      #preview-panel.tab-active { display: block; }
       #form-panel.tab-hidden { display: none; }
-      #security-panel.panel-active { display: none; }
-      #security-panel.tab-active { display: flex; }
 
       /* Topbar: two rows */
       #topbar { flex-wrap: wrap; gap: 0.5rem; }
@@ -834,6 +798,16 @@
     </div>
   </div>
 
+  <!-- ── Agent picker overlay ────────────────────────────────── -->
+  <div id="agent-picker-overlay" class="hidden">
+    <div id="agent-picker-box" style="background:var(--panel);border:1px solid var(--accent);border-radius:4px;padding:1.25rem;width:300px;max-height:420px;display:flex;flex-direction:column;gap:0.5rem;">
+      <div style="font-family:var(--font-title,monospace);font-size:0.75rem;letter-spacing:0.18em;color:var(--accent);">PICK CHARACTER</div>
+      <div id="agent-picker-list" style="display:flex;flex-direction:column;gap:0.25rem;overflow-y:auto;max-height:260px;"></div>
+      <button class="btn" onclick="pickAgent('anyone')" style="width:100%;margin-top:0.25rem;font-size:0.68rem;">◈ ANYONE (links to full roster)</button>
+      <button class="btn" onclick="closeAgentPicker()" style="width:100%;font-size:0.68rem;">✕ CANCEL</button>
+    </div>
+  </div>
+
   <!-- ── Top bar ──────────────────────────────────────────────── -->
   <div id="topbar">
     <div class="logo">◈ MISSION EDITOR</div>
@@ -855,23 +829,14 @@
   <!-- ── Mobile tab bar (hidden on desktop) ────────────────────── -->
   <div id="mobile-tabs">
     <button class="mobile-tab active" id="tab-form" onclick="setMobileTab('form')">✏ EDIT</button>
-    <button class="mobile-tab" id="tab-security" onclick="setMobileTab('security')">⚿ CODE</button>
     <button class="mobile-tab" id="tab-preview" onclick="setMobileTab('preview')">◉ PREVIEW</button>
   </div>
 
   <!-- ── Main ─────────────────────────────────────────────────── -->
   <div id="main">
 
-    <!-- LEFT: form + security -->
-    <div id="left-col">
-
-      <!-- Desktop tab bar (hidden on mobile) -->
-      <div id="left-tabs">
-        <button class="left-tab active" id="ltab-content" onclick="setLeftTab('content')">✏ CONTENT</button>
-        <button class="left-tab" id="ltab-security" onclick="setLeftTab('security')">⚿ SECURITY</button>
-      </div>
-
-      <div id="form-panel">
+    <!-- LEFT: form -->
+    <div id="form-panel">
 
       <!-- Page status -->
       <div>
@@ -1016,57 +981,29 @@
         </div>
       </div>
 
-      <!-- Mission Agent -->
+      <!-- Turn-in -->
       <div>
-        <div class="section-heading">Mission Agent(s)</div>
+        <div class="section-heading">Turn-In Instructions</div>
         <div class="field">
-          <label>Who the player reports to — one per line</label>
-          <textarea id="f-agent" rows="2" placeholder="e.g. Mara Jade&#10;Docking Bay 94"></textarea>
+          <label>One paragraph per blank line</label>
+          <textarea id="f-turnin" rows="5" placeholder="How does the player claim their payout?"></textarea>
         </div>
       </div>
 
-      </div><!-- /#form-panel -->
-
-      <!-- ── Security panel ──────────────────────────────────── -->
-      <div id="security-panel">
-
-        <div class="sec-enable-row">
-          <input type="checkbox" id="sec-enabled">
-          <label for="sec-enabled">ENABLE ACCESS CODE GATE</label>
+      <!-- Mission Agent -->
+      <div>
+        <div class="section-heading">Mission Agent</div>
+        <div class="field" style="margin-top:0.5rem;">
+          <label>Character name(s) — comma-separated, or "anyone"</label>
+          <div style="display:flex;gap:0.4rem;align-items:center;margin-top:0.3rem;">
+            <input type="text" id="f-agent" placeholder="Greedo, Watto" style="flex:1;" oninput="schedulePreview()">
+            <button class="btn" onclick="openAgentPicker()" title="Pick from roster" style="flex-shrink:0;padding:0.25rem 0.6rem;font-size:0.65rem;">◈ PICK</button>
+          </div>
+          <div style="font-size:0.57rem;opacity:0.35;margin-top:0.25rem;letter-spacing:0.06em;">Names matched case-insensitively to character roster. Unmatched names render as plain text.</div>
         </div>
+      </div>
 
-        <div id="security-fields" class="sec-disabled">
-          <div>
-            <div class="section-heading">Access Codes</div>
-            <div class="field">
-              <label>One code per line — player must enter one of these</label>
-              <textarea id="sec-codes" rows="4" placeholder="REDSTAR&#10;AUREK-7&#10;ECHO-BASE"></textarea>
-            </div>
-          </div>
-          <div class="sec-case-row">
-            <input type="checkbox" id="sec-case-sensitive">
-            <label for="sec-case-sensitive">Case sensitive</label>
-          </div>
-          <div>
-            <div class="section-heading">Success Message</div>
-            <div class="field">
-              <label>Shown when the correct code is entered</label>
-              <textarea id="sec-success-msg" rows="5" placeholder="Report to Handler Vex at Bay 7. Show this screen. Payout: 500 credits."></textarea>
-            </div>
-          </div>
-        </div><!-- /#security-fields -->
-
-        <div class="experimental-block">
-          <div class="section-heading">⚗ Experimental — coming soon</div>
-          <div class="sec-exp-row"><input type="checkbox" disabled><label>Multiple code tiers</label></div>
-          <div class="sec-exp-row"><input type="checkbox" disabled><label>Faction-specific codes</label></div>
-          <div class="sec-exp-row"><input type="checkbox" disabled><label>Agent ID pairing</label></div>
-          <div class="sec-exp-row"><input type="checkbox" disabled><label>Countdown timer unlock</label></div>
-        </div>
-
-      </div><!-- /#security-panel -->
-
-    </div><!-- /#left-col -->
+    </div><!-- /#form-panel -->
 
     <!-- RIGHT: preview -->
     <div id="preview-panel">
@@ -1210,6 +1147,7 @@
   let fileName        = '';
   let fileSha         = null;   // GitHub blob SHA — required for PUT updates
   let previewDebounce = null;
+  let charRoster      = [];     // [{name, slug}] loaded from characters/index.html
 
   const GH_OWNER  = 'Flint-Inferno';
   const GH_REPO   = 'cantina-obscura';
@@ -1402,16 +1340,9 @@
 
   function initEditorContent() {
     document.getElementById('save-btn').disabled = false;
+    loadCharRoster();
     loadFile();
     document.getElementById('form-panel').addEventListener('input', () => { markDirty(); schedulePreview(); });
-    document.getElementById('sec-enabled').addEventListener('change', () => {
-      document.getElementById('security-fields').classList.toggle('sec-disabled', !document.getElementById('sec-enabled').checked);
-      markDirty(); schedulePreview();
-    });
-    ['sec-codes', 'sec-success-msg'].forEach(id =>
-      document.getElementById(id).addEventListener('input', () => { markDirty(); schedulePreview(); })
-    );
-    document.getElementById('sec-case-sensitive').addEventListener('change', () => { markDirty(); schedulePreview(); });
   }
 
   // ── Init ─────────────────────────────────────────────────────
@@ -1520,32 +1451,10 @@
   // ── Mobile tab toggle ────────────────────────────────────────
   function setMobileTab(tab) {
     document.getElementById('form-panel').classList.toggle('tab-hidden', tab !== 'form');
-    document.getElementById('security-panel').classList.toggle('tab-active', tab === 'security');
     document.getElementById('preview-panel').classList.toggle('tab-active', tab === 'preview');
-    document.getElementById('left-col').classList.toggle('col-hidden', tab === 'preview');
     document.getElementById('tab-form').classList.toggle('active', tab === 'form');
-    document.getElementById('tab-security').classList.toggle('active', tab === 'security');
     document.getElementById('tab-preview').classList.toggle('active', tab === 'preview');
     if (tab === 'preview') refreshPreview();
-  }
-
-  // ── Left column tab switching (desktop) ──────────────────
-  function setLeftTab(tab) {
-    const showSec = tab === 'security';
-    document.getElementById('form-panel').classList.toggle('ltab-hidden', showSec);
-    document.getElementById('security-panel').classList.toggle('panel-active', showSec);
-    document.getElementById('ltab-content').classList.toggle('active', !showSec);
-    document.getElementById('ltab-security').classList.toggle('active', showSec);
-  }
-
-  // ── Security config helpers ───────────────────────────────
-  function getSecurityConfig() {
-    const enabled = document.getElementById('sec-enabled').checked;
-    const codes = (document.getElementById('sec-codes').value || '')
-      .split('\n').map(s => s.trim()).filter(Boolean);
-    const caseSensitive = document.getElementById('sec-case-sensitive').checked;
-    const successMsg = document.getElementById('sec-success-msg').value;
-    return { enabled, codes, caseSensitive, successMsg };
   }
 
   // ── Browse overlay ───────────────────────────────────────────
@@ -1738,6 +1647,80 @@
     return `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FOLDER}/${encodeURIComponent(fname)}`;
   }
 
+  // ── Character roster (for agent field) ──────────────────────
+  async function loadCharRoster() {
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/characters/index.html`,
+        { headers: ghHeaders() }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      const html = atob(data.content.replace(/\n/g,''));
+      const doc  = new DOMParser().parseFromString(html, 'text/html');
+      charRoster = [];
+      doc.querySelectorAll('.roster-entry').forEach(entry => {
+        const name = entry.querySelector('.entry-name')?.textContent.trim();
+        const href = entry.getAttribute('href') || '';
+        const slug = href.replace('.html','').replace(/^.*\//,'');
+        if (name && slug) charRoster.push({ name, slug });
+      });
+    } catch(_) {}
+  }
+
+  function buildAgentHTML(text) {
+    const t = (text || '').trim();
+    if (!t) return '[ AGENT NAME ]';
+    if (t.toLowerCase() === 'anyone') {
+      return `<a href="../characters/" style="color:inherit;text-decoration:underline;opacity:0.85;">ANYONE</a>`;
+    }
+    return t.split(',').map(part => {
+      const name = part.trim();
+      if (!name) return '';
+      const match = charRoster.find(c => c.name.toLowerCase() === name.toLowerCase());
+      if (match) return `<a href="../characters/${match.slug}.html" style="color:inherit;text-decoration:underline;opacity:0.85;">${name}</a>`;
+      return name;
+    }).filter(Boolean).join(', ');
+  }
+
+  function openAgentPicker() {
+    const list = document.getElementById('agent-picker-list');
+    list.innerHTML = '';
+    if (!charRoster.length) {
+      list.innerHTML = '<div style="opacity:0.4;font-size:0.72rem;padding:0.5rem 0;text-align:center;">No characters in roster yet</div>';
+    } else {
+      charRoster.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = c.name;
+        btn.style.cssText = 'width:100%;text-align:left;font-size:0.72rem;';
+        btn.onclick = () => pickAgent(c.name);
+        list.appendChild(btn);
+      });
+    }
+    document.getElementById('agent-picker-overlay').classList.remove('hidden');
+  }
+
+  function pickAgent(name) {
+    const input = document.getElementById('f-agent');
+    const current = input.value.trim();
+    if (!current) {
+      input.value = name;
+    } else {
+      const parts = current.split(',').map(p => p.trim().toLowerCase());
+      if (!parts.includes(name.toLowerCase())) {
+        input.value = current + ', ' + name;
+      }
+    }
+    closeAgentPicker();
+    schedulePreview();
+    markDirty();
+  }
+
+  function closeAgentPicker() {
+    document.getElementById('agent-picker-overlay').classList.add('hidden');
+  }
+
   // ── Load file from GitHub ────────────────────────────────────
   async function loadFile() {
     setStatus('LOADING...', '');
@@ -1836,10 +1819,10 @@
       document.getElementById('f-briefing').value = htmlToPlainText(brief.innerHTML);
     }
 
-    // Agent
-    const turnin = doc.querySelector('.agent-name');
+    // Turn-in
+    const turnin = doc.querySelector('.turnin-instructions');
     if (turnin) {
-      document.getElementById('f-agent').value = (turnin.textContent || '').trim();
+      document.getElementById('f-turnin').value = htmlToPlainText(turnin.innerHTML);
     }
 
     // Credits
@@ -1847,6 +1830,15 @@
     const unit = doc.querySelector('.credit-unit');
     document.getElementById('f-credits').value     = amt  ? amt.textContent.trim()  : '$000';
     document.getElementById('f-credit-unit').value = unit ? unit.textContent.trim() : 'CREDITS';
+
+    // Agent — strip any existing links back to plain comma-separated names
+    const agentEl = doc.querySelector('.agent-name');
+    if (agentEl) {
+      const clone = agentEl.cloneNode(true);
+      clone.querySelectorAll('a').forEach(a => a.replaceWith(a.textContent));
+      const agentText = clone.textContent.trim();
+      document.getElementById('f-agent').value = (agentText === '[ AGENT NAME ]' || agentText === '') ? '' : agentText;
+    }
 
     // Page status
     const statusMeta = doc.querySelector('meta[name="mission-status"]');
@@ -1868,17 +1860,6 @@
       }
       if (color && /^#[0-9a-fA-F]{6}$/.test(color)) setLogoColor(slot, color);
     });
-
-    // Security config
-    try {
-      const secEl = doc.getElementById('mission-security');
-      const sec = secEl ? JSON.parse(secEl.textContent) : {};
-      document.getElementById('sec-enabled').checked = !!sec.enabled;
-      document.getElementById('sec-codes').value = (sec.codes || []).join('\n');
-      document.getElementById('sec-case-sensitive').checked = !!sec.caseSensitive;
-      document.getElementById('sec-success-msg').value = sec.successMsg || '';
-      document.getElementById('security-fields').classList.toggle('sec-disabled', !sec.enabled);
-    } catch(_) {}
 
     // Read all 6 CSS color vars from the file and populate inputs
     const getVar = name => { const m = html.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{3,6})')); return m ? m[1] : null; };
@@ -1933,12 +1914,6 @@
     html = html.replace(/(--danger:\s*)#[0-9a-fA-F]+/g,  `$1${danger}`);
     // Replace LOGO_COLOR in script
     html = html.replace(/(const LOGO_COLOR\s*=\s*)'#[0-9a-fA-F]+'/, `$1'${accent}'`);
-    // Restore hi-contrast block to canonical accessibility values
-    // (global CSS var replaces above would otherwise clobber it)
-    html = html.replace(
-      /body\.hi-contrast\s*\{[^}]*\}/,
-      'body.hi-contrast {\n      --text:   #ffffff;\n      --bg:     #000000;\n      --border: #555555;\n      --dim:    #1a1a1a;\n      --accent: #e0e0e0;\n      --danger: #ff9999;\n    }'
-    );
 
     // Parse and modify DOM
     const doc  = new DOMParser().parseFromString(html, 'text/html');
@@ -1974,15 +1949,19 @@
     const brief = doc.querySelector('.mission-instructions');
     if (brief) brief.innerHTML = plainTextToHTML(v('f-briefing'), briefMode);
 
-    // Agent
-    const agentEl = doc.querySelector('.agent-name');
-    if (agentEl) agentEl.textContent = v('f-agent') || '[ AGENT NAME ]';
+    // Turn-in
+    const turnin = doc.querySelector('.turnin-instructions');
+    if (turnin) turnin.innerHTML = plainTextToHTML(v('f-turnin'), 'para');
 
     // Credits
     const amt  = doc.querySelector('.credit-amount');
     const unit = doc.querySelector('.credit-unit');
     if (amt)  amt.textContent  = v('f-credits')     || '$000';
     if (unit) unit.textContent = v('f-credit-unit') || 'CREDITS';
+
+    // Agent
+    const agentDiv = doc.querySelector('.agent-name');
+    if (agentDiv) agentDiv.innerHTML = buildAgentHTML(v('f-agent'));
 
     // ── Page status meta ─────────────────────────────────────────
     let sMeta = doc.querySelector('meta[name="mission-status"]');
@@ -2022,17 +2001,6 @@
     scriptEl.textContent = `(function(){var _L={${logoMap}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();`;
     doc.body.appendChild(scriptEl);
 
-    // ── Security config ──────────────────────────────────────────
-    const secCfg = getSecurityConfig();
-    let secScript = doc.getElementById('mission-security');
-    if (!secScript) {
-      secScript = doc.createElement('script');
-      secScript.id = 'mission-security';
-      secScript.type = 'application/json';
-      doc.head.appendChild(secScript);
-    }
-    secScript.textContent = JSON.stringify(secCfg);
-
     return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
   }
 
@@ -2062,13 +2030,6 @@
     if (!templateHTML) return;
     const html = buildHTML();
     const frame = document.getElementById('preview-frame');
-    frame.onload = function() {
-      try {
-        const enabled = document.getElementById('sec-enabled').checked;
-        const gate = frame.contentDocument.getElementById('security-gate');
-        if (gate) gate.style.display = enabled ? '' : 'none';
-      } catch(_) {}
-    };
     frame.srcdoc = html;
   }
 
