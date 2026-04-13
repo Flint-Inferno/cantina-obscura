@@ -806,15 +806,14 @@
     buildPresetButtons();
     initRosterColorSync();
     buildRosterPresetButtons();
+    // Load content via raw URLs — works without a PAT (public repo)
+    await loadCharTemplate();
+    await loadRoster();
+    refreshPreview();
+    // Check PAT for save/owner features
     const pat = localStorage.getItem('gh_pat');
-    if (!pat) {
-      openPat();
-    } else {
-      await checkOwner(pat);
-      await loadRoster();
-      await loadCharTemplate();
-      refreshPreview();
-    }
+    if (pat) await checkOwner(pat);
+    else openPat();
     document.getElementById('form-panel').addEventListener('input', () => schedulePreview());
   });
 
@@ -905,16 +904,28 @@
   async function loadRoster() {
     setStatus('LOADING ROSTER...', '');
     try {
-      const data = await ghGet(ROSTER_PATH);
+      // Try API first — gives us the SHA needed for saves
+      const data = await ghGet(ROSTER_PATH).catch(() => null);
       if (data) {
         rosterSha = data.sha;
         const html = atob(data.content.replace(/\n/g,''));
         rosterHTMLCache = html;
         parseRosterFromHTML(html);
         loadRosterColors(html);
+      } else {
+        // No PAT or API failure — load via raw URL (read-only, no SHA)
+        const res = await fetch(
+          `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${ROSTER_PATH}?t=${Date.now()}`
+        );
+        if (res.ok) {
+          const html = await res.text();
+          rosterHTMLCache = html;
+          parseRosterFromHTML(html);
+          loadRosterColors(html);
+        }
       }
       renderRosterList();
-      setStatus('READY', 'ok');
+      setStatus(rosterSha ? 'READY' : 'READ-ONLY — add PAT to save', rosterSha ? 'ok' : '');
       document.getElementById('save-roster-btn').disabled = false;
     } catch(e) {
       setStatus('LOAD ERROR: ' + e.message, 'err');
@@ -999,8 +1010,11 @@
   // ═══════════════════════════════════════════════════════════
   async function loadCharTemplate() {
     try {
-      const data = await ghGet(CHAR_TEMPLATE_PATH);
-      if (data) charTemplateHTML = atob(data.content.replace(/\n/g,''));
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${CHAR_TEMPLATE_PATH}?t=${Date.now()}`
+      );
+      if (res.ok) charTemplateHTML = await res.text();
+      else throw new Error(`HTTP ${res.status}`);
     } catch(e) {
       setStatus('TEMPLATE LOAD ERROR: ' + e.message, 'err');
     }
