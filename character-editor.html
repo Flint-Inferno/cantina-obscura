@@ -944,6 +944,9 @@
   function b64enc(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
+  function b64dec(b64) {
+    return decodeURIComponent(escape(atob(b64.replace(/\n/g, ''))));
+  }
   function b64encBinary(dataUrl) {
     // dataUrl = 'data:image/jpeg;base64,...' — extract the base64 part
     return dataUrl.split(',')[1];
@@ -1086,7 +1089,7 @@
       const data = await ghGet(ROSTER_PATH).catch(() => null);
       if (data) {
         rosterSha = data.sha;
-        const html = atob(data.content.replace(/\n/g,''));
+        const html = b64dec(data.content);
         rosterHTMLCache = html;
         parseRosterFromHTML(html);
         loadRosterColors(html);
@@ -1259,7 +1262,7 @@
       const data = await ghGet(GH_CHARS + '/' + slug + '.html');
       if (data) {
         charSha = data.sha;
-        const html = atob(data.content.replace(/\n/g,''));
+        const html = b64dec(data.content);
         populateBioFields(html);
       }
     } catch(e) {
@@ -1828,7 +1831,7 @@
     if (!html) {
       try {
         const data = await ghGet(ROSTER_PATH);
-        if (data) { html = atob(data.content.replace(/\n/g,'')); rosterHTMLCache = html; }
+        if (data) { html = b64dec(data.content); rosterHTMLCache = html; }
       } catch(_) {}
     }
     if (!html) return null;
@@ -2074,7 +2077,7 @@
         const slug = f.name.replace(/\.html$/, '');
         try {
           const data = await ghGet(GH_CHARS + '/' + f.name);
-          const html = data ? atob(data.content.replace(/\n/g, '')) : '';
+          const html = data ? b64dec(data.content) : '';
           const doc  = new DOMParser().parseFromString(html, 'text/html');
           const meta = n => doc.querySelector(`meta[name="${n}"]`)?.getAttribute('content') || '';
           scanResults.push({
