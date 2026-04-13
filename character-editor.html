@@ -857,6 +857,11 @@
       if (res.ok) {
         const user = await res.json();
         isOwner = (user.login === GH_OWNER);
+      } else if (res.status === 401 || res.status === 403) {
+        // Bad or expired token — clear it and re-prompt
+        localStorage.removeItem('gh_pat');
+        await tryShowAuthOverlay();
+        return;
       }
     } catch(_) {}
     updateOwnerUI();
