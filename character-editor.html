@@ -786,6 +786,7 @@
   let portraitChanged= false;
   let wmData         = null; // watermark PNG data URL
   let rosterSha      = null; // GitHub SHA for roster index
+  let rosterHTMLCache= '';  // cached roster HTML to avoid double-fetch in preview
   let charTemplateHTML = '';
   let previewDebounce  = null;
   let activeRtField    = null;
@@ -812,6 +813,7 @@
       await checkOwner(pat);
       await loadRoster();
       await loadCharTemplate();
+      refreshPreview();
     }
     document.getElementById('form-panel').addEventListener('input', () => schedulePreview());
   });
@@ -894,6 +896,7 @@
     await checkOwner(val);
     await loadRoster();
     await loadCharTemplate();
+    refreshPreview();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -906,6 +909,7 @@
       if (data) {
         rosterSha = data.sha;
         const html = atob(data.content.replace(/\n/g,''));
+        rosterHTMLCache = html;
         parseRosterFromHTML(html);
         loadRosterColors(html);
       }
@@ -1603,12 +1607,14 @@
   //  BUILD ROSTER HTML
   // ═══════════════════════════════════════════════════════════
   async function buildRosterHTML() {
-    // Fetch current roster page as base
-    let html = '';
-    try {
-      const data = await ghGet(ROSTER_PATH);
-      if (data) html = atob(data.content.replace(/\n/g,''));
-    } catch(_) {}
+    // Use cached HTML from loadRoster; fall back to a fresh fetch if cache is empty
+    let html = rosterHTMLCache;
+    if (!html) {
+      try {
+        const data = await ghGet(ROSTER_PATH);
+        if (data) { html = atob(data.content.replace(/\n/g,'')); rosterHTMLCache = html; }
+      } catch(_) {}
+    }
     if (!html) return null;
 
     const doc = new DOMParser().parseFromString(html, 'text/html');
