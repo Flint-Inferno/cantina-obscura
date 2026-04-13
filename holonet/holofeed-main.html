@@ -922,36 +922,156 @@ function toggleGlobalTranslate() {
 // TO REMOVE A STORY: delete its { ... } block (and the comma before/after it).
 // ============================================================
 const HEADLINES = [
-  { h:"Mon Mothma Addresses New Republic Senate on Path to Voluntary Demilitarization", b:"Chancellor Mon Mothma delivered a landmark address to the New Republic Senate today, proposing a radical reduction in military expenditures and the gradual return of defense authority to individual systems. Critics within the Senate have raised concerns that the move could leave border worlds vulnerable to lingering Imperial factions.", tag:'standard' },
-  { h:"Scientists Confirm Scarif Ecologically Devastated — Radiation Levels Lethal, No Safe Return for Decades", b:"A team of New Republic scientists released a comprehensive survey of the Scarif system, confirming that the Death Star's superlaser strike and subsequent radiation fallout have rendered the planet's surface ecologically dead. Coral reefs that once stretched thousands of kilometers are gone. The atmosphere shows trace radiation that will persist for an estimated forty to sixty years.", tag:'breaking' },
-  { h:"Imperial Remnants Regroup Near Jakku — New Republic Forces on High Alert", b:"Intelligence reports indicate a coalition of Imperial Moff remnants have established a fortified position in the Jakku system, where a decisive New Republic offensive is considered imminent. Fleet commanders have declined to comment on operational specifics.", tag:'breaking' },
-  { h:"Chandrila Formally Named as New Republic Capital — Celebrations Sweep the Planet", b:"Chandrila has been officially designated the seat of New Republic governance following a near-unanimous Senate vote. Streets across the capital city of Hanna filled with celebrating crowds as the news broke.", tag:'standard' },
-  { h:"Czerka Corporation Reports Record Profits Amid Postwar Reconstruction Boom", b:"Czerka Corporation announced its strongest financial quarter on record, driven by a surge in demand for reconstruction equipment, mining droids, and civil infrastructure tools across formerly occupied systems.", tag:'standard' },
-  { h:"Wookiee Liberation Council Convenes on Kashyyyk to Address Ongoing Recovery", b:"Wookiee delegates convened at Rwookrrorro to address the ongoing recovery from decades of Imperial occupation and forced labor. Reconstruction of major Kashyyyk settlements is reported to be approximately forty percent complete.", tag:'standard' },
-  { h:"Corellia Docking Authority Opens Three New Outer Rim Trade Corridors", b:"The Corellia Docking Authority announced the opening of three new commercial transit corridors connecting the Core to the Outer Rim, intended to ease the supply bottlenecks that have affected recovery efforts.", tag:'standard' },
-  { h:"Alderaanian Diaspora Network Locates Survivors on Espirion and Sullust", b:"The Alderaanian Diaspora Network confirmed the location of several previously missing survivor communities on Espirion and Sullust. Relocation assistance is being organized through the New Republic's Refugee Affairs Office.", tag:'standard' },
-  { h:"Kuat Drive Yards Pivots to Civilian Production — First Models Next Quarter", b:"Kuat Drive Yards announced a major shift in its production lines from military vessels to civilian transports. The first consumer models are expected to reach dealerships within two standard quarters.", tag:'standard' },
-  { h:"Former Imperial Governor Surrenders on Ryloth — War Crimes Tribunal Scheduled", b:"Former Imperial Governor Delto Harven surrendered to New Republic authorities on Ryloth following months of negotiation. He is expected to face a military tribunal for alleged war crimes committed during the occupation of the system.", tag:'breaking' },
-  { h:"Archaeological Team Uncovers Pre-Republic Ruins on Nothoiin", b:"A research team from the University of Corellia has uncovered the remnants of a pre-Republic settlement on Nothoiin, including structures and artifacts dating to more than four thousand years before the current era.", tag:'standard' },
-  { h:"Hutt Grand Council Fractures — Multiple Clans Claim Supremacy Over Cartel Routes", b:"Three of the major Hutt clan families have publicly broken with the Grand Council following the disappearance of crime lord Jabba Desilijic Tiure. Bounty hunters across the Outer Rim report a significant uptick in contract activity.", tag:'breaking' },
-  { h:"New Republic Navy Decommissions Three Imperial Star Destroyers", b:"The New Republic Navy announced the decommissioning of three captured Imperial-class Star Destroyers, the latest in a series of post-armistice military reductions. The vessels will be repurposed for civilian infrastructure projects.", tag:'standard' },
-  { h:"Sullust Relief Efforts Enter Critical Phase — Off-World Aid Ships En Route", b:"New Republic aid officials warned that relief efforts on Sullust are entering a critical phase, as local infrastructure remains severely damaged from years of Imperial extraction and wartime bombardment.", tag:'standard' },
-  { h:"Barsha Corporation Files Outer Rim Mining Permits — Environmental Groups Object", b:"Barsha Corporation has filed permits to expand mineral extraction across four Outer Rim systems, drawing sharp criticism from environmental groups who cite the devastation of Scarif as evidence of the risks posed by unchecked corporate extraction.", tag:'standard' },
-  { h:"Chancellor Mon Mothma Introduces Galactic Reconciliation and Reconstruction Act", b:"In a lengthy Senate address, Chancellor Mon Mothma outlined a sweeping Galactic Reconciliation and Reconstruction Act that would fund relief operations across dozens of systems and create a path for former Imperial citizens to seek New Republic membership.", tag:'standard' },
-  { h:"Bounty Hunters Guild Seeks Official Recognition Under New Republic Law", b:"The Bounty Hunters Guild has formally petitioned the New Republic for legal recognition as a licensed professional body. The petition has drawn mixed reactions from senators.", tag:'standard' },
-  { h:"Toydaria Votes to Join New Republic as Associate Member State", b:"Toydaria's parliament voted to formally join the New Republic as an associate member, granting the kingdom access to trade agreements and defense guarantees without full Senate representation.", tag:'standard' },
-  { h:"Separatist Holdouts Identified on Mustafar — Diplomatic Envoy Dispatched", b:"New Republic intelligence suggests a group of approximately three hundred separatist holdouts has fortified a position in the Mustafar system, refusing to acknowledge the end of the war.", tag:'standard' },
-  { h:"Kashyyyk Rebuilding Effort: 40% of Wookiee Settlements Restored", b:"New Republic reconstruction authorities announced that roughly forty percent of Kashyyyk's Wookiee settlements have been fully restored since the end of Imperial occupation.", tag:'standard' },
-  { h:"Zahn Consortium Seizes Outer Rim Relay Stations — Shipping Fees Spark Outrage", b:"The Zahn Consortium has reportedly seized three major hyperspace relay stations, enabling it to levy tolls on shipping in the region. New Republic logistics officials have lodged a formal protest.", tag:'breaking' },
-  { h:"Coruscant Reconstruction Commission Releases 10-Year Restoration Plan", b:"The Coruscant Reconstruction Commission released its first official 10-year plan, calling for restoration of the city-world's lower levels and new transit infrastructure to replace systems neglected under Imperial rule.", tag:'standard' },
-  { h:"New Republic Scientists: Scarif Will Remain Uninhabitable for a Generation", b:"A new scientific assessment confirms that radiation levels across Scarif's surface remain lethal for unshielded humans and will likely continue for several decades. All marine ecosystems in the planet's reef system were destroyed. The report calls for a permanent quarantine zone.", tag:'breaking' },
-  { h:"Force-Sensitive Sightings Reported Across Multiple Systems — New Republic Silent", b:"Multiple credible sightings of Force-sensitive individuals have been reported across several systems, prompting speculation about a possible new Jedi order. New Republic officials have declined to comment.", tag:'standard' },
-  { h:"Hosnian Prime to Host New Republic Senate Sessions During Capital Construction", b:"The Senate Logistics Committee voted to temporarily relocate to Hosnian Prime while permanent facilities on Chandrila are completed, for an estimated two to three standard years.", tag:'standard' },
-  { h:"New Republic Food Relief Fleet Departs Mon Cala for Outer Rim Territories", b:"Twelve New Republic freighters carrying food, medical supplies, and construction equipment departed from Mon Cala today, bound for formerly Imperial-occupied territories in the Outer Rim.", tag:'standard' },
-  { h:"Sources Report Organized Imperial Faction Active in Outer Rim — Details Scarce", b:"Multiple intelligence reports describe continued activity by an organized Imperial faction in uncharted Outer Rim territories. The group is rumored to be led by a former Imperial Moff.", tag:'standard' },
-  { h:"Nar Shaddaa Tourism Surges to 10-Year High as Galaxy Reopens Post-War", b:"Tourism to Nar Shaddaa has increased markedly since the war's end, with entertainment district operators reporting visitor numbers at a ten-year high.", tag:'standard' },
-  { h:"Teräs Käsi Open Championship Returns to Malastare After Decade Suspension", b:"The Malastare Teräs Käsi Open Championship returns after a ten-year suspension under Imperial rule, with registrations now open to competitors from across the galaxy.", tag:'standard' },
-  { h:"Mandalorian Factions Issue Unprecedented Joint Statement on Future of the Way", b:"Three prominent Mandalorian factions released a joint statement today addressing their cultural traditions, the status of Mandalore, and intentions regarding New Republic engagement.", tag:'standard' }
+  {
+    h:"Mon Mothma Addresses New Republic Senate on Path to Voluntary Demilitarization",
+    b:"Chancellor Mon Mothma delivered a landmark address to the New Republic Senate today, proposing a radical reduction in military expenditures and the gradual return of defense authority to individual systems. Critics within the Senate have raised concerns that the move could leave border worlds vulnerable to lingering Imperial factions.",
+    tag:"standard"
+  },
+  {
+    h:"Scientists Confirm Scarif Ecologically Devastated — Radiation Levels Lethal, No Safe Return for Decades",
+    b:"A team of New Republic scientists released a comprehensive survey of the Scarif system, confirming that the Death Star's superlaser strike and subsequent radiation fallout have rendered the planet's surface ecologically dead. Coral reefs that once stretched thousands of kilometers are gone. The atmosphere shows trace radiation that will persist for an estimated forty to sixty years.",
+    tag:"breaking"
+  },
+  {
+    h:"Imperial Remnants Regroup Near Jakku — New Republic Forces on High Alert",
+    b:"Intelligence reports indicate a coalition of Imperial Moff remnants have established a fortified position in the Jakku system, where a decisive New Republic offensive is considered imminent. Fleet commanders have declined to comment on operational specifics.",
+    tag:"breaking"
+  },
+  {
+    h:"Chandrila Formally Named as New Republic Capital — Celebrations Sweep the Planet",
+    b:"Chandrila has been officially designated the seat of New Republic governance following a near-unanimous Senate vote. Streets across the capital city of Hanna filled with celebrating crowds as the news broke.",
+    tag:"standard"
+  },
+  {
+    h:"Czerka Corporation Reports Record Profits Amid Postwar Reconstruction Boom",
+    b:"Czerka Corporation announced its strongest financial quarter on record, driven by a surge in demand for reconstruction equipment, mining droids, and civil infrastructure tools across formerly occupied systems.",
+    tag:"standard"
+  },
+  {
+    h:"Wookiee Liberation Council Convenes on Kashyyyk to Address Ongoing Recovery",
+    b:"Wookiee delegates convened at Rwookrrorro to address the ongoing recovery from decades of Imperial occupation and forced labor. Reconstruction of major Kashyyyk settlements is reported to be approximately forty percent complete.",
+    tag:"standard"
+  },
+  {
+    h:"Corellia Docking Authority Opens Three New Outer Rim Trade Corridors",
+    b:"The Corellia Docking Authority announced the opening of three new commercial transit corridors connecting the Core to the Outer Rim, intended to ease the supply bottlenecks that have affected recovery efforts.",
+    tag:"standard"
+  },
+  {
+    h:"Alderaanian Diaspora Network Locates Survivors on Espirion and Sullust",
+    b:"The Alderaanian Diaspora Network confirmed the location of several previously missing survivor communities on Espirion and Sullust. Relocation assistance is being organized through the New Republic's Refugee Affairs Office.",
+    tag:"standard"
+  },
+  {
+    h:"Kuat Drive Yards Pivots to Civilian Production — First Models Next Quarter",
+    b:"Kuat Drive Yards announced a major shift in its production lines from military vessels to civilian transports. The first consumer models are expected to reach dealerships within two standard quarters.",
+    tag:"standard"
+  },
+  {
+    h:"Former Imperial Governor Surrenders on Ryloth — War Crimes Tribunal Scheduled",
+    b:"Former Imperial Governor Delto Harven surrendered to New Republic authorities on Ryloth following months of negotiation. He is expected to face a military tribunal for alleged war crimes committed during the occupation of the system.",
+    tag:"breaking"
+  },
+  {
+    h:"Archaeological Team Uncovers Pre-Republic Ruins on Nothoiin",
+    b:"A research team from the University of Corellia has uncovered the remnants of a pre-Republic settlement on Nothoiin, including structures and artifacts dating to more than four thousand years before the current era.",
+    tag:"standard"
+  },
+  {
+    h:"Hutt Grand Council Fractures — Multiple Clans Claim Supremacy Over Cartel Routes",
+    b:"Three of the major Hutt clan families have publicly broken with the Grand Council following the disappearance of crime lord Jabba Desilijic Tiure. Bounty hunters across the Outer Rim report a significant uptick in contract activity.",
+    tag:"breaking"
+  },
+  {
+    h:"New Republic Navy Decommissions Three Imperial Star Destroyers",
+    b:"The New Republic Navy announced the decommissioning of three captured Imperial-class Star Destroyers, the latest in a series of post-armistice military reductions. The vessels will be repurposed for civilian infrastructure projects.",
+    tag:"standard"
+  },
+  {
+    h:"Sullust Relief Efforts Enter Critical Phase — Off-World Aid Ships En Route",
+    b:"New Republic aid officials warned that relief efforts on Sullust are entering a critical phase, as local infrastructure remains severely damaged from years of Imperial extraction and wartime bombardment.",
+    tag:"standard"
+  },
+  {
+    h:"Barsha Corporation Files Outer Rim Mining Permits — Environmental Groups Object",
+    b:"Barsha Corporation has filed permits to expand mineral extraction across four Outer Rim systems, drawing sharp criticism from environmental groups who cite the devastation of Scarif as evidence of the risks posed by unchecked corporate extraction.",
+    tag:"standard"
+  },
+  {
+    h:"Chancellor Mon Mothma Introduces Galactic Reconciliation and Reconstruction Act",
+    b:"In a lengthy Senate address, Chancellor Mon Mothma outlined a sweeping Galactic Reconciliation and Reconstruction Act that would fund relief operations across dozens of systems and create a path for former Imperial citizens to seek New Republic membership.",
+    tag:"standard"
+  },
+  {
+    h:"Bounty Hunters Guild Seeks Official Recognition Under New Republic Law",
+    b:"The Bounty Hunters Guild has formally petitioned the New Republic for legal recognition as a licensed professional body. The petition has drawn mixed reactions from senators.",
+    tag:"standard"
+  },
+  {
+    h:"Toydaria Votes to Join New Republic as Associate Member State",
+    b:"Toydaria's parliament voted to formally join the New Republic as an associate member, granting the kingdom access to trade agreements and defense guarantees without full Senate representation.",
+    tag:"standard"
+  },
+  {
+    h:"Separatist Holdouts Identified on Mustafar — Diplomatic Envoy Dispatched",
+    b:"New Republic intelligence suggests a group of approximately three hundred separatist holdouts has fortified a position in the Mustafar system, refusing to acknowledge the end of the war.",
+    tag:"standard"
+  },
+  {
+    h:"Kashyyyk Rebuilding Effort: 40% of Wookiee Settlements Restored",
+    b:"New Republic reconstruction authorities announced that roughly forty percent of Kashyyyk's Wookiee settlements have been fully restored since the end of Imperial occupation.",
+    tag:"standard"
+  },
+  {
+    h:"Zahn Consortium Seizes Outer Rim Relay Stations — Shipping Fees Spark Outrage",
+    b:"The Zahn Consortium has reportedly seized three major hyperspace relay stations, enabling it to levy tolls on shipping in the region. New Republic logistics officials have lodged a formal protest.",
+    tag:"breaking"
+  },
+  {
+    h:"Coruscant Reconstruction Commission Releases 10-Year Restoration Plan",
+    b:"The Coruscant Reconstruction Commission released its first official 10-year plan, calling for restoration of the city-world's lower levels and new transit infrastructure to replace systems neglected under Imperial rule.",
+    tag:"standard"
+  },
+  {
+    h:"New Republic Scientists: Scarif Will Remain Uninhabitable for a Generation",
+    b:"A new scientific assessment confirms that radiation levels across Scarif's surface remain lethal for unshielded humans and will likely continue for several decades. All marine ecosystems in the planet's reef system were destroyed. The report calls for a permanent quarantine zone.",
+    tag:"breaking"
+  },
+  {
+    h:"Force-Sensitive Sightings Reported Across Multiple Systems — New Republic Silent",
+    b:"Multiple credible sightings of Force-sensitive individuals have been reported across several systems, prompting speculation about a possible new Jedi order. New Republic officials have declined to comment.",
+    tag:"standard"
+  },
+  {
+    h:"Hosnian Prime to Host New Republic Senate Sessions During Capital Construction",
+    b:"The Senate Logistics Committee voted to temporarily relocate to Hosnian Prime while permanent facilities on Chandrila are completed, for an estimated two to three standard years.",
+    tag:"standard"
+  },
+  {
+    h:"New Republic Food Relief Fleet Departs Mon Cala for Outer Rim Territories",
+    b:"Twelve New Republic freighters carrying food, medical supplies, and construction equipment departed from Mon Cala today, bound for formerly Imperial-occupied territories in the Outer Rim.",
+    tag:"standard"
+  },
+  {
+    h:"Sources Report Organized Imperial Faction Active in Outer Rim — Details Scarce",
+    b:"Multiple intelligence reports describe continued activity by an organized Imperial faction in uncharted Outer Rim territories. The group is rumored to be led by a former Imperial Moff.",
+    tag:"standard"
+  },
+  {
+    h:"Nar Shaddaa Tourism Surges to 10-Year High as Galaxy Reopens Post-War",
+    b:"Tourism to Nar Shaddaa has increased markedly since the war's end, with entertainment district operators reporting visitor numbers at a ten-year high.",
+    tag:"standard"
+  },
+  {
+    h:"Teräs Käsi Open Championship Returns to Malastare After Decade Suspension",
+    b:"The Malastare Teräs Käsi Open Championship returns after a ten-year suspension under Imperial rule, with registrations now open to competitors from across the galaxy.",
+    tag:"standard"
+  },
+  {
+    h:"Mandalorian Factions Issue Unprecedented Joint Statement on Future of the Way",
+    b:"Three prominent Mandalorian factions released a joint statement today addressing their cultural traditions, the status of Mandalore, and intentions regarding New Republic engagement.",
+    tag:"standard"
+  }
 ];
 
 // ============================================================
@@ -970,16 +1090,56 @@ const HEADLINES = [
 // in the feed is roughly 1 ad per 3 headlines — this is set in buildNewsFeed().
 // ============================================================
 const ADS = [
-  { h:"CANTINA OBSCURA — OARIN OUTPOST", b:"Deep in the heart of Oarin Outpost, Cantina Obscura serves the finest drinks this side of the Outer Rim. Mention this ad and your first drink is on the house. Ask for Marek at the bar. We don't judge what you've done or where you're going.", tag:'ad' },
-  { h:"TAGGECO LOGISTICS — YOUR CARGO, OUR PROBLEM", b:"TaggeCo Logistics offers reliable freight hauling across more than 200 verified hyperspace routes. No questions asked on compliant manifests. Competitive rates, discreet handling.", tag:'ad' },
-  { h:"BLASTECH CONSUMER DIVISION — ARMED AND READY", b:"BlasTech Industries introduces the DH-series consumer line of personal blasters for the discerning traveler. Lightweight, reliable, and field-serviceable. Available at licensed dealers.", tag:'ad' },
-  { h:"OUTER RIM TRADERS EXCHANGE — WHERE DEALS GET DONE", b:"The Outer Rim Traders Exchange connects buyers and sellers across more than 90 member stations. Register your freight manifest today.", tag:'ad' },
-  { h:"DEXTER'S DINER — NOW ON 12 WORLDS", b:"Dexter Jettster's legendary cooking has expanded beyond Coruscant's lower levels. Twelve franchise locations now open, serving the same oversized portions and honest grub.", tag:'ad' },
-  { h:"CORELLIAN ENGINEERING CORP — OWN YOUR FREEDOM", b:"CEC announces financing options on their CR-70 light freighter line. Speed, reliability, and a cargo hold big enough to matter. Visit a CEC dealer today.", tag:'ad' },
-  { h:"ZELTROS — THE GALAXY'S MOST WELCOMING WORLD", b:"The Zeltron Tourism Bureau invites you to the galaxy's most celebrated hospitality destination. Scheduled transports available from most Core and Mid Rim hubs.", tag:'ad' },
-  { h:"NHARWAAK MEDICAL SUPPLIES — RELIABLE WHEREVER YOU ARE", b:"Nharwaak Medical delivers certified bacta, trauma kits, and surgical tools to remote stations and outer rim outposts. Bulk orders accepted. Discretion available.", tag:'ad' },
-  { h:"KESSEL EXPORTS LTD — FINE SPICE, LEGITIMATELY SOURCED", b:"Following the liberation of the Kessel spice mines, Kessel Exports Ltd. offers certified, legitimately harvested Kessel spice to licensed distributors. Contact our trade office.", tag:'ad' },
-  { h:"ORD MANTELL SALVAGE COOPERATIVE — WE BUY WHAT OTHERS LEAVE BEHIND", b:"The Ord Mantell Salvage Cooperative purchases decommissioned military hardware, starship components, and droid chassis. No questions on provenance under 10,000 credits.", tag:'ad' }
+  {
+    h:"CANTINA OBSCURA — OARIN OUTPOST",
+    b:"Deep in the heart of Oarin Outpost, Cantina Obscura serves the finest drinks this side of the Outer Rim. Mention this ad and your first drink is on the house. Ask for Marek at the bar. We don't judge what you've done or where you're going.",
+    tag:"ad"
+  },
+  {
+    h:"TAGGECO LOGISTICS — YOUR CARGO, OUR PROBLEM",
+    b:"TaggeCo Logistics offers reliable freight hauling across more than 200 verified hyperspace routes. No questions asked on compliant manifests. Competitive rates, discreet handling.",
+    tag:"ad"
+  },
+  {
+    h:"BLASTECH CONSUMER DIVISION — ARMED AND READY",
+    b:"BlasTech Industries introduces the DH-series consumer line of personal blasters for the discerning traveler. Lightweight, reliable, and field-serviceable. Available at licensed dealers.",
+    tag:"ad"
+  },
+  {
+    h:"OUTER RIM TRADERS EXCHANGE — WHERE DEALS GET DONE",
+    b:"The Outer Rim Traders Exchange connects buyers and sellers across more than 90 member stations. Register your freight manifest today.",
+    tag:"ad"
+  },
+  {
+    h:"DEXTER'S DINER — NOW ON 12 WORLDS",
+    b:"Dexter Jettster's legendary cooking has expanded beyond Coruscant's lower levels. Twelve franchise locations now open, serving the same oversized portions and honest grub.",
+    tag:"ad"
+  },
+  {
+    h:"CORELLIAN ENGINEERING CORP — OWN YOUR FREEDOM",
+    b:"CEC announces financing options on their CR-70 light freighter line. Speed, reliability, and a cargo hold big enough to matter. Visit a CEC dealer today.",
+    tag:"ad"
+  },
+  {
+    h:"ZELTROS — THE GALAXY'S MOST WELCOMING WORLD",
+    b:"The Zeltron Tourism Bureau invites you to the galaxy's most celebrated hospitality destination. Scheduled transports available from most Core and Mid Rim hubs.",
+    tag:"ad"
+  },
+  {
+    h:"NHARWAAK MEDICAL SUPPLIES — RELIABLE WHEREVER YOU ARE",
+    b:"Nharwaak Medical delivers certified bacta, trauma kits, and surgical tools to remote stations and outer rim outposts. Bulk orders accepted. Discretion available.",
+    tag:"ad"
+  },
+  {
+    h:"KESSEL EXPORTS LTD — FINE SPICE, LEGITIMATELY SOURCED",
+    b:"Following the liberation of the Kessel spice mines, Kessel Exports Ltd. offers certified, legitimately harvested Kessel spice to licensed distributors. Contact our trade office.",
+    tag:"ad"
+  },
+  {
+    h:"ORD MANTELL SALVAGE COOPERATIVE — WE BUY WHAT OTHERS LEAVE BEHIND",
+    b:"The Ord Mantell Salvage Cooperative purchases decommissioned military hardware, starship components, and droid chassis. No questions on provenance under 10,000 credits.",
+    tag:"ad"
+  }
 ];
 
 // ============================================================
@@ -1106,7 +1266,7 @@ const TRACK_CX = 260, TRACK_CY = 115, TRACK_RX = 190, TRACK_RY = 85;
 //   BS_MAX = fastest possible lap (currently 45 seconds = 0 min 45 sec)
 // Decrease these numbers to make laps shorter/faster.
 // Increase them to make laps longer/slower.
-const BS_MIN = (2*Math.PI)/75, BS_MAX = (2*Math.PI)/45;
+const BS_MIN = (2*Math.PI)/50, BS_MAX = (2*Math.PI)/45;
 
 // ============================================================
 // FATHIER RACER NAME POOL
@@ -1118,9 +1278,20 @@ const BS_MIN = (2*Math.PI)/75, BS_MAX = (2*Math.PI)/45;
 // Names should feel like Star Wars creature/racing names.
 // ============================================================
 const RACER_NAMES = [
-  "Tano's Pride","Corellian Wind","Scarlet Dust","Iron Hooves",
-  "Dusk Runner","Crimson Flash","Silver Stride","Shadow Gallop",
-  "Star Dancer","Void Chaser","Desert Lightning","Thunder Mane"
+  "Tano",
+  ",",
+  ",",
+  ",",
+  ",
+  ",
+  ",",
+  ",",
+  ",",
+  ",
+  ",
+  ",",
+  ",",
+  ","
 ];
 // The 6 dot colors assigned to racers in order (one per racer slot).
 // These are hex color codes. Change them to any valid CSS color.
@@ -1462,9 +1633,26 @@ const TOURN_CYCLE = 1200, ROUND_DUR = 240, FLASH_DUR = 240;
 // Names should feel like alien/Star Wars player names.
 // ============================================================
 const TOURN_NAMES = [
-  'Vraxx','Serinda','Tolmus','Keth','Bralor','Nisha','Varek','Zuri',
-  'Davan','Oska','Remis','Feth','Solana','Krynn','Nella','Torvin',
-  'Wyke','Saryn','Delvo','Prynn'
+  "Vraxx",
+  "Serinda",
+  "Tolmus",
+  "Keth",
+  "Bralor",
+  "Nisha",
+  "Varek",
+  "Zuri",
+  "Davan",
+  "Oska",
+  "Remis",
+  "Feth",
+  "Solana",
+  "Krynn",
+  "Nella",
+  "Torvin",
+  "Wyke",
+  "Saryn",
+  "Delvo",
+  "Prynn"
 ];
 
 function computeTournWinner(seed) {
@@ -1607,12 +1795,42 @@ function buildBracketGrid(container, bracket, completedRounds) {
 // Prices update every 30 seconds and are seeded to be identical for all viewers.
 // ============================================================
 const STOCKS = [
-  {name:'Kuat Drive Yards', sym:'KDY', base:1420, vol:0.015},
-  {name:'Czerka Corporation', sym:'CZRK', base:847, vol:0.022},
-  {name:'Barsha Corp', sym:'BRSH', base:312, vol:0.03},
-  {name:'Holowan Mechanicals', sym:'HLWN', base:589, vol:0.025},
-  {name:'TaggeCo Industries', sym:'TGCO', base:734, vol:0.018},
-  {name:'Outer Rim Commodities', sym:'ORMX', base:198, vol:0.035}
+  {
+    name:"Kuat Drive Yards",
+    sym:"KDY",
+    base:1420,
+    vol:0.015
+  },
+  {
+    name:"Czerka Corporation",
+    sym:"CZRK",
+    base:847,
+    vol:0.022
+  },
+  {
+    name:"Barsha Corp",
+    sym:"BRSH",
+    base:312,
+    vol:0.03
+  },
+  {
+    name:"Holowan Mechanicals",
+    sym:"HLWN",
+    base:589,
+    vol:0.025
+  },
+  {
+    name:"TaggeCo Industries",
+    sym:"TGCO",
+    base:734,
+    vol:0.018
+  },
+  {
+    name:"Outer Rim Commodities",
+    sym:"ORMX",
+    base:198,
+    vol:0.035
+  }
 ];
 
 function stockPrice(stock, seed, step) {
