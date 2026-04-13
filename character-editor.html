@@ -1929,16 +1929,22 @@
         const pSha = await ghGet(GH_CHARS + '/portraits/' + slug + '.jpg').then(d => d?.sha).catch(()=>null);
         await ghPut(GH_CHARS + '/portraits/' + slug + '.jpg', portraitData.data, pSha, `Update portrait: ${slug}`, true);
         portraitChanged = false;
+        // Switch thumb to live GitHub Pages URL so it shows in the editor immediately
+        const thumb = document.getElementById('portrait-thumb');
+        thumb.src = `https://${GH_OWNER.toLowerCase()}.github.io/${GH_REPO}/${GH_CHARS}/portraits/${slug}.jpg?t=${Date.now()}`;
+        thumb.style.display = 'block';
+        document.getElementById('portrait-clear-btn').style.display = '';
       }
 
-      // Update roster entry in memory
+      // Update roster entry in memory and always mark dirty so roster stays in sync
       const occupation = document.getElementById('f-occupation').value.trim();
       const ridx = roster.findIndex(r => r.slug === slug);
       const entry = { slug, name, occupation, portrait: portraitData ? `portraits/${slug}.jpg` : (ridx >= 0 ? roster[ridx].portrait : '') };
       if (ridx >= 0) roster[ridx] = entry;
-      else { roster.push(entry); rosterDirty = true; }
+      else roster.push(entry);
+      rosterDirty = true;
 
-      setStatus('COMMITTED — ' + slug + '.html', 'ok');
+      setStatus('COMMITTED — save roster to sync name changes', 'ok');
       renderRosterList();
     } catch(e) {
       setStatus('COMMIT ERROR: ' + e.message, 'err');
