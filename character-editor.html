@@ -1877,15 +1877,23 @@
     clearTimeout(previewDebounce);
     previewDebounce = setTimeout(refreshPreview, 350);
   }
+  const PAGES_BASE = `https://${GH_OWNER.toLowerCase()}.github.io/${GH_REPO}/`;
+  function injectBase(html, path) {
+    const base = `<base href="${PAGES_BASE}${path}">`;
+    return html.replace(/<head>/i, '<head>' + base);
+  }
+
   function refreshPreview() {
     const frame = document.getElementById('preview-frame');
     if (currentSlug) {
-      // Bio preview
+      // Bio preview — base set to characters/ so portrait paths resolve correctly
       const html = buildBioHTML();
-      if (html) frame.srcdoc = html;
+      if (html) frame.srcdoc = injectBase(html, 'characters/');
     } else {
-      // Roster preview — build inline
-      buildRosterHTML().then(html => { if (html) frame.srcdoc = html; }).catch(()=>{});
+      // Roster preview — base set to characters/ so portrait thumbs resolve
+      buildRosterHTML().then(html => {
+        if (html) frame.srcdoc = injectBase(html, 'characters/');
+      }).catch(()=>{});
     }
   }
 
@@ -1950,11 +1958,6 @@
         const pSha = await ghGet(GH_CHARS + '/portraits/' + slug + '.jpg').then(d => d?.sha).catch(()=>null);
         await ghPut(GH_CHARS + '/portraits/' + slug + '.jpg', portraitData.data, pSha, `Update portrait: ${slug}`, true);
         portraitChanged = false;
-        // Switch thumb to live GitHub Pages URL so it shows in the editor immediately
-        const thumb = document.getElementById('portrait-thumb');
-        thumb.src = `https://${GH_OWNER.toLowerCase()}.github.io/${GH_REPO}/${GH_CHARS}/portraits/${slug}.jpg?t=${Date.now()}`;
-        thumb.style.display = 'block';
-        document.getElementById('portrait-clear-btn').style.display = '';
       }
 
       // Update roster entry in memory and always mark dirty so roster stays in sync
