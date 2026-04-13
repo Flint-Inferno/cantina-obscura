@@ -165,29 +165,81 @@
     }
 
     /* Briefing mode toggle */
-    .mode-toggle {
-      display: flex;
-      gap: 0.4rem;
-      margin-bottom: 0.25rem;
+    /* ── Rich text toolbar ──────────────────────────────────── */
+    .rt-wrap { display: flex; flex-direction: column; gap: 0; margin-top: 0.4rem; }
+    .rt-toolbar {
+      display: flex; flex-wrap: wrap; gap: 2px;
+      padding: 0.25rem 0.3rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-bottom: none; border-radius: 2px 2px 0 0;
     }
-    .mode-toggle button {
-      font-family: var(--font);
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
-      padding: 0.2rem 0.6rem;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text);
-      opacity: 0.5;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: all 0.15s;
+    .rt-btn {
+      font-family: var(--font); font-size: 0.68rem;
+      padding: 0.15rem 0.45rem; border: 1px solid transparent;
+      background: transparent; color: var(--text);
+      border-radius: 2px; cursor: pointer; letter-spacing: 0.06em;
+      transition: border-color 0.12s, background 0.12s;
     }
-    .mode-toggle button.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      opacity: 1;
+    .rt-btn:hover { border-color: var(--dim); background: rgba(255,255,255,0.04); }
+    .rt-btn.active { border-color: var(--accent); color: var(--accent); }
+    .rt-btn b { font-weight: bold; }
+    .rt-btn i { font-style: italic; }
+    .rt-color-wrap { position: relative; display: inline-flex; align-items: center; }
+    .rt-color-input { position: absolute; width: 26px; height: 22px; opacity: 0; cursor: pointer; left: 0; top: 0; }
+    .rt-field {
+      font-family: var(--font); font-size: 0.78rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 0 0 2px 2px;
+      padding: 0.35rem 0.5rem; min-height: 120px;
+      outline: none; line-height: 1.6;
+      transition: border-color 0.15s; white-space: pre-wrap;
     }
+    .rt-field:focus { border-color: var(--dim); }
+    .rt-field a { color: var(--accent); text-decoration: underline; }
+    .rt-field ul, .rt-field ol { padding-left: 1.4em; }
+    /* ── Link picker overlay ────────────────────────────────── */
+    #brief-link-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #brief-link-overlay.hidden { display: none; }
+    #brief-link-box {
+      background: var(--panel); border: 1px solid var(--accent);
+      border-radius: 4px; padding: 1.25rem;
+      width: min(460px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    #brief-link-box h2 { font-family: var(--font-hd); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); }
+    .blp-tabs { display: flex; gap: 0.3rem; }
+    .blp-tab {
+      font-family: var(--font); font-size: 0.6rem; letter-spacing: 0.12em;
+      padding: 0.2rem 0.55rem; border: 1px solid var(--border);
+      background: transparent; color: var(--text);
+      border-radius: 2px; cursor: pointer; opacity: 0.6;
+      transition: opacity 0.15s, border-color 0.15s;
+    }
+    .blp-tab:hover { opacity: 1; }
+    .blp-tab.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    #brief-link-list {
+      max-height: 200px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 0.2rem;
+    }
+    .blp-item {
+      font-size: 0.72rem; padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border); border-radius: 2px;
+      cursor: pointer; transition: border-color 0.12s, color 0.12s;
+    }
+    .blp-item:hover { border-color: var(--accent); color: var(--accent); }
+    #brief-link-manual { display: none; }
+    #brief-link-manual input {
+      width: 100%; font-family: var(--font); font-size: 0.75rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.3rem 0.5rem; outline: none;
+    }
+    #brief-link-manual input:focus { border-color: var(--dim); }
 
     /* Page status toggle */
     .status-toggle {
@@ -798,6 +850,26 @@
     </div>
   </div>
 
+  <!-- ── Brief link picker overlay ───────────────────────────── -->
+  <div id="brief-link-overlay" class="hidden">
+    <div id="brief-link-box">
+      <h2>↗ INSERT LINK</h2>
+      <div class="blp-tabs">
+        <button class="blp-tab active" onclick="setBriefLpTab('characters')">CHARACTERS</button>
+        <button class="blp-tab"        onclick="setBriefLpTab('missions')">MISSIONS</button>
+        <button class="blp-tab"        onclick="setBriefLpTab('manual')">MANUAL URL</button>
+      </div>
+      <div id="brief-link-list"></div>
+      <div id="brief-link-manual">
+        <input type="text" id="brief-link-manual-input" placeholder="https://...">
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.25rem;">
+        <button class="btn primary" onclick="confirmBriefLink()" style="flex:1;font-size:0.68rem;">INSERT</button>
+        <button class="btn"         onclick="closeBriefLink()"   style="flex:1;font-size:0.68rem;">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Agent picker overlay ────────────────────────────────── -->
   <div id="agent-picker-overlay" class="hidden">
     <div id="agent-picker-box" style="background:var(--panel);border:1px solid var(--accent);border-radius:4px;padding:1.25rem;width:300px;max-height:420px;display:flex;flex-direction:column;gap:0.5rem;">
@@ -956,13 +1028,20 @@
       <!-- Briefing -->
       <div>
         <div class="section-heading">Mission Briefing</div>
-        <div class="mode-toggle">
-          <button id="brief-para-btn" class="active" onclick="setBriefMode('para')">¶ PARAGRAPHS</button>
-          <button id="brief-list-btn" onclick="setBriefMode('list')">≡ BULLET LIST</button>
-        </div>
-        <div class="field">
-          <label id="brief-label">One paragraph per blank line</label>
-          <textarea id="f-briefing" rows="7" placeholder="Write the mission objectives here..."></textarea>
+        <div class="rt-wrap">
+          <div class="rt-toolbar">
+            <button class="rt-btn" onclick="briefCmd('bold')"      title="Bold"><b>B</b></button>
+            <button class="rt-btn" onclick="briefCmd('italic')"    title="Italic"><i>I</i></button>
+            <button class="rt-btn" onclick="briefCmd('underline')" title="Underline"><u>U</u></button>
+            <div class="rt-color-wrap" title="Text color">
+              <button class="rt-btn">A</button>
+              <input type="color" class="rt-color-input" onchange="briefColor(this.value)">
+            </div>
+            <button class="rt-btn" onclick="openBriefLink()" title="Embed link">↗ LINK</button>
+            <button class="rt-btn" id="brief-list-btn" onclick="toggleBriefList()" title="Toggle bullet list">≡ LIST</button>
+          </div>
+          <div class="rt-field" id="rt-briefing" contenteditable="true" spellcheck="false"
+               oninput="markDirty();schedulePreview()"></div>
         </div>
       </div>
 
@@ -1140,7 +1219,7 @@
   }
 
   let currentFaction  = FACTIONS[0];
-  let briefMode       = 'para';  // 'para' | 'list'
+  let briefMode       = 'para';  // kept for turn-in; briefing now uses contenteditable
   let pageStatus      = 'not-started'; // 'not-started' | 'in-progress' | 'complete'
   let isDirty         = false;
   let templateHTML    = '';
@@ -1389,13 +1468,105 @@
   }
 
   // ── Brief mode ───────────────────────────────────────────────
-  function setBriefMode(mode) {
-    briefMode = mode;
-    document.getElementById('brief-para-btn').classList.toggle('active', mode === 'para');
-    document.getElementById('brief-list-btn').classList.toggle('active', mode === 'list');
-    document.getElementById('brief-label').textContent =
-      mode === 'para' ? 'One paragraph per blank line' : 'One bullet per line';
+  // ── Rich text — briefing ─────────────────────────────────────
+  let savedBriefSel = null;
+  let briefLpTab    = 'characters';
+
+  function briefCmd(cmd) {
+    document.getElementById('rt-briefing').focus();
+    document.execCommand(cmd, false, null);
     schedulePreview();
+  }
+  function briefColor(hex) {
+    document.getElementById('rt-briefing').focus();
+    document.execCommand('foreColor', false, hex);
+    schedulePreview();
+  }
+  function toggleBriefList() {
+    const field = document.getElementById('rt-briefing');
+    const btn   = document.getElementById('brief-list-btn');
+    field.focus();
+    document.execCommand('insertUnorderedList', false, null);
+    btn.classList.toggle('active', !!field.querySelector('ul'));
+    schedulePreview();
+  }
+  function saveBriefSel() {
+    const sel = window.getSelection();
+    savedBriefSel = sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+  }
+  function restoreBriefSel() {
+    if (!savedBriefSel) return;
+    document.getElementById('rt-briefing').focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedBriefSel);
+  }
+  function openBriefLink() {
+    saveBriefSel();
+    document.getElementById('brief-link-overlay').classList.remove('hidden');
+    setBriefLpTab('characters');
+  }
+  function closeBriefLink() {
+    document.getElementById('brief-link-overlay').classList.add('hidden');
+    restoreBriefSel();
+  }
+  async function setBriefLpTab(tab) {
+    briefLpTab = tab;
+    document.querySelectorAll('.blp-tab').forEach(b => {
+      b.classList.toggle('active',
+        (tab === 'characters' && b.textContent === 'CHARACTERS') ||
+        (tab === 'missions'   && b.textContent === 'MISSIONS')   ||
+        (tab === 'manual'     && b.textContent === 'MANUAL URL'));
+    });
+    const list   = document.getElementById('brief-link-list');
+    const manual = document.getElementById('brief-link-manual');
+    list.style.display   = tab !== 'manual' ? '' : 'none';
+    manual.style.display = tab === 'manual' ? '' : 'none';
+    if (tab === 'manual') {
+      setTimeout(() => document.getElementById('brief-link-manual-input').focus(), 50);
+      return;
+    }
+    list.innerHTML = '<div style="opacity:0.35;padding:0.5rem;font-size:0.7rem;">Loading...</div>';
+    try {
+      const folder = tab === 'characters' ? 'characters' : GH_FOLDER;
+      const res    = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${folder}`,
+        { headers: ghHeaders() }
+      );
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const files = (await res.json()).filter(f => f.type === 'file' && f.name.endsWith('.html') && f.name !== 'index.html');
+      list.innerHTML = '';
+      if (!files.length) { list.innerHTML = '<div style="opacity:0.35;padding:0.5rem;font-size:0.7rem;">None found.</div>'; return; }
+      files.forEach(f => {
+        const slug = f.name.replace(/\.html$/, '');
+        const url  = `https://flint-inferno.github.io/${GH_REPO}/${folder}/${f.name}`;
+        const el   = document.createElement('div');
+        el.className = 'blp-item';
+        el.textContent = tab === 'characters' ? slug : f.name;
+        el.onclick = () => insertBriefLink(slug, url);
+        list.appendChild(el);
+      });
+    } catch(e) {
+      list.innerHTML = `<div style="opacity:0.5;padding:0.5rem;font-size:0.7rem;">Error: ${e.message}</div>`;
+    }
+  }
+  function insertBriefLink(label, url) {
+    document.getElementById('brief-link-overlay').classList.add('hidden');
+    restoreBriefSel();
+    const sel = window.getSelection();
+    if (sel && sel.isCollapsed) {
+      // No text selected — insert label as link text
+      document.execCommand('insertHTML', false, `<a href="${url}">${label}</a>`);
+    } else {
+      document.execCommand('createLink', false, url);
+    }
+    schedulePreview();
+  }
+  function confirmBriefLink() {
+    const url = document.getElementById('brief-link-manual-input').value.trim();
+    if (!url) { closeBriefLink(); return; }
+    document.getElementById('brief-link-manual-input').value = '';
+    insertBriefLink(url, url);
   }
 
   // ── Live preview ─────────────────────────────────────────────
@@ -1816,7 +1987,7 @@
     // Briefing
     const brief = doc.querySelector('.mission-instructions');
     if (brief) {
-      document.getElementById('f-briefing').value = htmlToPlainText(brief.innerHTML);
+      document.getElementById('rt-briefing').innerHTML = brief.innerHTML;
     }
 
     // Turn-in
@@ -1947,7 +2118,7 @@
 
     // Briefing
     const brief = doc.querySelector('.mission-instructions');
-    if (brief) brief.innerHTML = plainTextToHTML(v('f-briefing'), briefMode);
+    if (brief) brief.innerHTML = document.getElementById('rt-briefing').innerHTML;
 
     // Turn-in
     const turnin = doc.querySelector('.turnin-instructions');
