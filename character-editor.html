@@ -1880,6 +1880,9 @@
   const PAGES_BASE = `https://${GH_OWNER.toLowerCase()}.github.io/${GH_REPO}/`;
   function injectBase(html, path) {
     const base = `<base href="${PAGES_BASE}${path}">`;
+    // Also absolutize font URLs — CSS url() in <style> blocks doesn't reliably respect <base>
+    html = html.replace(/url\((['"]?)\.\.\/toypad-system-backup\/AurebeshAF-Canon\.otf\1\)/g,
+      `url('${PAGES_BASE}AurebeshAF-Canon.otf')`);
     return html.replace(/<head>/i, '<head>' + base);
   }
 
