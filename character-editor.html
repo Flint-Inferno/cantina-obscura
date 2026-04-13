@@ -356,6 +356,38 @@
 </head>
 <body>
 
+  <!-- ── Password overlay (collaborators) ──────────────────────── -->
+  <div id="pw-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>◈ CANTINA OBSCURA</h2>
+      <p>Enter the access password to continue.</p>
+      <input type="password" class="overlay-input" id="pw-input" placeholder="Password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitPassword()">
+      <div class="overlay-status" id="pw-status"></div>
+      <div class="overlay-actions">
+        <button class="btn" onclick="openPat()" style="margin-right:auto;font-size:0.6rem;opacity:0.45;border-color:transparent;">USE TOKEN INSTEAD</button>
+        <button class="btn primary" onclick="submitPassword()">ENTER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Change collaborator password overlay ───────────────────── -->
+  <div id="changepw-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>⚿ CHANGE COLLABORATOR PASSWORD</h2>
+      <p>Set the shared password collaborators use to access the editor.<br>Your PAT will be encrypted with this password and saved to the repo.</p>
+      <input type="password" class="overlay-input" id="changepw-input"   placeholder="New password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') document.getElementById('changepw-confirm').focus()">
+      <input type="password" class="overlay-input" id="changepw-confirm" placeholder="Confirm password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitChangePw()">
+      <div class="overlay-status" id="changepw-status"></div>
+      <div class="overlay-actions">
+        <button class="btn" onclick="closeChangePw()">CANCEL</button>
+        <button class="btn primary" onclick="submitChangePw()">SAVE PASSWORD</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── PAT overlay ──────────────────────────────────────────── -->
   <div id="pat-overlay" class="overlay hidden">
     <div class="overlay-box">
@@ -431,6 +463,7 @@
     <div class="logo">◈ CHARACTER EDITOR</div>
     <span id="topbar-view-label">ROSTER</span>
     <div id="status-msg">LOADING...</div>
+    <button class="btn" id="changepw-btn" onclick="showChangePw()" style="display:none" title="Change collaborator password">⚿ PASSWORD</button>
     <button class="btn" id="token-btn"  onclick="openPat()" title="Set GitHub PAT">⚿ TOKEN</button>
     <button class="btn primary" id="save-roster-btn" onclick="saveRoster()" disabled>▲ SAVE ROSTER</button>
     <button class="btn primary" id="save-char-btn"   onclick="saveCharacter()" style="display:none" disabled>▲ SAVE CHARACTER</button>
@@ -774,6 +807,7 @@
   const GH_MISSIONS = 'live-page-links';
   const CHAR_TEMPLATE_PATH = 'character-template.html';
   const ROSTER_PATH        = 'characters/index.html';
+  const CONFIG_FILE        = 'editor-config.json';
 
   // ═══════════════════════════════════════════════════════════
   //  STATE
@@ -813,7 +847,7 @@
     // Check PAT for save/owner features
     const pat = localStorage.getItem('gh_pat');
     if (pat) await checkOwner(pat);
-    else openPat();
+    else await tryShowAuthOverlay();
     document.getElementById('form-panel').addEventListener('input', () => schedulePreview());
   });
 
@@ -831,14 +865,44 @@
   function updateOwnerUI() {
     document.getElementById('token-btn').style.display = '';
     if (isOwner) {
-      document.getElementById('f-gm-password').disabled = false;
+      document.getElementById('changepw-btn').style.display    = '';
+      document.getElementById('f-gm-password').disabled        = false;
       document.getElementById('gm-pw-change-btn').style.display = '';
       document.getElementById('gm-pw-lock-note').style.display  = 'none';
     } else {
-      document.getElementById('f-gm-password').disabled = true;
+      document.getElementById('changepw-btn').style.display    = 'none';
+      document.getElementById('f-gm-password').disabled        = true;
       document.getElementById('gm-pw-change-btn').style.display = 'none';
       document.getElementById('gm-pw-lock-note').style.display  = '';
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  CRYPTO HELPERS (PAT encryption/decryption)
+  // ═══════════════════════════════════════════════════════════
+  async function _deriveKey(password, salt) {
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password),
+      'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  }
+  function _hex(buf) { return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  function _unhex(h) { return new Uint8Array(h.match(/.{2}/g).map(x=>parseInt(x,16))); }
+
+  async function encryptPat(pat, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv   = crypto.getRandomValues(new Uint8Array(12));
+    const key  = await _deriveKey(password, salt);
+    const ct   = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, new TextEncoder().encode(pat));
+    return { salt: _hex(salt), iv: _hex(iv), ciphertext: btoa(String.fromCharCode(...new Uint8Array(ct))) };
+  }
+  async function decryptPat(cfg, password) {
+    const key = await _deriveKey(password, _unhex(cfg.salt));
+    const ct  = Uint8Array.from(atob(cfg.ciphertext), c => c.charCodeAt(0));
+    const pt  = await crypto.subtle.decrypt({name:'AES-GCM', iv: _unhex(cfg.iv)}, key, ct);
+    return new TextDecoder().decode(pt);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -896,6 +960,97 @@
     await loadRoster();
     await loadCharTemplate();
     refreshPreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PASSWORD AUTH (collaborators)
+  // ═══════════════════════════════════════════════════════════
+  async function tryShowAuthOverlay() {
+    try {
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${CONFIG_FILE}?t=${Date.now()}`
+      );
+      if (res.ok) {
+        // Config exists — show password prompt
+        document.getElementById('pw-overlay').classList.remove('hidden');
+        setTimeout(() => document.getElementById('pw-input').focus(), 50);
+      } else {
+        openPat(); // No config yet — owner sets up PAT first
+      }
+    } catch(_) {
+      openPat();
+    }
+  }
+
+  async function submitPassword() {
+    const pw = document.getElementById('pw-input').value;
+    const st = document.getElementById('pw-status');
+    if (!pw) { st.textContent = 'Enter a password.'; st.className = ''; return; }
+    st.textContent = 'Verifying...'; st.className = '';
+    try {
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${CONFIG_FILE}?t=${Date.now()}`
+      );
+      if (!res.ok) throw new Error('No password configured yet — ask the owner to set one.');
+      const cfg = await res.json();
+      let pat;
+      try { pat = await decryptPat(cfg, pw); } catch(_) { throw new Error('incorrect'); }
+      if (!pat || (!pat.startsWith('ghp_') && !pat.startsWith('github_')))
+        throw new Error('incorrect');
+      // Cache PAT in localStorage so they never need to enter it again on this device
+      localStorage.setItem('gh_pat', pat);
+      document.getElementById('pw-overlay').classList.add('hidden');
+      document.getElementById('pw-input').value = '';
+      await checkOwner(pat);
+      await loadRoster(); // Re-load with PAT to get SHA for saves
+    } catch(e) {
+      const msg = e.message === 'incorrect' ? 'Incorrect password.' : 'Error: ' + e.message;
+      st.textContent = msg; st.className = '';
+    }
+  }
+
+  // ── Change collaborator password (owner only) ─────────────────
+  function showChangePw() {
+    document.getElementById('changepw-input').value   = '';
+    document.getElementById('changepw-confirm').value = '';
+    document.getElementById('changepw-status').textContent = '';
+    document.getElementById('changepw-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('changepw-input').focus(), 50);
+  }
+  function closeChangePw() {
+    document.getElementById('changepw-overlay').classList.add('hidden');
+  }
+  async function submitChangePw() {
+    const pw1 = document.getElementById('changepw-input').value;
+    const pw2 = document.getElementById('changepw-confirm').value;
+    const st  = document.getElementById('changepw-status');
+    if (!pw1)        { st.textContent = 'Enter a password.'; st.className = ''; return; }
+    if (pw1 !== pw2) { st.textContent = 'Passwords do not match.'; st.className = ''; return; }
+    const pat = localStorage.getItem('gh_pat');
+    if (!pat) { st.textContent = 'No PAT stored — use ⚿ TOKEN first.'; st.className = ''; return; }
+    st.textContent = 'Encrypting and saving...'; st.className = '';
+    try {
+      const cfg    = await encryptPat(pat, pw1);
+      const cfgB64 = btoa(JSON.stringify(cfg, null, 2));
+      let sha = null;
+      try {
+        const ex = await fetch(
+          `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_FILE}`,
+          { headers: ghHeaders() });
+        if (ex.ok) sha = (await ex.json()).sha;
+      } catch(_) {}
+      const body = { message: 'Update editor-config.json (character editor password)', content: cfgB64 };
+      if (sha) body.sha = sha;
+      const put = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_FILE}`,
+        { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      );
+      if (!put.ok) { const e = await put.json().catch(()=>({})); throw new Error(e.message || `HTTP ${put.status}`); }
+      st.textContent = 'Password saved!'; st.className = 'ok';
+      setTimeout(() => closeChangePw(), 1500);
+    } catch(e) {
+      st.textContent = 'Error: ' + e.message; st.className = '';
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
