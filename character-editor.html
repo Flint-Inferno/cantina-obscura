@@ -481,6 +481,7 @@
     <button class="btn primary" id="save-roster-btn" onclick="saveRoster()" disabled>▲ SAVE ROSTER</button>
     <button class="btn" id="download-char-btn" onclick="downloadCharacter()" style="display:none" title="Download bio as HTML file">⬇ DOWNLOAD</button>
     <button class="btn primary" id="save-char-btn"   onclick="saveCharacter()" style="display:none" disabled>▲ SAVE CHARACTER</button>
+    <button class="btn primary" id="save-both-btn"   onclick="saveBoth()"      style="display:none">▲ SAVE BOTH</button>
   </div>
 
   <!-- ── Mobile tab bar ───────────────────────────────────────── -->
@@ -1205,6 +1206,7 @@
     document.getElementById('topbar-view-label').textContent   = 'ROSTER';
     document.getElementById('save-roster-btn').style.display   = '';
     document.getElementById('save-char-btn').style.display     = 'none';
+    document.getElementById('save-both-btn').style.display     = 'none';
     document.getElementById('download-char-btn').style.display = 'none';
     currentSlug = null;
     charSha     = null;
@@ -1212,14 +1214,15 @@
   }
 
   function showBioView(slug) {
-    document.getElementById('roster-view').style.display     = 'none';
-    document.getElementById('bio-view').style.display        = '';
-    document.getElementById('topbar-view-label').textContent = 'BIO — ' + slug.toUpperCase();
-    document.getElementById('save-roster-btn').style.display = 'none';
-    document.getElementById('save-char-btn').style.display   = '';
-    document.getElementById('save-char-btn').disabled        = false;
+    document.getElementById('roster-view').style.display       = 'none';
+    document.getElementById('bio-view').style.display          = '';
+    document.getElementById('topbar-view-label').textContent   = 'BIO — ' + slug.toUpperCase();
+    document.getElementById('save-roster-btn').style.display   = 'none';
+    document.getElementById('save-char-btn').style.display     = '';
+    document.getElementById('save-char-btn').disabled          = false;
+    document.getElementById('save-both-btn').style.display     = '';
     document.getElementById('download-char-btn').style.display = '';
-    document.getElementById('bio-editing-label').textContent = 'EDITING: ' + slug;
+    document.getElementById('bio-editing-label').textContent   = 'EDITING: ' + slug;
   }
 
   function backToRoster() {
@@ -1906,9 +1909,23 @@
   async function confirmCommit() {
     document.getElementById('commit-overlay').classList.add('hidden');
     if (!commitQueue) return;
-    if (commitQueue.type === 'char') await doSaveChar(commitQueue.slug, commitQueue.name);
+    if (commitQueue.type === 'char')   await doSaveChar(commitQueue.slug, commitQueue.name);
     else if (commitQueue.type === 'roster') await doSaveRoster();
+    else if (commitQueue.type === 'both') {
+      await doSaveChar(commitQueue.slug, commitQueue.name);
+      await doSaveRoster();
+    }
     commitQueue = null;
+  }
+
+  function saveBoth() {
+    const slug = (document.getElementById('f-slug').value.trim() || 'character').toLowerCase().replace(/[^a-z0-9-]/g,'-');
+    const name = document.getElementById('f-name').value.trim() || slug;
+    const files = [`characters/${slug}.html`, 'characters/index.html'];
+    if (portraitChanged && portraitData) files.splice(1, 0, `characters/portraits/${slug}.jpg`);
+    document.getElementById('commit-desc').innerHTML = `<strong>${files.join(', ')}</strong>`;
+    commitQueue = { type: 'both', slug, name };
+    document.getElementById('commit-overlay').classList.remove('hidden');
   }
 
   async function doSaveChar(slug, name) {
