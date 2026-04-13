@@ -356,6 +356,19 @@
 </head>
 <body>
 
+  <!-- ── Scan missing characters overlay ───────────────────────── -->
+  <div id="scan-overlay" class="overlay hidden">
+    <div class="overlay-box" style="width:min(480px,calc(100vw - 2rem));">
+      <h2>⊕ FIND MISSING CHARACTERS</h2>
+      <p id="scan-status-msg" style="min-height:1.2em;">Scanning GitHub...</p>
+      <div id="scan-list" style="display:flex;flex-direction:column;gap:0.3rem;max-height:260px;overflow-y:auto;"></div>
+      <div class="overlay-actions">
+        <button class="btn" onclick="closeScanOverlay()">CANCEL</button>
+        <button class="btn primary" id="scan-add-btn" onclick="addMissingChars()" disabled>ADD SELECTED</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Password overlay (collaborators) ──────────────────────── -->
   <div id="pw-overlay" class="overlay hidden">
     <div class="overlay-box">
@@ -486,8 +499,9 @@
       <div id="roster-view">
         <div>
           <div class="section-heading">Character Roster</div>
-          <div style="margin-top:0.5rem;margin-bottom:0.5rem;">
+          <div style="margin-top:0.5rem;margin-bottom:0.5rem;display:flex;flex-direction:column;gap:0.35rem;">
             <button class="btn primary" onclick="newCharacter()" style="width:100%">+ NEW CHARACTER</button>
+            <button class="btn" onclick="openScanOverlay()" style="width:100%;font-size:0.65rem;">⊕ FIND MISSING CHARACTERS</button>
           </div>
           <div id="roster-char-list">
             <div style="opacity:0.35;font-size:0.72rem;padding:1rem 0;text-align:center;">Loading...</div>
@@ -1978,6 +1992,108 @@
     renderRosterList();
     pendingDeleteSlug = null;
     setStatus('REMOVED FROM ROSTER — save roster to commit', 'ok');
+    schedulePreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SCAN FOR MISSING CHARACTERS
+  // ═══════════════════════════════════════════════════════════
+  let scanResults = [];
+
+  function openScanOverlay() {
+    scanResults = [];
+    document.getElementById('scan-list').innerHTML = '';
+    document.getElementById('scan-status-msg').textContent = 'Scanning GitHub for unregistered character files...';
+    document.getElementById('scan-add-btn').disabled = true;
+    document.getElementById('scan-overlay').classList.remove('hidden');
+    doScanMissing();
+  }
+  function closeScanOverlay() {
+    document.getElementById('scan-overlay').classList.add('hidden');
+  }
+
+  async function doScanMissing() {
+    const statusEl = document.getElementById('scan-status-msg');
+    const listEl   = document.getElementById('scan-list');
+    try {
+      const files = await ghGet(GH_CHARS);
+      if (!files) throw new Error('Could not load characters folder — is a PAT set?');
+
+      const SKIP = new Set(['index.html', 'character-template.html']);
+      const currentSlugs = new Set(roster.map(r => r.slug));
+
+      const candidates = files.filter(f =>
+        f.type === 'file' &&
+        f.name.endsWith('.html') &&
+        !SKIP.has(f.name) &&
+        !currentSlugs.has(f.name.replace(/\.html$/, ''))
+      );
+
+      if (!candidates.length) {
+        statusEl.textContent = 'No missing characters found — roster is up to date.';
+        return;
+      }
+
+      statusEl.textContent = `Found ${candidates.length} unregistered file${candidates.length !== 1 ? 's' : ''}. Fetching details...`;
+
+      scanResults = [];
+      for (const f of candidates) {
+        const slug = f.name.replace(/\.html$/, '');
+        try {
+          const data = await ghGet(GH_CHARS + '/' + f.name);
+          const html = data ? atob(data.content.replace(/\n/g, '')) : '';
+          const doc  = new DOMParser().parseFromString(html, 'text/html');
+          const meta = n => doc.querySelector(`meta[name="${n}"]`)?.getAttribute('content') || '';
+          scanResults.push({
+            slug,
+            name:       meta('char-name')       || slug,
+            occupation: meta('char-occupation')  || '',
+            portrait:   meta('char-portrait')    || '',
+            checked:    true,
+          });
+        } catch(_) {
+          scanResults.push({ slug, name: slug, occupation: '', portrait: '', checked: true });
+        }
+      }
+
+      renderScanList();
+      statusEl.textContent = `Found ${scanResults.length} unregistered character${scanResults.length !== 1 ? 's' : ''}:`;
+      document.getElementById('scan-add-btn').disabled = false;
+    } catch(e) {
+      statusEl.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  function renderScanList() {
+    const listEl = document.getElementById('scan-list');
+    listEl.innerHTML = '';
+    scanResults.forEach((r, i) => {
+      const row = document.createElement('label');
+      row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:2px;cursor:pointer;';
+      const cb = document.createElement('input');
+      cb.type    = 'checkbox';
+      cb.checked = r.checked;
+      cb.onchange = () => { scanResults[i].checked = cb.checked; };
+      const info = document.createElement('span');
+      info.style.cssText = 'font-size:0.75rem;flex:1;';
+      info.innerHTML = `<strong>${esc(r.name)}</strong> <span style="opacity:0.4;font-size:0.65rem;">${esc(r.slug)}.html${r.occupation ? ' — ' + esc(r.occupation) : ''}</span>`;
+      row.appendChild(cb);
+      row.appendChild(info);
+      listEl.appendChild(row);
+    });
+  }
+
+  function addMissingChars() {
+    const toAdd = scanResults.filter(r => r.checked);
+    toAdd.forEach(r => {
+      if (!roster.find(e => e.slug === r.slug)) {
+        roster.push({ slug: r.slug, name: r.name, occupation: r.occupation, portrait: r.portrait });
+      }
+    });
+    rosterDirty = true;
+    renderRosterList();
+    closeScanOverlay();
+    setStatus(`Added ${toAdd.length} character${toAdd.length !== 1 ? 's' : ''} — click SAVE ROSTER to commit`, 'ok');
     schedulePreview();
   }
 
