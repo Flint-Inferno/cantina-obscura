@@ -620,6 +620,7 @@
                 <button class="rt-btn">A</button>
                 <input type="color" class="rt-color-input" onchange="rtColor(this.value)">
               </div>
+              <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
               <button class="rt-btn" onclick="openLinkPicker()" title="Link">↗ LINK</button>
             </div>
             <div class="rt-field" id="rt-background" contenteditable="true" spellcheck="false"
@@ -642,6 +643,7 @@
                 <button class="rt-btn">A</button>
                 <input type="color" class="rt-color-input" onchange="rtColor(this.value)">
               </div>
+              <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
               <button class="rt-btn" onclick="openLinkPicker()" title="Link">↗ LINK</button>
               <button class="rt-btn" id="skills-list-btn" onclick="toggleSkillsList()" title="Toggle bullet list">≡ LIST</button>
             </div>
@@ -686,6 +688,7 @@
                 <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
                 <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
                 <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
                 <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
               </div>
               <div class="rt-field" id="rt-gm-motives" contenteditable="true" spellcheck="false"
@@ -703,6 +706,7 @@
                 <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
                 <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
                 <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
                 <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
               </div>
               <div class="rt-field" id="rt-gm-secrets" contenteditable="true" spellcheck="false"
@@ -720,6 +724,7 @@
                 <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
                 <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
                 <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
                 <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
               </div>
               <div class="rt-field" id="rt-gm-plot-hooks" contenteditable="true" spellcheck="false"
@@ -737,6 +742,7 @@
                 <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
                 <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
                 <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
+                <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
                 <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
               </div>
               <div class="rt-field" id="rt-gm-cast-notes" contenteditable="true" spellcheck="false"
@@ -1367,6 +1373,20 @@
     if (!activeRtField) return;
     activeRtField.focus();
     document.execCommand('foreColor', false, hex);
+    schedulePreview();
+  }
+  function rtClearColor() {
+    if (!activeRtField) return;
+    activeRtField.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    activeRtField.querySelectorAll('[color], [style*="color"]').forEach(el => {
+      if (range.intersectsNode(el)) {
+        el.removeAttribute('color');
+        el.style.removeProperty('color');
+      }
+    });
     schedulePreview();
   }
 
