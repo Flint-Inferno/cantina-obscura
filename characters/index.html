@@ -342,7 +342,7 @@
       const body=document.body, btn=document.getElementById('aurebesh-toggle');
       body.classList.toggle('aurebesh-mode');
       btn.classList.toggle('active');
-      btn.textContent = body.classList.contains('aurebesh-mode') ? 'ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ« BASIC' : 'ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ« AUREBESH';
+      btn.textContent = body.classList.contains('aurebesh-mode') ? 'BASIC' : 'AUREBESH';
     }
 
     // Hi-contrast toggle
@@ -351,7 +351,7 @@
       body.classList.toggle('hi-contrast');
       const on=body.classList.contains('hi-contrast');
       btn.classList.toggle('active',on);
-      btn.textContent = on ? 'ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ STANDARD' : 'ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ HI-CONTRAST';
+      btn.textContent = on ? 'STANDARD' : 'HI-CONTRAST';
       try { localStorage.setItem('cantina-hc', on?'1':'0'); } catch(_) {}
     }
     (function() {
@@ -359,7 +359,7 @@
         if (localStorage.getItem('cantina-hc')==='1') {
           document.body.classList.add('hi-contrast');
           const btn=document.getElementById('hc-toggle');
-          if(btn){btn.classList.add('active');btn.textContent='ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ STANDARD';}
+          if(btn){btn.classList.add('active');btn.textContent='STANDARD';}
         }
       } catch(_) {}
     })();
