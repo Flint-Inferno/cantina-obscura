@@ -1037,6 +1037,7 @@
               <button class="rt-btn">A</button>
               <input type="color" class="rt-color-input" onchange="briefColor(this.value)">
             </div>
+            <button class="rt-btn" onclick="briefClearColor()" title="Clear color from selection">✕A</button>
             <button class="rt-btn" onclick="openBriefLink()" title="Embed link">↗ LINK</button>
             <button class="rt-btn" id="brief-list-btn" onclick="toggleBriefList()" title="Toggle bullet list">≡ LIST</button>
           </div>
@@ -1480,6 +1481,21 @@
   function briefColor(hex) {
     document.getElementById('rt-briefing').focus();
     document.execCommand('foreColor', false, hex);
+    schedulePreview();
+  }
+  function briefClearColor() {
+    const field = document.getElementById('rt-briefing');
+    field.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    field.querySelectorAll('[color], [style*="color"]').forEach(el => {
+      if (range.intersectsNode(el)) {
+        el.removeAttribute('color');
+        el.style.removeProperty('color');
+      }
+    });
+    markDirty();
     schedulePreview();
   }
   function toggleBriefList() {
