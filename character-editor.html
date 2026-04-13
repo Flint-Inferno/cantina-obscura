@@ -466,6 +466,7 @@
     <button class="btn" id="changepw-btn" onclick="showChangePw()" style="display:none" title="Change collaborator password">⚿ PASSWORD</button>
     <button class="btn" id="token-btn"  onclick="openPat()" title="Set GitHub PAT">⚿ TOKEN</button>
     <button class="btn primary" id="save-roster-btn" onclick="saveRoster()" disabled>▲ SAVE ROSTER</button>
+    <button class="btn" id="download-char-btn" onclick="downloadCharacter()" style="display:none" title="Download bio as HTML file">⬇ DOWNLOAD</button>
     <button class="btn primary" id="save-char-btn"   onclick="saveCharacter()" style="display:none" disabled>▲ SAVE CHARACTER</button>
   </div>
 
@@ -540,7 +541,7 @@
           <div class="section-heading">Identity</div>
           <div class="field" style="margin-top:0.5rem;">
             <label>Character Name</label>
-            <input type="text" id="f-name" placeholder="Name" spellcheck="false">
+            <input type="text" id="f-name" placeholder="Name" spellcheck="false" oninput="autoSlug()">
           </div>
           <div class="field" style="margin-top:0.5rem;">
             <label>Name in Aurebesh (same text, different font)</label>
@@ -548,8 +549,8 @@
           </div>
           <div class="field-row" style="margin-top:0.5rem;">
             <div class="field">
-              <label>File Slug</label>
-              <input type="text" id="f-slug" placeholder="greedo" spellcheck="false">
+              <label>File Slug <span style="opacity:0.4;font-size:0.55rem;">(auto-fills from name)</span></label>
+              <input type="text" id="f-slug" placeholder="greedo" spellcheck="false" oninput="slugManuallyEdited=true">
             </div>
             <div class="field">
               <label>Status</label>
@@ -827,10 +828,11 @@
   let savedSelection   = null; // saved before link picker opens
   let lpTab            = 'characters';
   let lpItems          = [];
-  let gmPwHash         = ''; // current SHA-256 hash of GM password
-  let commitQueue      = null; // {type: 'char'|'roster'}
-  let pendingDeleteSlug= null;
-  let isOwner          = false;
+  let gmPwHash           = ''; // current SHA-256 hash of GM password
+  let commitQueue        = null; // {type: 'char'|'roster'}
+  let pendingDeleteSlug  = null;
+  let isOwner            = false;
+  let slugManuallyEdited = false;
 
   // ═══════════════════════════════════════════════════════════
   //  INIT
@@ -1184,23 +1186,25 @@
   //  ROSTER VIEW ↔ BIO VIEW SWITCHING
   // ═══════════════════════════════════════════════════════════
   function showRosterView() {
-    document.getElementById('roster-view').style.display = '';
-    document.getElementById('bio-view').style.display    = 'none';
-    document.getElementById('topbar-view-label').textContent = 'ROSTER';
-    document.getElementById('save-roster-btn').style.display = '';
-    document.getElementById('save-char-btn').style.display   = 'none';
+    document.getElementById('roster-view').style.display       = '';
+    document.getElementById('bio-view').style.display          = 'none';
+    document.getElementById('topbar-view-label').textContent   = 'ROSTER';
+    document.getElementById('save-roster-btn').style.display   = '';
+    document.getElementById('save-char-btn').style.display     = 'none';
+    document.getElementById('download-char-btn').style.display = 'none';
     currentSlug = null;
     charSha     = null;
     refreshPreview();
   }
 
   function showBioView(slug) {
-    document.getElementById('roster-view').style.display = 'none';
-    document.getElementById('bio-view').style.display    = '';
+    document.getElementById('roster-view').style.display     = 'none';
+    document.getElementById('bio-view').style.display        = '';
     document.getElementById('topbar-view-label').textContent = 'BIO — ' + slug.toUpperCase();
     document.getElementById('save-roster-btn').style.display = 'none';
     document.getElementById('save-char-btn').style.display   = '';
-    document.getElementById('save-char-btn').disabled = false;
+    document.getElementById('save-char-btn').disabled        = false;
+    document.getElementById('download-char-btn').style.display = '';
     document.getElementById('bio-editing-label').textContent = 'EDITING: ' + slug;
   }
 
@@ -1250,7 +1254,28 @@
     refreshPreview();
   }
 
+  function autoSlug() {
+    if (slugManuallyEdited) return;
+    const name = document.getElementById('f-name').value;
+    const slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    document.getElementById('f-slug').value = slug;
+    schedulePreview();
+  }
+
+  function downloadCharacter() {
+    const html = buildBioHTML();
+    if (!html) return;
+    const slug = (document.getElementById('f-slug').value.trim() || 'character').toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const blob = new Blob([html], { type: 'text/html' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = slug + '.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   function clearBioForm() {
+    slugManuallyEdited = false;
     document.getElementById('f-name').value        = '';
     document.getElementById('f-aur-name').value    = '';
     document.getElementById('f-slug').value        = '';
@@ -1274,6 +1299,7 @@
   }
 
   function populateBioFields(html) {
+    slugManuallyEdited = true; // existing character — don't auto-overwrite slug
     const doc  = new DOMParser().parseFromString(html, 'text/html');
     const meta = name => doc.querySelector(`meta[name="${name}"]`)?.getAttribute('content') || '';
 
