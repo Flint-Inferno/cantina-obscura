@@ -285,6 +285,17 @@ body::after {
   min-height: 26px;
 }
 
+#race-track-label {
+  text-align: center;
+  padding: 3px 12px;
+  font-family: var(--font-eng);
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--glow-dim);
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
 #leaderboard { padding: 8px 14px; }
 .lb-title { font-family: var(--font-eng); font-weight: bold; font-size: 9px; color: var(--glow-dim); letter-spacing: 3px; margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 .lb-row { display: grid; grid-template-columns: 24px 1fr 80px 80px; gap: 4px; align-items: center; padding: 3px 0; border-bottom: 1px solid rgba(26,44,20,0.5); font-size: 13px; }
@@ -637,6 +648,12 @@ body::after {
       <div id="header-sub" class="alien-text">Outer Rim Datanet — Authorized Uplink Node 7-Theta</div>
     </div>
     <div id="header-right">
+      <a href="https://flint-inferno.github.io/cantina-obscura/characters/index.html"
+         class="header-btn"
+         style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:0;padding:3px 8px;line-height:1.25;">
+        <span style="font-size:8px;letter-spacing:1px;">PERSONS OF</span>
+        <span style="font-size:8px;letter-spacing:1px;">INTEREST</span>
+      </a>
       <button class="header-btn" id="translate-global-btn" onclick="toggleGlobalTranslate()">⬡ TRANSLATE ALL</button>
       <button class="header-btn" id="color-btn" onclick="cycleColors()">◈ HOLONET COLORS</button>
       <div id="clock">--:--:-- GST</div>
@@ -683,6 +700,7 @@ body::after {
   <!-- RACE -->
   <div id="tab-race" class="tab-pane">
     <div id="race-status">AWAITING RACE START</div>
+    <div id="race-track-label">⬡ OARIN CIRCUIT ⬡</div>
     <div id="race-canvas-wrap"><canvas id="race-canvas" width="520" height="230"></canvas></div>
     <div id="leaderboard">
       <div class="lb-title">LIVE LEADERBOARD</div>
@@ -922,156 +940,36 @@ function toggleGlobalTranslate() {
 // TO REMOVE A STORY: delete its { ... } block (and the comma before/after it).
 // ============================================================
 const HEADLINES = [
-  {
-    h:"Mon Mothma Addresses New Republic Senate on Path to Voluntary Demilitarization",
-    b:"Chancellor Mon Mothma delivered a landmark address to the New Republic Senate today, proposing a radical reduction in military expenditures and the gradual return of defense authority to individual systems. Critics within the Senate have raised concerns that the move could leave border worlds vulnerable to lingering Imperial factions.",
-    tag:"standard"
-  },
-  {
-    h:"Scientists Confirm Scarif Ecologically Devastated — Radiation Levels Lethal, No Safe Return for Decades",
-    b:"A team of New Republic scientists released a comprehensive survey of the Scarif system, confirming that the Death Star's superlaser strike and subsequent radiation fallout have rendered the planet's surface ecologically dead. Coral reefs that once stretched thousands of kilometers are gone. The atmosphere shows trace radiation that will persist for an estimated forty to sixty years.",
-    tag:"breaking"
-  },
-  {
-    h:"Imperial Remnants Regroup Near Jakku — New Republic Forces on High Alert",
-    b:"Intelligence reports indicate a coalition of Imperial Moff remnants have established a fortified position in the Jakku system, where a decisive New Republic offensive is considered imminent. Fleet commanders have declined to comment on operational specifics.",
-    tag:"breaking"
-  },
-  {
-    h:"Chandrila Formally Named as New Republic Capital — Celebrations Sweep the Planet",
-    b:"Chandrila has been officially designated the seat of New Republic governance following a near-unanimous Senate vote. Streets across the capital city of Hanna filled with celebrating crowds as the news broke.",
-    tag:"standard"
-  },
-  {
-    h:"Czerka Corporation Reports Record Profits Amid Postwar Reconstruction Boom",
-    b:"Czerka Corporation announced its strongest financial quarter on record, driven by a surge in demand for reconstruction equipment, mining droids, and civil infrastructure tools across formerly occupied systems.",
-    tag:"standard"
-  },
-  {
-    h:"Wookiee Liberation Council Convenes on Kashyyyk to Address Ongoing Recovery",
-    b:"Wookiee delegates convened at Rwookrrorro to address the ongoing recovery from decades of Imperial occupation and forced labor. Reconstruction of major Kashyyyk settlements is reported to be approximately forty percent complete.",
-    tag:"standard"
-  },
-  {
-    h:"Corellia Docking Authority Opens Three New Outer Rim Trade Corridors",
-    b:"The Corellia Docking Authority announced the opening of three new commercial transit corridors connecting the Core to the Outer Rim, intended to ease the supply bottlenecks that have affected recovery efforts.",
-    tag:"standard"
-  },
-  {
-    h:"Alderaanian Diaspora Network Locates Survivors on Espirion and Sullust",
-    b:"The Alderaanian Diaspora Network confirmed the location of several previously missing survivor communities on Espirion and Sullust. Relocation assistance is being organized through the New Republic's Refugee Affairs Office.",
-    tag:"standard"
-  },
-  {
-    h:"Kuat Drive Yards Pivots to Civilian Production — First Models Next Quarter",
-    b:"Kuat Drive Yards announced a major shift in its production lines from military vessels to civilian transports. The first consumer models are expected to reach dealerships within two standard quarters.",
-    tag:"standard"
-  },
-  {
-    h:"Former Imperial Governor Surrenders on Ryloth — War Crimes Tribunal Scheduled",
-    b:"Former Imperial Governor Delto Harven surrendered to New Republic authorities on Ryloth following months of negotiation. He is expected to face a military tribunal for alleged war crimes committed during the occupation of the system.",
-    tag:"breaking"
-  },
-  {
-    h:"Archaeological Team Uncovers Pre-Republic Ruins on Nothoiin",
-    b:"A research team from the University of Corellia has uncovered the remnants of a pre-Republic settlement on Nothoiin, including structures and artifacts dating to more than four thousand years before the current era.",
-    tag:"standard"
-  },
-  {
-    h:"Hutt Grand Council Fractures — Multiple Clans Claim Supremacy Over Cartel Routes",
-    b:"Three of the major Hutt clan families have publicly broken with the Grand Council following the disappearance of crime lord Jabba Desilijic Tiure. Bounty hunters across the Outer Rim report a significant uptick in contract activity.",
-    tag:"breaking"
-  },
-  {
-    h:"New Republic Navy Decommissions Three Imperial Star Destroyers",
-    b:"The New Republic Navy announced the decommissioning of three captured Imperial-class Star Destroyers, the latest in a series of post-armistice military reductions. The vessels will be repurposed for civilian infrastructure projects.",
-    tag:"standard"
-  },
-  {
-    h:"Sullust Relief Efforts Enter Critical Phase — Off-World Aid Ships En Route",
-    b:"New Republic aid officials warned that relief efforts on Sullust are entering a critical phase, as local infrastructure remains severely damaged from years of Imperial extraction and wartime bombardment.",
-    tag:"standard"
-  },
-  {
-    h:"Barsha Corporation Files Outer Rim Mining Permits — Environmental Groups Object",
-    b:"Barsha Corporation has filed permits to expand mineral extraction across four Outer Rim systems, drawing sharp criticism from environmental groups who cite the devastation of Scarif as evidence of the risks posed by unchecked corporate extraction.",
-    tag:"standard"
-  },
-  {
-    h:"Chancellor Mon Mothma Introduces Galactic Reconciliation and Reconstruction Act",
-    b:"In a lengthy Senate address, Chancellor Mon Mothma outlined a sweeping Galactic Reconciliation and Reconstruction Act that would fund relief operations across dozens of systems and create a path for former Imperial citizens to seek New Republic membership.",
-    tag:"standard"
-  },
-  {
-    h:"Bounty Hunters Guild Seeks Official Recognition Under New Republic Law",
-    b:"The Bounty Hunters Guild has formally petitioned the New Republic for legal recognition as a licensed professional body. The petition has drawn mixed reactions from senators.",
-    tag:"standard"
-  },
-  {
-    h:"Toydaria Votes to Join New Republic as Associate Member State",
-    b:"Toydaria's parliament voted to formally join the New Republic as an associate member, granting the kingdom access to trade agreements and defense guarantees without full Senate representation.",
-    tag:"standard"
-  },
-  {
-    h:"Separatist Holdouts Identified on Mustafar — Diplomatic Envoy Dispatched",
-    b:"New Republic intelligence suggests a group of approximately three hundred separatist holdouts has fortified a position in the Mustafar system, refusing to acknowledge the end of the war.",
-    tag:"standard"
-  },
-  {
-    h:"Kashyyyk Rebuilding Effort: 40% of Wookiee Settlements Restored",
-    b:"New Republic reconstruction authorities announced that roughly forty percent of Kashyyyk's Wookiee settlements have been fully restored since the end of Imperial occupation.",
-    tag:"standard"
-  },
-  {
-    h:"Zahn Consortium Seizes Outer Rim Relay Stations — Shipping Fees Spark Outrage",
-    b:"The Zahn Consortium has reportedly seized three major hyperspace relay stations, enabling it to levy tolls on shipping in the region. New Republic logistics officials have lodged a formal protest.",
-    tag:"breaking"
-  },
-  {
-    h:"Coruscant Reconstruction Commission Releases 10-Year Restoration Plan",
-    b:"The Coruscant Reconstruction Commission released its first official 10-year plan, calling for restoration of the city-world's lower levels and new transit infrastructure to replace systems neglected under Imperial rule.",
-    tag:"standard"
-  },
-  {
-    h:"New Republic Scientists: Scarif Will Remain Uninhabitable for a Generation",
-    b:"A new scientific assessment confirms that radiation levels across Scarif's surface remain lethal for unshielded humans and will likely continue for several decades. All marine ecosystems in the planet's reef system were destroyed. The report calls for a permanent quarantine zone.",
-    tag:"breaking"
-  },
-  {
-    h:"Force-Sensitive Sightings Reported Across Multiple Systems — New Republic Silent",
-    b:"Multiple credible sightings of Force-sensitive individuals have been reported across several systems, prompting speculation about a possible new Jedi order. New Republic officials have declined to comment.",
-    tag:"standard"
-  },
-  {
-    h:"Hosnian Prime to Host New Republic Senate Sessions During Capital Construction",
-    b:"The Senate Logistics Committee voted to temporarily relocate to Hosnian Prime while permanent facilities on Chandrila are completed, for an estimated two to three standard years.",
-    tag:"standard"
-  },
-  {
-    h:"New Republic Food Relief Fleet Departs Mon Cala for Outer Rim Territories",
-    b:"Twelve New Republic freighters carrying food, medical supplies, and construction equipment departed from Mon Cala today, bound for formerly Imperial-occupied territories in the Outer Rim.",
-    tag:"standard"
-  },
-  {
-    h:"Sources Report Organized Imperial Faction Active in Outer Rim — Details Scarce",
-    b:"Multiple intelligence reports describe continued activity by an organized Imperial faction in uncharted Outer Rim territories. The group is rumored to be led by a former Imperial Moff.",
-    tag:"standard"
-  },
-  {
-    h:"Nar Shaddaa Tourism Surges to 10-Year High as Galaxy Reopens Post-War",
-    b:"Tourism to Nar Shaddaa has increased markedly since the war's end, with entertainment district operators reporting visitor numbers at a ten-year high.",
-    tag:"standard"
-  },
-  {
-    h:"Teräs Käsi Open Championship Returns to Malastare After Decade Suspension",
-    b:"The Malastare Teräs Käsi Open Championship returns after a ten-year suspension under Imperial rule, with registrations now open to competitors from across the galaxy.",
-    tag:"standard"
-  },
-  {
-    h:"Mandalorian Factions Issue Unprecedented Joint Statement on Future of the Way",
-    b:"Three prominent Mandalorian factions released a joint statement today addressing their cultural traditions, the status of Mandalore, and intentions regarding New Republic engagement.",
-    tag:"standard"
-  }
+  { h:"Mon Mothma Addresses New Republic Senate on Path to Voluntary Demilitarization", b:"Chancellor Mon Mothma delivered a landmark address to the New Republic Senate today, proposing a radical reduction in military expenditures and the gradual return of defense authority to individual systems. Critics within the Senate have raised concerns that the move could leave border worlds vulnerable to lingering Imperial factions.", tag:'standard' },
+  { h:"Scientists Confirm Scarif Ecologically Devastated — Radiation Levels Lethal, No Safe Return for Decades", b:"A team of New Republic scientists released a comprehensive survey of the Scarif system, confirming that the Death Star's superlaser strike and subsequent radiation fallout have rendered the planet's surface ecologically dead. Coral reefs that once stretched thousands of kilometers are gone. The atmosphere shows trace radiation that will persist for an estimated forty to sixty years.", tag:'breaking' },
+  { h:"Imperial Remnants Regroup Near Jakku — New Republic Forces on High Alert", b:"Intelligence reports indicate a coalition of Imperial Moff remnants have established a fortified position in the Jakku system, where a decisive New Republic offensive is considered imminent. Fleet commanders have declined to comment on operational specifics.", tag:'breaking' },
+  { h:"Chandrila Formally Named as New Republic Capital — Celebrations Sweep the Planet", b:"Chandrila has been officially designated the seat of New Republic governance following a near-unanimous Senate vote. Streets across the capital city of Hanna filled with celebrating crowds as the news broke.", tag:'standard' },
+  { h:"Czerka Corporation Reports Record Profits Amid Postwar Reconstruction Boom", b:"Czerka Corporation announced its strongest financial quarter on record, driven by a surge in demand for reconstruction equipment, mining droids, and civil infrastructure tools across formerly occupied systems.", tag:'standard' },
+  { h:"Wookiee Liberation Council Convenes on Kashyyyk to Address Ongoing Recovery", b:"Wookiee delegates convened at Rwookrrorro to address the ongoing recovery from decades of Imperial occupation and forced labor. Reconstruction of major Kashyyyk settlements is reported to be approximately forty percent complete.", tag:'standard' },
+  { h:"Corellia Docking Authority Opens Three New Outer Rim Trade Corridors", b:"The Corellia Docking Authority announced the opening of three new commercial transit corridors connecting the Core to the Outer Rim, intended to ease the supply bottlenecks that have affected recovery efforts.", tag:'standard' },
+  { h:"Alderaanian Diaspora Network Locates Survivors on Espirion and Sullust", b:"The Alderaanian Diaspora Network confirmed the location of several previously missing survivor communities on Espirion and Sullust. Relocation assistance is being organized through the New Republic's Refugee Affairs Office.", tag:'standard' },
+  { h:"Kuat Drive Yards Pivots to Civilian Production — First Models Next Quarter", b:"Kuat Drive Yards announced a major shift in its production lines from military vessels to civilian transports. The first consumer models are expected to reach dealerships within two standard quarters.", tag:'standard' },
+  { h:"Former Imperial Governor Surrenders on Ryloth — War Crimes Tribunal Scheduled", b:"Former Imperial Governor Delto Harven surrendered to New Republic authorities on Ryloth following months of negotiation. He is expected to face a military tribunal for alleged war crimes committed during the occupation of the system.", tag:'breaking' },
+  { h:"Archaeological Team Uncovers Pre-Republic Ruins on Nothoiin", b:"A research team from the University of Corellia has uncovered the remnants of a pre-Republic settlement on Nothoiin, including structures and artifacts dating to more than four thousand years before the current era.", tag:'standard' },
+  { h:"Hutt Grand Council Fractures — Multiple Clans Claim Supremacy Over Cartel Routes", b:"Three of the major Hutt clan families have publicly broken with the Grand Council following the disappearance of crime lord Jabba Desilijic Tiure. Bounty hunters across the Outer Rim report a significant uptick in contract activity.", tag:'breaking' },
+  { h:"New Republic Navy Decommissions Three Imperial Star Destroyers", b:"The New Republic Navy announced the decommissioning of three captured Imperial-class Star Destroyers, the latest in a series of post-armistice military reductions. The vessels will be repurposed for civilian infrastructure projects.", tag:'standard' },
+  { h:"Sullust Relief Efforts Enter Critical Phase — Off-World Aid Ships En Route", b:"New Republic aid officials warned that relief efforts on Sullust are entering a critical phase, as local infrastructure remains severely damaged from years of Imperial extraction and wartime bombardment.", tag:'standard' },
+  { h:"Barsha Corporation Files Outer Rim Mining Permits — Environmental Groups Object", b:"Barsha Corporation has filed permits to expand mineral extraction across four Outer Rim systems, drawing sharp criticism from environmental groups who cite the devastation of Scarif as evidence of the risks posed by unchecked corporate extraction.", tag:'standard' },
+  { h:"Chancellor Mon Mothma Introduces Galactic Reconciliation and Reconstruction Act", b:"In a lengthy Senate address, Chancellor Mon Mothma outlined a sweeping Galactic Reconciliation and Reconstruction Act that would fund relief operations across dozens of systems and create a path for former Imperial citizens to seek New Republic membership.", tag:'standard' },
+  { h:"Bounty Hunters Guild Seeks Official Recognition Under New Republic Law", b:"The Bounty Hunters Guild has formally petitioned the New Republic for legal recognition as a licensed professional body. The petition has drawn mixed reactions from senators.", tag:'standard' },
+  { h:"Toydaria Votes to Join New Republic as Associate Member State", b:"Toydaria's parliament voted to formally join the New Republic as an associate member, granting the kingdom access to trade agreements and defense guarantees without full Senate representation.", tag:'standard' },
+  { h:"Separatist Holdouts Identified on Mustafar — Diplomatic Envoy Dispatched", b:"New Republic intelligence suggests a group of approximately three hundred separatist holdouts has fortified a position in the Mustafar system, refusing to acknowledge the end of the war.", tag:'standard' },
+  { h:"Kashyyyk Rebuilding Effort: 40% of Wookiee Settlements Restored", b:"New Republic reconstruction authorities announced that roughly forty percent of Kashyyyk's Wookiee settlements have been fully restored since the end of Imperial occupation.", tag:'standard' },
+  { h:"Zahn Consortium Seizes Outer Rim Relay Stations — Shipping Fees Spark Outrage", b:"The Zahn Consortium has reportedly seized three major hyperspace relay stations, enabling it to levy tolls on shipping in the region. New Republic logistics officials have lodged a formal protest.", tag:'breaking' },
+  { h:"Coruscant Reconstruction Commission Releases 10-Year Restoration Plan", b:"The Coruscant Reconstruction Commission released its first official 10-year plan, calling for restoration of the city-world's lower levels and new transit infrastructure to replace systems neglected under Imperial rule.", tag:'standard' },
+  { h:"New Republic Scientists: Scarif Will Remain Uninhabitable for a Generation", b:"A new scientific assessment confirms that radiation levels across Scarif's surface remain lethal for unshielded humans and will likely continue for several decades. All marine ecosystems in the planet's reef system were destroyed. The report calls for a permanent quarantine zone.", tag:'breaking' },
+  { h:"Force-Sensitive Sightings Reported Across Multiple Systems — New Republic Silent", b:"Multiple credible sightings of Force-sensitive individuals have been reported across several systems, prompting speculation about a possible new Jedi order. New Republic officials have declined to comment.", tag:'standard' },
+  { h:"Hosnian Prime to Host New Republic Senate Sessions During Capital Construction", b:"The Senate Logistics Committee voted to temporarily relocate to Hosnian Prime while permanent facilities on Chandrila are completed, for an estimated two to three standard years.", tag:'standard' },
+  { h:"New Republic Food Relief Fleet Departs Mon Cala for Outer Rim Territories", b:"Twelve New Republic freighters carrying food, medical supplies, and construction equipment departed from Mon Cala today, bound for formerly Imperial-occupied territories in the Outer Rim.", tag:'standard' },
+  { h:"Sources Report Organized Imperial Faction Active in Outer Rim — Details Scarce", b:"Multiple intelligence reports describe continued activity by an organized Imperial faction in uncharted Outer Rim territories. The group is rumored to be led by a former Imperial Moff.", tag:'standard' },
+  { h:"Nar Shaddaa Tourism Surges to 10-Year High as Galaxy Reopens Post-War", b:"Tourism to Nar Shaddaa has increased markedly since the war's end, with entertainment district operators reporting visitor numbers at a ten-year high.", tag:'standard' },
+  { h:"Teräs Käsi Open Championship Returns to Malastare After Decade Suspension", b:"The Malastare Teräs Käsi Open Championship returns after a ten-year suspension under Imperial rule, with registrations now open to competitors from across the galaxy.", tag:'standard' },
+  { h:"Mandalorian Factions Issue Unprecedented Joint Statement on Future of the Way", b:"Three prominent Mandalorian factions released a joint statement today addressing their cultural traditions, the status of Mandalore, and intentions regarding New Republic engagement.", tag:'standard' }
 ];
 
 // ============================================================
@@ -1090,56 +988,16 @@ const HEADLINES = [
 // in the feed is roughly 1 ad per 3 headlines — this is set in buildNewsFeed().
 // ============================================================
 const ADS = [
-  {
-    h:"CANTINA OBSCURA — OARIN OUTPOST",
-    b:"Deep in the heart of Oarin Outpost, Cantina Obscura serves the finest drinks this side of the Outer Rim. Mention this ad and your first drink is on the house. Ask for Marek at the bar. We don't judge what you've done or where you're going.",
-    tag:"ad"
-  },
-  {
-    h:"TAGGECO LOGISTICS — YOUR CARGO, OUR PROBLEM",
-    b:"TaggeCo Logistics offers reliable freight hauling across more than 200 verified hyperspace routes. No questions asked on compliant manifests. Competitive rates, discreet handling.",
-    tag:"ad"
-  },
-  {
-    h:"BLASTECH CONSUMER DIVISION — ARMED AND READY",
-    b:"BlasTech Industries introduces the DH-series consumer line of personal blasters for the discerning traveler. Lightweight, reliable, and field-serviceable. Available at licensed dealers.",
-    tag:"ad"
-  },
-  {
-    h:"OUTER RIM TRADERS EXCHANGE — WHERE DEALS GET DONE",
-    b:"The Outer Rim Traders Exchange connects buyers and sellers across more than 90 member stations. Register your freight manifest today.",
-    tag:"ad"
-  },
-  {
-    h:"DEXTER'S DINER — NOW ON 12 WORLDS",
-    b:"Dexter Jettster's legendary cooking has expanded beyond Coruscant's lower levels. Twelve franchise locations now open, serving the same oversized portions and honest grub.",
-    tag:"ad"
-  },
-  {
-    h:"CORELLIAN ENGINEERING CORP — OWN YOUR FREEDOM",
-    b:"CEC announces financing options on their CR-70 light freighter line. Speed, reliability, and a cargo hold big enough to matter. Visit a CEC dealer today.",
-    tag:"ad"
-  },
-  {
-    h:"ZELTROS — THE GALAXY'S MOST WELCOMING WORLD",
-    b:"The Zeltron Tourism Bureau invites you to the galaxy's most celebrated hospitality destination. Scheduled transports available from most Core and Mid Rim hubs.",
-    tag:"ad"
-  },
-  {
-    h:"NHARWAAK MEDICAL SUPPLIES — RELIABLE WHEREVER YOU ARE",
-    b:"Nharwaak Medical delivers certified bacta, trauma kits, and surgical tools to remote stations and outer rim outposts. Bulk orders accepted. Discretion available.",
-    tag:"ad"
-  },
-  {
-    h:"KESSEL EXPORTS LTD — FINE SPICE, LEGITIMATELY SOURCED",
-    b:"Following the liberation of the Kessel spice mines, Kessel Exports Ltd. offers certified, legitimately harvested Kessel spice to licensed distributors. Contact our trade office.",
-    tag:"ad"
-  },
-  {
-    h:"ORD MANTELL SALVAGE COOPERATIVE — WE BUY WHAT OTHERS LEAVE BEHIND",
-    b:"The Ord Mantell Salvage Cooperative purchases decommissioned military hardware, starship components, and droid chassis. No questions on provenance under 10,000 credits.",
-    tag:"ad"
-  }
+  { h:"CANTINA OBSCURA — OARIN OUTPOST", b:"Deep in the heart of Oarin Outpost, Cantina Obscura serves the finest drinks this side of the Outer Rim. Mention this ad and your first drink is on the house. Ask for Marek at the bar. We don't judge what you've done or where you're going.", tag:'ad' },
+  { h:"TAGGECO LOGISTICS — YOUR CARGO, OUR PROBLEM", b:"TaggeCo Logistics offers reliable freight hauling across more than 200 verified hyperspace routes. No questions asked on compliant manifests. Competitive rates, discreet handling.", tag:'ad' },
+  { h:"BLASTECH CONSUMER DIVISION — ARMED AND READY", b:"BlasTech Industries introduces the DH-series consumer line of personal blasters for the discerning traveler. Lightweight, reliable, and field-serviceable. Available at licensed dealers.", tag:'ad' },
+  { h:"OUTER RIM TRADERS EXCHANGE — WHERE DEALS GET DONE", b:"The Outer Rim Traders Exchange connects buyers and sellers across more than 90 member stations. Register your freight manifest today.", tag:'ad' },
+  { h:"DEXTER'S DINER — NOW ON 12 WORLDS", b:"Dexter Jettster's legendary cooking has expanded beyond Coruscant's lower levels. Twelve franchise locations now open, serving the same oversized portions and honest grub.", tag:'ad' },
+  { h:"CORELLIAN ENGINEERING CORP — OWN YOUR FREEDOM", b:"CEC announces financing options on their CR-70 light freighter line. Speed, reliability, and a cargo hold big enough to matter. Visit a CEC dealer today.", tag:'ad' },
+  { h:"ZELTROS — THE GALAXY'S MOST WELCOMING WORLD", b:"The Zeltron Tourism Bureau invites you to the galaxy's most celebrated hospitality destination. Scheduled transports available from most Core and Mid Rim hubs.", tag:'ad' },
+  { h:"NHARWAAK MEDICAL SUPPLIES — RELIABLE WHEREVER YOU ARE", b:"Nharwaak Medical delivers certified bacta, trauma kits, and surgical tools to remote stations and outer rim outposts. Bulk orders accepted. Discretion available.", tag:'ad' },
+  { h:"KESSEL EXPORTS LTD — FINE SPICE, LEGITIMATELY SOURCED", b:"Following the liberation of the Kessel spice mines, Kessel Exports Ltd. offers certified, legitimately harvested Kessel spice to licensed distributors. Contact our trade office.", tag:'ad' },
+  { h:"ORD MANTELL SALVAGE COOPERATIVE — WE BUY WHAT OTHERS LEAVE BEHIND", b:"The Ord Mantell Salvage Cooperative purchases decommissioned military hardware, starship components, and droid chassis. No questions on provenance under 10,000 credits.", tag:'ad' }
 ];
 
 // ============================================================
@@ -1266,7 +1124,7 @@ const TRACK_CX = 260, TRACK_CY = 115, TRACK_RX = 190, TRACK_RY = 85;
 //   BS_MAX = fastest possible lap (currently 45 seconds = 0 min 45 sec)
 // Decrease these numbers to make laps shorter/faster.
 // Increase them to make laps longer/slower.
-const BS_MIN = (2*Math.PI)/25, BS_MAX = (2*Math.PI)/45;
+const BS_MIN = (2*Math.PI)/75, BS_MAX = (2*Math.PI)/45;
 
 // ============================================================
 // FATHIER RACER NAME POOL
@@ -1286,6 +1144,15 @@ const RACER_NAMES = [
 // These are hex color codes. Change them to any valid CSS color.
 // There must be exactly 6 entries — one for each racer position.
 const RACER_COLORS = ['#ff4444','#44aaff','#44ff88','#ffcc22','#ff88ff','#ff8833'];
+
+// ============================================================
+// TRACK ROTATION
+// ============================================================
+// Populated by the Track Editor export. Each entry: { name, nodes, segments }
+// The default entry is the built-in oval. When the track editor exports a
+// rotation, this array gets replaced entirely by the injection script.
+// ============================================================
+let TRACK_ROTATION = [{ name: 'OARIN CIRCUIT' }];
 
 function makeRacers(seed) {
   const rng = mulberry32(seed);
@@ -1326,7 +1193,7 @@ function buildRaceChain(hourSeed, hourStart) {
   while (t < hourStart + 14400) {
     const racers = makeRacers(seed);
     const {duration, winner} = computeRaceDuration(racers);
-    chain.push({seed, startT:t, raceEnd:t+duration, phaseEnd:t+duration+FLASH+COUNTDOWN, racers, winner, duration});
+    chain.push({seed, startT:t, raceEnd:t+duration, phaseEnd:t+duration+FLASH+COUNTDOWN, racers, winner, duration, trackIdx: chain.length % Math.max(1, TRACK_ROTATION.length)});
     t += duration + FLASH + COUNTDOWN;
     seed++;
   }
@@ -1524,13 +1391,29 @@ function renderRace() {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 
+  // Update track name label
+  const trackName = (TRACK_ROTATION[race.trackIdx ?? 0] || TRACK_ROTATION[0]).name;
+  const trackLabelEl = document.getElementById('race-track-label');
+  if (trackLabelEl) trackLabelEl.textContent = '⬡ ' + trackName + ' ⬡';
+
   // Status bar
   const statusEl = document.getElementById('race-status');
   const lb = getLeaderboard(race, t);
 
   if (phase === 'countdown') {
     const cdLeft = Math.ceil(state.cdLeft);
-    statusEl.textContent = '— NEW RACE STARTING IN ' + cdLeft + 's —';
+    // Find next race's track name
+    let nextName = null;
+    if (raceChain && TRACK_ROTATION.length > 1) {
+      const ri = raceChain.indexOf(race);
+      const nr = ri >= 0 ? raceChain[ri + 1] : null;
+      if (nr) nextName = (TRACK_ROTATION[nr.trackIdx ?? 0] || TRACK_ROTATION[0]).name;
+    }
+    if (nextName) {
+      statusEl.textContent = '— NEXT: ' + nextName + ' — IN ' + cdLeft + 's —';
+    } else {
+      statusEl.textContent = '— NEW RACE STARTING IN ' + cdLeft + 's —';
+    }
     statusEl.style.color = 'var(--amber)';
   } else if (phase === 'flash') {
     const wr = race.racers[race.winner];
@@ -1622,26 +1505,9 @@ const TOURN_CYCLE = 1200, ROUND_DUR = 240, FLASH_DUR = 240;
 // Names should feel like alien/Star Wars player names.
 // ============================================================
 const TOURN_NAMES = [
-  "Vraxx",
-  "Serinda",
-  "Tolmus",
-  "Keth",
-  "Bralor",
-  "Nisha",
-  "Varek",
-  "Zuri",
-  "Davan",
-  "Oska",
-  "Remis",
-  "Feth",
-  "Solana",
-  "Krynn",
-  "Nella",
-  "Torvin",
-  "Wyke",
-  "Saryn",
-  "Delvo",
-  "Prynn"
+  'Vraxx','Serinda','Tolmus','Keth','Bralor','Nisha','Varek','Zuri',
+  'Davan','Oska','Remis','Feth','Solana','Krynn','Nella','Torvin',
+  'Wyke','Saryn','Delvo','Prynn'
 ];
 
 function computeTournWinner(seed) {
@@ -1784,42 +1650,12 @@ function buildBracketGrid(container, bracket, completedRounds) {
 // Prices update every 30 seconds and are seeded to be identical for all viewers.
 // ============================================================
 const STOCKS = [
-  {
-    name:"Kuat Drive Yards",
-    sym:"KDY",
-    base:1420,
-    vol:0.015
-  },
-  {
-    name:"Czerka Corporation",
-    sym:"CZRK",
-    base:847,
-    vol:0.022
-  },
-  {
-    name:"Barsha Corp",
-    sym:"BRSH",
-    base:312,
-    vol:0.03
-  },
-  {
-    name:"Holowan Mechanicals",
-    sym:"HLWN",
-    base:589,
-    vol:0.025
-  },
-  {
-    name:"TaggeCo Industries",
-    sym:"TGCO",
-    base:734,
-    vol:0.018
-  },
-  {
-    name:"Outer Rim Commodities",
-    sym:"ORMX",
-    base:198,
-    vol:0.035
-  }
+  {name:'Kuat Drive Yards', sym:'KDY', base:1420, vol:0.015},
+  {name:'Czerka Corporation', sym:'CZRK', base:847, vol:0.022},
+  {name:'Barsha Corp', sym:'BRSH', base:312, vol:0.03},
+  {name:'Holowan Mechanicals', sym:'HLWN', base:589, vol:0.025},
+  {name:'TaggeCo Industries', sym:'TGCO', base:734, vol:0.018},
+  {name:'Outer Rim Commodities', sym:'ORMX', base:198, vol:0.035}
 ];
 
 function stockPrice(stock, seed, step) {
@@ -1940,6 +1776,381 @@ function toggleUT() {
   });
 })();
 
+</script>
+
+<!-- HOLOFEED-TRACK-INJECTION -->
+<script>
+// ===HOLOFEED-TRACK-ENGINE-START===
+const TRACK_DEF = {
+  "nodes": [
+    {
+      "id": 0,
+      "x": 0.4963,
+      "y": 0.4978
+    },
+    {
+      "id": 1,
+      "x": 0.75,
+      "y": 0.1778
+    },
+    {
+      "id": 2,
+      "x": 0.9,
+      "y": 0.5
+    },
+    {
+      "id": 3,
+      "x": 0.75,
+      "y": 0.8222
+    },
+    {
+      "id": 4,
+      "x": 0.25,
+      "y": 0.1778
+    },
+    {
+      "id": 5,
+      "x": 0.1,
+      "y": 0.5
+    },
+    {
+      "id": 6,
+      "x": 0.25,
+      "y": 0.8222
+    }
+  ],
+  "segments": [
+    {
+      "id": 0,
+      "from": 0,
+      "to": 1,
+      "cp1": {
+        "x": 0.6213,
+        "y": 0.1756
+      },
+      "cp2": {
+        "x": 0.75,
+        "y": 0.1778
+      },
+      "type": "main",
+      "prob": 1
+    },
+    {
+      "id": 1,
+      "from": 1,
+      "to": 2,
+      "cp1": {
+        "x": 0.9,
+        "y": 0.1778
+      },
+      "cp2": {
+        "x": 0.9,
+        "y": 0.3444
+      },
+      "type": "main",
+      "prob": 1
+    },
+    {
+      "id": 2,
+      "from": 2,
+      "to": 3,
+      "cp1": {
+        "x": 0.9,
+        "y": 0.6556
+      },
+      "cp2": {
+        "x": 0.9,
+        "y": 0.8222
+      },
+      "type": "main",
+      "prob": 1
+    },
+    {
+      "id": 3,
+      "from": 3,
+      "to": 0,
+      "cp1": {
+        "x": 0.75,
+        "y": 0.8222
+      },
+      "cp2": {
+        "x": 0.6213,
+        "y": 0.82
+      },
+      "type": "main",
+      "prob": 1
+    },
+    {
+      "id": 4,
+      "from": 0,
+      "to": 4,
+      "cp1": {
+        "x": 0.3713,
+        "y": 0.82
+      },
+      "cp2": {
+        "x": 0.25,
+        "y": 0.8222
+      },
+      "type": "main",
+      "prob": 1
+    },
+    {
+      "id": 5,
+      "from": 4,
+      "to": 5,
+      "cp1": {
+        "x": 0.1,
+        "y": 0.8222
+      },
+      "cp2": {
+        "x": 0.1,
+        "y": 0.6556
+      },
+      "type": "main",
+      "prob": 1
+    },
+    {
+      "id": 6,
+      "from": 5,
+      "to": 6,
+      "cp1": {
+        "x": 0.1,
+        "y": 0.3444
+      },
+      "cp2": {
+        "x": 0.1,
+        "y": 0.1778
+      },
+      "type": "main",
+      "prob": 1
+    },
+    {
+      "id": 7,
+      "from": 6,
+      "to": 0,
+      "cp1": {
+        "x": 0.25,
+        "y": 0.1778
+      },
+      "cp2": {
+        "x": 0.3713,
+        "y": 0.1756
+      },
+      "type": "main",
+      "prob": 1
+    }
+  ]
+};
+
+// Build arc-length LUTs (normalized coords → holofeed canvas pixels)
+const _TLUTs = {};
+(function(){
+  const W=520,H=230;
+  function _b(p0,c1,c2,p3,t){const u=1-t;return{x:u*u*u*p0.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p3.x,y:u*u*u*p0.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p3.y};}
+  function _n(id){return TRACK_DEF.nodes.find(x=>x.id===id);}
+  TRACK_DEF.segments.forEach(seg=>{
+    const p0=_n(seg.from),p3=_n(seg.to);
+    const px0={x:p0.x*W,y:p0.y*H},px3={x:p3.x*W,y:p3.y*H};
+    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
+    let pts=[],cum=0,prev=null;
+    for(let i=0;i<=100;i++){const t=i/100,p=_b(px0,c1,c2,px3,t);if(prev)cum+=Math.hypot(p.x-prev.x,p.y-prev.y);pts.push({x:p.x,y:p.y,len:cum});prev=p;}
+    _TLUTs[seg.id]={pts,totalLen:cum};
+  });
+})();
+
+const _TMainLen = TRACK_DEF.segments.filter(s=>s.type==='main').reduce((a,s)=>a+(_TLUTs[s.id]?.totalLen||0),0);
+const _TSpdScale = _TMainLen / 895;
+const _TSpdMin = 12 * _TSpdScale, _TSpdMax = 20 * _TSpdScale;
+
+function _TPosAt(lut,arc){
+  if(!lut||!lut.pts.length)return{x:0,y:0};
+  const c=Math.max(0,Math.min(arc,lut.totalLen));
+  for(let i=1;i<lut.pts.length;i++){if(lut.pts[i].len>=c){const a=lut.pts[i-1],b=lut.pts[i],f=(b.len-a.len)>0?(c-a.len)/(b.len-a.len):0;return{x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};}}
+  const l=lut.pts[lut.pts.length-1];return{x:l.x,y:l.y};
+}
+function _TOut(nodeId){return TRACK_DEF.segments.filter(s=>s.from===nodeId);}
+function _TChoose(rng,outs){
+  if(outs.length===1)return outs[0];
+  const scs=outs.filter(s=>s.type==='shortcut'),mns=outs.filter(s=>s.type==='main');
+  const scP=scs.reduce((a,s)=>a+s.prob,0),mP=Math.max(0,1-scP)/Math.max(1,mns.length);
+  const es=[...scs.map(s=>({seg:s,p:s.prob})),...mns.map(s=>({seg:s,p:mP}))];
+  const rv=rng();let cum=0;for(const e of es){cum+=e.p;if(rv<cum)return e.seg;}return outs[0];
+}
+function _TStep(st,r,dt,tRace){
+  if(st.done)return;
+  const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period));
+  let adv=Math.max(spd,5)*dt,g=0;
+  while(adv>0.001&&g++<30){
+    const seg=TRACK_DEF.segments.find(s=>s.id===st.segId),lut=_TLUTs[st.segId];
+    if(!seg||!lut||lut.totalLen===0){st.done=true;return;}
+    const rem=lut.totalLen-st.arcPos;
+    if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=3){st.done=true;return;}}const outs=_TOut(seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs);st.segId=nx.id;st.arcPos=0;}
+    else{st.arcPos+=adv;st.arcThisLap+=adv;adv=0;}
+  }
+}
+
+// Precomputed race paths: seed → {paths:[{positions,finishT}], dt}
+const _TCache = {};
+function _TBuildPaths(race){
+  if(_TCache[race.seed])return _TCache[race.seed];
+  const dt=0.05,startSeg=TRACK_DEF.segments.find(s=>s.from===0&&s.type==='main')||TRACK_DEF.segments[0];
+  const maxT=race.duration+15,frames=Math.ceil(maxT/dt)+1;
+  const paths=race.racers.map((r,i)=>{
+    const st={segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false};
+    const positions=[];
+    for(let fi=0;fi<frames;fi++){
+      const pos=_TPosAt(_TLUTs[st.segId]||{pts:[],totalLen:0},st.arcPos);
+      positions.push({x:pos.x,y:pos.y,laps:st.laps,arc:st.arcThisLap});
+      if(!st.done)_TStep(st,r,dt,fi*dt);
+    }
+    return{positions};
+  });
+  _TCache[race.seed]={paths,dt};
+  // Evict old entries (keep last 3)
+  const keys=Object.keys(_TCache);if(keys.length>3)delete _TCache[keys[0]];
+  return _TCache[race.seed];
+}
+
+// OVERRIDE: draw track using bezier paths
+function getTrackCanvas(glowColor,dimColor,borderColor){
+  const tc=document.createElement('canvas');tc.width=520;tc.height=230;
+  const ctx=tc.getContext('2d'),W=520,H=230;
+  function _n(id){return TRACK_DEF.nodes.find(x=>x.id===id);}
+  function _px(nd){return{x:nd.x*W,y:nd.y*H};}
+  TRACK_DEF.segments.filter(s=>s.type==='main').forEach(seg=>{
+    const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));
+    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=borderColor;ctx.lineWidth=26;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=dimColor;ctx.lineWidth=0.5;ctx.setLineDash([8,6]);ctx.stroke();ctx.setLineDash([]);
+  });
+  TRACK_DEF.segments.filter(s=>s.type==='shortcut').forEach(seg=>{
+    const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));
+    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=dimColor+'88';ctx.lineWidth=10;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=glowColor+'44';ctx.lineWidth=2;ctx.stroke();
+  });
+  // S/F line perpendicular to outgoing segment at node 0
+  const sf0=_n(0),sfx=sf0.x*W,sfy=sf0.y*H;
+  const outSeg=TRACK_DEF.segments.find(s=>s.from===0&&s.type==='main');
+  let ang=Math.PI/2;
+  if(outSeg&&_TLUTs[outSeg.id]?.pts.length>1){
+    const a=_TLUTs[outSeg.id].pts[0],b=_TLUTs[outSeg.id].pts[2]||_TLUTs[outSeg.id].pts[1];
+    ang=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2;
+  }
+  ctx.save();ctx.translate(sfx,sfy);ctx.rotate(ang);
+  ctx.strokeStyle=glowColor;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();ctx.restore();
+  ctx.fillStyle=dimColor;ctx.font='7px "Share Tech Mono"';ctx.fillText('S/F',sfx+4,sfy-6);
+  return tc;
+}
+
+// OVERRIDE: makeRacers — adds _seed and _idx, uses pixel-based speed
+function makeRacers(seed){
+  const rng=mulberry32(seed);
+  const names=pickN(RACER_NAMES,6,rng);
+  return names.map((name,i)=>({
+    name,color:RACER_COLORS[i],
+    baseSpeed:_TSpdMin+rng()*(_TSpdMax-_TSpdMin),
+    amplitude:0.008+rng()*0.018,
+    period:8+rng()*16,
+    _seed:seed,_idx:i
+  }));
+}
+
+// OVERRIDE: computeRaceDuration — simulates the bezier path
+function computeRaceDuration(racers){
+  const dt=0.05;
+  const startSeg=TRACK_DEF.segments.find(s=>s.from===0&&s.type==='main')||TRACK_DEF.segments[0];
+  const states=racers.map((r,i)=>({segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false}));
+  for(let t=0;t<600;t+=dt){
+    for(let i=0;i<racers.length;i++){
+      if(states[i].done)continue;
+      _TStep(states[i],racers[i],dt,t);
+      if(states[i].done)return{duration:t,winner:i};
+    }
+  }
+  return{duration:600,winner:0};
+}
+
+// OVERRIDE: getLeaderboard — uses precomputed paths
+function getLeaderboard(race,tInRace){
+  const data=_TBuildPaths(race);
+  const t=Math.min(tInRace,race.duration);
+  const fi=Math.min(Math.floor(t/data.dt),data.paths[0].positions.length-1);
+  return race.racers.map((r,i)=>{
+    const pos=data.paths[i].positions[fi];
+    return{idx:i,name:r.name,color:r.color,laps:pos.laps,
+      totalDist:pos.laps*_TMainLen+pos.arc,lastLapTime:null};
+  }).sort((a,b)=>b.totalDist-a.totalDist);
+}
+
+// OVERRIDE: renderRace — uses precomputed positions
+function renderRace(){
+  if(document.getElementById('tab-race').style.display==='none')return;
+  const nowF=Date.now()/1000;
+  const state=getRaceState(nowF);
+  const{race,tInRace,phase}=state;
+  const canvas=document.getElementById('race-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const theme=THEMES[currentTheme];
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=theme.bg;ctx.fillRect(0,0,W,H);
+  ctx.drawImage(getTrackCanvas(theme.glow,theme.glowDim,theme.border2),0,0);
+  const t=Math.min(tInRace,race.duration);
+  const pathData=_TBuildPaths(race);
+  const fi=Math.min(Math.floor(t/pathData.dt),pathData.paths[0].positions.length-1);
+  // Trails
+  race.racers.forEach((r,i)=>{
+    const key=race.seed+'_'+i;
+    if(!trailBuffers[key])trailBuffers[key]=[];
+    const trail=trailBuffers[key];
+    const pos=pathData.paths[i].positions[fi];
+    trail.push({x:pos.x,y:pos.y});if(trail.length>18)trail.shift();
+    for(let j=1;j<trail.length;j++){ctx.globalAlpha=(j/trail.length)*0.35;ctx.beginPath();ctx.moveTo(trail[j-1].x,trail[j-1].y);ctx.lineTo(trail[j].x,trail[j].y);ctx.strokeStyle=r.color;ctx.lineWidth=3;ctx.stroke();}
+    ctx.globalAlpha=1;
+  });
+  // Dots
+  race.racers.forEach((r,i)=>{
+    const pos=pathData.paths[i].positions[fi];
+    const px=pos.x,py=pos.y;
+    const grad=ctx.createRadialGradient(px,py,0,px,py,10);grad.addColorStop(0,r.color+'bb');grad.addColorStop(1,r.color+'00');
+    ctx.beginPath();ctx.arc(px,py,10,0,2*Math.PI);ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,5.5,0,2*Math.PI);ctx.fillStyle=r.color;ctx.fill();
+    ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 6.5px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,px,py);
+  });
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  // Status
+  const statusEl=document.getElementById('race-status');
+  const lb=getLeaderboard(race,t);
+  if(phase==='countdown'){statusEl.textContent='— NEW RACE STARTING IN '+Math.ceil(state.cdLeft)+'s —';statusEl.style.color='var(--amber)';}
+  else if(phase==='flash'){const wr=race.racers[race.winner];statusEl.textContent='⬡ '+wr.name.toUpperCase()+' WINS! ⬡';statusEl.style.color=wr.color;}
+  else{statusEl.textContent='RACE IN PROGRESS — LEAD: '+lb[0].name.toUpperCase();statusEl.style.color='var(--glow)';}
+  // Leaderboard
+  const lbEl=document.getElementById('lb-rows');
+  const isRaceTab=document.getElementById('tab-race').classList.contains('active');
+  if(isRaceTab){
+    lbEl.innerHTML='';
+    lb.forEach((entry,pos)=>{
+      const isWinner=phase==='flash'&&race.racers[race.winner].name===entry.name;
+      const row=document.createElement('div');row.className='lb-row'+(isWinner?' winner-flash':'');
+      row.innerHTML='<span class="lb-pos">'+(pos+1)+'</span><span class="lb-name" style="color:'+entry.color+'">'+entry.name+'</span><span class="lb-laptime">—</span><span class="lb-laps">'+entry.laps+'/3</span>';
+      if(typeof globalTranslated!=='undefined'&&!globalTranslated)row.querySelector('.lb-name').style.fontFamily='var(--font-alien)';
+      lbEl.appendChild(row);
+    });
+  }
+}
+
+// Restart race RAF with new engine
+if(typeof raceRafId!=='undefined'&&raceRafId)cancelAnimationFrame(raceRafId);
+if(typeof trackCanvas!=='undefined')trackCanvas=null;
+if(typeof raceLoop==='function')raceLoop();
+// ===HOLOFEED-TRACK-ENGINE-END===
 </script>
 </body>
 </html>
