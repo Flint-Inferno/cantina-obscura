@@ -21,6 +21,8 @@
       --accent:     #c0c0d0;
       --border:     #222230;
       --dim:        #101018;
+      --panel-bg:   rgba(20,15,30,0.88);
+      --hover-tint: rgba(192,192,210,0.04);
       --font-main:  'Share Tech Mono', monospace;
       --font-title: 'Orbitron', sans-serif;
       --font-aur:   'Aurebesh', sans-serif;
@@ -103,7 +105,7 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 1.5rem;
-      background: rgba(20,15,5,0.88);
+      background: var(--panel-bg);
       animation: crt-flicker 10s ease-in-out infinite;
     }
     @keyframes crt-flicker {
@@ -166,7 +168,7 @@
       cursor: pointer;
     }
     .roster-entry:first-child { border-top: 1px solid var(--border); }
-    .roster-entry:hover { background: rgba(240,192,96,0.04); border-bottom-color: var(--accent); }
+    .roster-entry:hover { background: var(--hover-tint); border-bottom-color: var(--accent); }
     .roster-entry:hover .entry-name { color: var(--accent); }
 
     /* Thumbnail with CRT overlay */
@@ -271,9 +273,9 @@
     <!-- Top bar -->
     <div class="top-bar">
       <div class="top-bar-left">
-        <span class="classify-tag">HOLONET DIRECTORY</span>
+        <a class="classify-tag" href="https://flint-inferno.github.io/cantina-obscura/holonet/holofeed-main.html" style="text-decoration:none;cursor:pointer;">HOLONET DIRECTORY</a>
         <button class="aurebesh-toggle-btn" id="aurebesh-toggle" onclick="toggleAurebesh()">AUREBESH</button>
-        <button class="hc-toggle-btn" id="hc-toggle" onclick="toggleHiContrast()">&#9680; HI-CONTRAST</button>
+        <button class="hc-toggle-btn" id="theme-btn" onclick="cycleTheme()">◈ BLUE HOLO</button>
       </div>
     </div>
 
@@ -345,23 +347,46 @@
       btn.textContent = body.classList.contains('aurebesh-mode') ? 'BASIC' : 'AUREBESH';
     }
 
-    // Hi-contrast toggle
-    function toggleHiContrast() {
-      const body=document.body, btn=document.getElementById('hc-toggle');
-      body.classList.toggle('hi-contrast');
-      const on=body.classList.contains('hi-contrast');
-      btn.classList.toggle('active',on);
-      btn.textContent = on ? 'STANDARD' : 'HI-CONTRAST';
-      try { localStorage.setItem('cantina-hc', on?'1':'0'); } catch(_) {}
+    // Theme cycler — matches holofeed-main themes
+    const POI_THEMES = [
+      { name:'Blue Holo',      bg:'#020610', bodyBg:'#010408', text:'#3a80cc', accent:'#4ab4ff', border:'#1c3060', dim:'#040916', panelBg:'rgba(6,12,28,0.92)',   hoverTint:'rgba(74,180,255,0.05)'  },
+      { name:'Amber Burnout',  bg:'#090600', bodyBg:'#050400', text:'#b07020', accent:'#d48a0a', border:'#4a2e00', dim:'#0e0900', panelBg:'rgba(19,12,0,0.92)',   hoverTint:'rgba(212,138,10,0.06)'  },
+      { name:'Red Alert',      bg:'#080204', bodyBg:'#040101', text:'#cc2828', accent:'#ff4444', border:'#4a1414', dim:'#0d0306', panelBg:'rgba(17,4,8,0.92)',    hoverTint:'rgba(255,68,68,0.05)'   },
+      { name:'Void Purple',    bg:'#060408', bodyBg:'#030205', text:'#9055cc', accent:'#c084ff', border:'#341a54', dim:'#090610', panelBg:'rgba(13,8,22,0.92)',   hoverTint:'rgba(192,132,255,0.05)' },
+      { name:'High Contrast',  bg:'#000000', bodyBg:'#000000', text:'#bbbbbb', accent:'#ffffff', border:'#5a5a5a', dim:'#0d0d0d', panelBg:'rgba(20,20,20,0.97)',  hoverTint:'rgba(255,255,255,0.06)' },
+      { name:'Phosphor Green', bg:'#050804', bodyBg:'#020402', text:'#4a9e32', accent:'#4ecf36', border:'#2d4d20', dim:'#080d07', panelBg:'rgba(12,20,9,0.92)',   hoverTint:'rgba(78,207,54,0.05)'   }
+    ];
+    let poiThemeIdx = 0;
+
+    function applyPoiTheme(i) {
+      const t = POI_THEMES[i];
+      const r = document.documentElement;
+      r.style.setProperty('--bg',         t.bg);
+      r.style.setProperty('--text',       t.text);
+      r.style.setProperty('--accent',     t.accent);
+      r.style.setProperty('--border',     t.border);
+      r.style.setProperty('--dim',        t.dim);
+      r.style.setProperty('--panel-bg',   t.panelBg);
+      r.style.setProperty('--hover-tint', t.hoverTint);
+      document.body.style.backgroundColor = t.bodyBg;
+      // hi-contrast class no longer needed — theme handles it
+      document.body.classList.remove('hi-contrast');
+      document.getElementById('theme-btn').textContent = '◈ ' + t.name.toUpperCase();
+      try { localStorage.setItem('cantina-poi-theme', i); } catch(_) {}
     }
+
+    function cycleTheme() {
+      poiThemeIdx = (poiThemeIdx + 1) % POI_THEMES.length;
+      applyPoiTheme(poiThemeIdx);
+    }
+
+    // Restore saved theme on load
     (function() {
       try {
-        if (localStorage.getItem('cantina-hc')==='1') {
-          document.body.classList.add('hi-contrast');
-          const btn=document.getElementById('hc-toggle');
-          if(btn){btn.classList.add('active');btn.textContent='STANDARD';}
-        }
+        const saved = localStorage.getItem('cantina-poi-theme');
+        if (saved !== null) { poiThemeIdx = parseInt(saved) || 0; }
       } catch(_) {}
+      applyPoiTheme(poiThemeIdx);
     })();
   </script>
 
