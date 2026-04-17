@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HoloFeed Studio — Datanet Configuration Terminal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg: #04080a; --panel: #070e12; --panel2: #0b141a;
+  --border: #112230; --border2: #1a3448;
+  --glow: #00ccff; --glow-dim: #1a6a8a;
+  --amber: #f0c040; --amber-dim: #8a6a10;
+  --danger: #ff4444; --success: #44ff88;
+  --mono: 'Share Tech Mono', monospace;
+  --title: 'Orbitron', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--glow); font-family: var(--mono); min-height: 100vh; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px);
+  pointer-events: none; z-index: 9000;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  background: var(--panel2); border-bottom: 2px solid var(--border2);
+  padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+#topbar-left { display: flex; flex-direction: column; gap: 2px; }
+#topbar-title { font-family: var(--title); font-size: 15px; font-weight: 900; letter-spacing: 4px; color: var(--amber); text-shadow: 0 0 12px rgba(240,192,64,0.4); }
+#topbar-sub { font-size: 10px; color: var(--glow-dim); letter-spacing: 2px; }
+#topbar-actions { display: flex; gap: 8px; align-items: center; }
+.top-btn { font-family: var(--mono); font-weight: bold; font-size: 10px; letter-spacing: 1.5px; padding: 7px 14px; border-radius: 2px; cursor: pointer; transition: all 0.2s; border: 1px solid; }
+.btn-load { background: none; border-color: var(--glow-dim); color: var(--glow-dim); }
+.btn-load:hover { border-color: var(--glow); color: var(--glow); box-shadow: 0 0 8px rgba(0,204,255,0.2); }
+.btn-save { background: rgba(0,204,255,0.08); border-color: var(--glow); color: var(--glow); }
+.btn-save:hover { background: rgba(0,204,255,0.18); box-shadow: 0 0 12px rgba(0,204,255,0.3); }
+.btn-save:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-preview { background: rgba(240,192,64,0.08); border-color: var(--amber); color: var(--amber); }
+.btn-preview:hover { background: rgba(240,192,64,0.18); box-shadow: 0 0 10px rgba(240,192,64,0.3); }
+.btn-preview:disabled { opacity: 0.3; cursor: not-allowed; }
+#file-input { display: none; }
+
+/* ── STATUS BAR (global) ── */
+#status-bar {
+  background: var(--panel2); border-top: 1px solid var(--border);
+  padding: 5px 20px; font-size: 10px; color: var(--glow-dim); letter-spacing: 1px;
+  display: flex; gap: 16px; align-items: center;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+}
+#status-msg { flex: 1; }
+#status-msg.ok { color: var(--success); }
+#status-msg.err { color: var(--danger); }
+
+/* ── LOAD ZONE ── */
+#load-zone { margin: 40px auto; max-width: 600px; text-align: center; padding: 20px; }
+#drop-area {
+  border: 2px dashed var(--border2); border-radius: 4px; padding: 50px 30px;
+  cursor: pointer; transition: all 0.2s; background: var(--panel);
+}
+#drop-area:hover, #drop-area.drag-over { border-color: var(--glow); background: rgba(0,204,255,0.05); }
+#drop-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.6; }
+#drop-title { font-family: var(--title); font-size: 13px; letter-spacing: 3px; color: var(--amber); margin-bottom: 8px; }
+#drop-sub { font-size: 11px; color: var(--glow-dim); letter-spacing: 1px; }
+
+/* ── EDITOR LAYOUT ── */
+#editor-wrap { display: none; max-width: 1300px; margin: 0 auto; padding: 16px 16px 40px; }
+#editor-wrap.visible { display: block; }
+
+/* ── SECTION TABS ── */
+#section-nav {
+  display: flex; gap: 0; border-bottom: 2px solid var(--border2);
+  margin-bottom: 16px; overflow-x: auto;
+}
+.sec-tab {
+  font-family: var(--mono); font-weight: bold; font-size: 10px; letter-spacing: 1.5px;
+  padding: 8px 14px; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--glow-dim); cursor: pointer; white-space: nowrap; margin-bottom: -2px; transition: all 0.15s;
+}
+.sec-tab:hover { color: var(--glow); }
+.sec-tab.active { color: var(--glow); border-bottom-color: var(--glow); }
+.sec-pane { display: none; }
+.sec-pane.active { display: block; }
+
+/* ── SECTION HEADER ── */
+.sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.sec-title { font-family: var(--title); font-size: 11px; letter-spacing: 3px; color: var(--amber); }
+.sec-count { font-size: 10px; color: var(--glow-dim); }
+
+/* ── CARDS ── */
+.card-list { display: flex; flex-direction: column; gap: 8px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: 10px 12px; transition: border-color 0.15s; }
+.card:hover { border-color: var(--border2); }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.card-num { font-size: 9px; color: var(--glow-dim); min-width: 24px; padding-top: 3px; flex-shrink: 0; }
+.card-fields { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.card-del { background: none; border: 1px solid #3a1010; color: #884444; font-family: var(--mono); font-size: 10px; padding: 2px 8px; cursor: pointer; border-radius: 2px; flex-shrink: 0; transition: all 0.15s; }
+.card-del:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ── INPUTS ── */
+input[type="text"], input[type="number"], textarea, select {
+  background: var(--panel2); border: 1px solid var(--border2); color: var(--glow);
+  font-family: var(--mono); font-size: 11px; padding: 5px 8px; border-radius: 2px;
+  width: 100%; outline: none; transition: border-color 0.15s;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--glow); box-shadow: 0 0 6px rgba(0,204,255,0.15); }
+textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+select { cursor: pointer; }
+.field-label { font-size: 9px; color: var(--amber-dim); letter-spacing: 1.5px; margin-bottom: 2px; display: block; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.field-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; }
+
+/* ── ADD BUTTON ── */
+.add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: none; border: 1px dashed var(--border2); color: var(--glow-dim);
+  font-family: var(--mono); font-weight: bold; font-size: 10px; letter-spacing: 1.5px;
+  padding: 10px; width: 100%; cursor: pointer; border-radius: 3px; margin-top: 8px; transition: all 0.15s;
+}
+.add-btn:hover { border-color: var(--glow); color: var(--glow); background: rgba(0,204,255,0.04); }
+
+/* ── CHIPS ── */
+.chip-area { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 3px; min-height: 50px; }
+.chip { display: flex; align-items: center; gap: 5px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 2px; padding: 3px 8px; font-size: 11px; font-weight: bold; color: var(--glow); }
+.chip-del { background: none; border: none; color: #664444; cursor: pointer; font-size: 12px; line-height: 1; padding: 0 2px; transition: color 0.15s; }
+.chip-del:hover { color: var(--danger); }
+.chip-input-row { display: flex; gap: 6px; margin-top: 8px; }
+.chip-input-row input { flex: 1; }
+.chip-add-btn { background: rgba(0,204,255,0.08); border: 1px solid var(--glow); color: var(--glow); font-family: var(--mono); font-weight: bold; font-size: 11px; padding: 5px 14px; cursor: pointer; border-radius: 2px; white-space: nowrap; transition: all 0.15s; }
+.chip-add-btn:hover { background: rgba(0,204,255,0.18); }
+
+/* ── TIMING ── */
+.timing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.timing-card { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: 12px; }
+.timing-title { font-size: 9px; color: var(--amber); letter-spacing: 2px; margin-bottom: 4px; }
+.timing-desc { font-size: 9px; color: var(--glow-dim); line-height: 1.5; margin-bottom: 8px; }
+.timing-input-row { display: flex; gap: 6px; align-items: center; }
+.timing-input-row input { width: 80px; flex-shrink: 0; }
+.timing-unit { font-size: 10px; color: var(--glow-dim); }
+
+/* ── HINT TEXT ── */
+.hint { font-size: 9px; color: var(--glow-dim); line-height: 1.6; padding: 8px 10px; background: rgba(0,0,0,0.3); border-left: 2px solid var(--border2); margin-bottom: 12px; border-radius: 0 2px 2px 0; }
+.hint strong { color: var(--amber); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 46px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--panel2); border: 1px solid var(--glow); color: var(--glow);
+  font-family: var(--mono); font-weight: bold; font-size: 11px; letter-spacing: 1px;
+  padding: 8px 20px; border-radius: 2px; opacity: 0; transition: all 0.3s;
+  pointer-events: none; z-index: 9999; box-shadow: 0 0 20px rgba(0,204,255,0.2);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err { border-color: var(--danger); color: var(--danger); }
+
+/* ══════════════════════════════════════════════════
+   TRACK EDITOR STYLES
+══════════════════════════════════════════════════ */
+#sec-tracks { display: none; flex-direction: column; height: calc(100vh - 160px); min-height: 600px; }
+#sec-tracks.active { display: flex; }
+
+/* Track toolbar */
+#track-toolbar {
+  background: var(--panel2); border: 1px solid var(--border2); border-radius: 3px;
+  padding: 7px 10px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 8px; flex-shrink: 0;
+}
+.tb-title { font-size: 10px; letter-spacing: 2px; color: var(--amber); margin-right: 2px; }
+.tb-sep { width: 1px; background: var(--border2); height: 20px; margin: 0 2px; flex-shrink: 0; }
+.tb-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 4px 9px;
+  background: none; border: 1px solid var(--border2); color: var(--glow-dim);
+  cursor: pointer; border-radius: 2px; transition: all 0.12s; white-space: nowrap;
+}
+.tb-btn:hover { border-color: var(--glow); color: var(--glow); }
+.tb-btn.active { border-color: var(--glow); color: var(--glow); background: rgba(0,204,255,0.08); }
+.tb-btn.danger { border-color: #3a1010; color: #884444; }
+.tb-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+.tb-btn.commit { border-color: var(--glow); color: var(--glow); background: rgba(0,204,255,0.08); }
+.tb-btn.commit:hover { background: rgba(0,204,255,0.18); }
+#track-toolbar select { font-family: var(--mono); font-size: 10px; background: var(--panel2); border: 1px solid var(--border2); color: var(--glow); padding: 3px 6px; cursor: pointer; border-radius: 2px; outline: none; }
+#track-toolbar label { font-size: 9px; color: var(--glow-dim); letter-spacing: 1px; }
+
+/* Track main area */
+#track-main { display: flex; flex: 1; overflow: hidden; gap: 8px; }
+#track-canvas-area { flex: 1; display: flex; align-items: center; justify-content: center; background: var(--bg); border: 1px solid var(--border2); border-radius: 3px; padding: 10px; overflow: hidden; }
+#track-canvas { border: 1px solid var(--border2); cursor: crosshair; max-width: 100%; max-height: 100%; }
+
+/* Track sidebar */
+#track-sidebar { width: 232px; flex-shrink: 0; background: var(--panel2); border: 1px solid var(--border2); border-radius: 3px; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.sb-section { border: 1px solid var(--border); padding: 9px; border-radius: 2px; }
+.sb-title { font-size: 9px; letter-spacing: 2px; color: var(--amber); margin-bottom: 7px; display: block; }
+.sb-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+.sb-label { font-size: 9px; color: var(--glow-dim); letter-spacing: 1px; flex-shrink: 0; }
+.sb-val { font-size: 10px; color: var(--glow); }
+input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: var(--border2); border-radius: 2px; outline: none; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--glow); border-radius: 50%; cursor: pointer; }
+
+/* Track leaderboard preview */
+#lb-list { display: flex; flex-direction: column; gap: 3px; }
+.lb-entry { font-size: 9px; display: flex; gap: 5px; align-items: center; }
+.lb-pos { color: var(--glow-dim); min-width: 12px; }
+.lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-laps { color: var(--amber); min-width: 30px; text-align: right; font-size: 8px; }
+
+/* Track status */
+#track-status-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 2px; padding: 4px 10px; font-size: 9px; letter-spacing: 1px; color: var(--glow-dim); flex-shrink: 0; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="topbar-left">
+    <div id="topbar-title">HoloFeed Studio</div>
+    <div id="topbar-sub">DATANET CONFIGURATION TERMINAL — v2.0</div>
+  </div>
+  <div id="topbar-actions">
+    <button class="top-btn btn-load" onclick="document.getElementById('file-input').click()">⬡ LOAD HOLOFEED.HTML</button>
+    <input type="file" id="file-input" accept=".html" onchange="loadFile(this)">
+    <button class="top-btn btn-preview" id="preview-btn" onclick="openPreview()" disabled>👁 PREVIEW HOLOFEED</button>
+    <button class="top-btn btn-save" id="save-btn" onclick="saveFile()" disabled>▼ EXPORT MODIFIED FILE</button>
+  </div>
+</div>
+
+<div id="status-bar">
+  <span id="status-msg">No file loaded. Click LOAD HOLOFEED.HTML to begin.</span>
+  <span id="status-file"></span>
+</div>
+
+<div id="load-zone">
+  <div id="drop-area"
+       onclick="document.getElementById('file-input').click()"
+       ondragover="event.preventDefault();this.classList.add('drag-over')"
+       ondragleave="this.classList.remove('drag-over')"
+       ondrop="handleDrop(event)">
+    <div id="drop-icon">⬡</div>
+    <div id="drop-title">LOAD YOUR HOLOFEED.HTML</div>
+    <div id="drop-sub">Click to browse, or drag and drop the file here.<br><br>
+    Edit headlines, ads, stocks, timing, and tracks<br>in one place — then export in one click.</div>
+  </div>
+</div>
+
+<div id="editor-wrap">
+
+  <div id="section-nav">
+    <button class="sec-tab active" onclick="showSection('news', this)">📰 HEADLINES</button>
+    <button class="sec-tab" onclick="showSection('ads', this)">📢 ADS</button>
+    <button class="sec-tab" onclick="showSection('racers', this)">🐎 RACER NAMES</button>
+    <button class="sec-tab" onclick="showSection('tournament', this)">♟ TOURN. NAMES</button>
+    <button class="sec-tab" onclick="showSection('stocks', this)">📈 STOCKS</button>
+    <button class="sec-tab" onclick="showSection('timing', this)">⏱ TIMING</button>
+    <button class="sec-tab" onclick="showSection('tracks', this)">🏁 TRACKS</button>
+  </div>
+
+  <!-- HEADLINES -->
+  <div class="sec-pane active" id="sec-news">
+    <div class="sec-header"><span class="sec-title">HOLONEWS HEADLINES</span><span class="sec-count" id="news-count"></span></div>
+    <div class="hint"><strong>Click a headline to expand/edit it.</strong> Each story has a headline, a body paragraph, and a tag.<br>
+    Tag options: <strong>standard</strong> (plain badge) or <strong>breaking</strong> (red BREAKING badge).<br>
+    Stories cycle automatically — order here doesn't matter, the feed shuffles them.</div>
+    <div class="card-list" id="news-list"></div>
+    <button class="add-btn" onclick="addHeadline()">+ ADD NEW HEADLINE</button>
+  </div>
+
+  <!-- ADS -->
+  <div class="sec-pane" id="sec-ads">
+    <div class="sec-header"><span class="sec-title">SPONSORED ADS</span><span class="sec-count" id="ads-count"></span></div>
+    <div class="hint">Ads appear roughly <strong>once every 3 headlines</strong> in the feed, marked with an amber SPONSORED badge.<br>
+    The <strong>Cantina Obscura</strong> ad contains the free-drink easter egg — keep it if you want that to work.</div>
+    <div class="card-list" id="ads-list"></div>
+    <button class="add-btn" onclick="addAd()">+ ADD NEW AD</button>
+  </div>
+
+  <!-- RACER NAMES -->
+  <div class="sec-pane" id="sec-racers">
+    <div class="sec-header"><span class="sec-title">FATHIER RACER NAME POOL</span><span class="sec-count" id="racers-count"></span></div>
+    <div class="hint">Each race picks <strong>6 names at random</strong> from this pool.<br>
+    You need <strong>at least 6 names</strong>. More names = more variety between races.</div>
+    <div class="chip-area" id="racers-chips"></div>
+    <div class="chip-input-row">
+      <input type="text" id="racer-new-input" placeholder="New racer name..." onkeydown="if(event.key==='Enter')addChip('racers')">
+      <button class="chip-add-btn" onclick="addChip('racers')">+ ADD</button>
+    </div>
+  </div>
+
+  <!-- TOURNAMENT NAMES -->
+  <div class="sec-pane" id="sec-tournament">
+    <div class="sec-header"><span class="sec-title">SPEED HOLOCHESS PLAYER POOL</span><span class="sec-count" id="tourn-count"></span></div>
+    <div class="hint">16 names are picked each tournament. The previous winner always carries over with a ★.<br>
+    You need <strong>at least 17 names</strong> so there's always someone new to replace the champion.</div>
+    <div class="chip-area" id="tourn-chips"></div>
+    <div class="chip-input-row">
+      <input type="text" id="tourn-new-input" placeholder="New player name..." onkeydown="if(event.key==='Enter')addChip('tourn')">
+      <button class="chip-add-btn" onclick="addChip('tourn')">+ ADD</button>
+    </div>
+  </div>
+
+  <!-- STOCKS -->
+  <div class="sec-pane" id="sec-stocks">
+    <div class="sec-header"><span class="sec-title">EXCHANGE LISTINGS</span><span class="sec-count" id="stocks-count"></span></div>
+    <div class="hint">Each stock shows a live scrolling line graph on the Exchange tab.<br>
+    <strong>Symbol</strong>: short all-caps ticker (e.g. KDY). &nbsp;
+    <strong>Base price</strong>: starting credit value. &nbsp;
+    <strong>Volatility</strong>: price swing per tick — 0.01 = stable, 0.05 = very jumpy.</div>
+    <div class="card-list" id="stocks-list"></div>
+    <button class="add-btn" onclick="addStock()">+ ADD NEW STOCK</button>
+  </div>
+
+  <!-- TIMING -->
+  <div class="sec-pane" id="sec-timing">
+    <div class="sec-header"><span class="sec-title">TIMING &amp; SPEED SETTINGS</span></div>
+    <div class="hint">These control how fast things happen. All values are in <strong>seconds</strong> unless noted.</div>
+    <div class="timing-grid" id="timing-grid"></div>
+  </div>
+
+  <!-- TRACKS -->
+  <div class="sec-pane" id="sec-tracks">
+
+    <div id="track-toolbar">
+      <span class="tb-title">TRACK EDITOR</span>
+      <div class="tb-sep"></div>
+      <button class="tb-btn active" id="btn-addnode"  onclick="setTrackMode('addNode')">+ NODE</button>
+      <button class="tb-btn"        id="btn-select"   onclick="setTrackMode('select')">⬤ SELECT</button>
+      <button class="tb-btn"        id="btn-shortcut" onclick="setTrackMode('shortcut')">⤷ SHORTCUT</button>
+      <button class="tb-btn"        id="btn-closeloop" onclick="closeLoop()">⟲ CLOSE</button>
+      <div class="tb-sep"></div>
+      <label>PRESET:</label>
+      <select id="preset-sel" onchange="loadPreset(this.value)">
+        <option value="">— custom —</option>
+        <option value="oval">Classic Oval</option>
+        <option value="chicane">Chicane</option>
+        <option value="wedge">Canto Wedge</option>
+        <option value="figure8">Figure-8</option>
+      </select>
+      <div class="tb-sep"></div>
+      <label>NAME:</label>
+      <input type="text" id="track-name" placeholder="Track name…"
+        style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:var(--glow);padding:3px 7px;border-radius:2px;outline:none;width:120px;"
+        oninput="syncTrackName()">
+      <button class="tb-btn" onclick="saveToRotation()">+ SAVE TO ROTATION</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="btn-preview" onclick="togglePreview()">▶ PREVIEW</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn danger" onclick="clearTrack()">✕ CLEAR</button>
+    </div>
+
+    <div id="track-main">
+      <div id="track-canvas-area">
+        <canvas id="track-canvas" width="800" height="450"></canvas>
+      </div>
+      <div id="track-sidebar">
+
+        <div class="sb-section">
+          <span class="sb-title">MODE</span>
+          <div class="hint" id="mode-hint" style="margin-bottom:0">
+            <strong>ADD NODE:</strong> Click to place nodes. Click near S/F to close loop.
+          </div>
+        </div>
+
+        <div class="sb-section" id="sel-panel" style="display:none">
+          <span class="sb-title">SELECTED</span>
+          <div id="sel-content"></div>
+        </div>
+
+        <div class="sb-section">
+          <span class="sb-title">TRACK INFO</span>
+          <div class="sb-row"><span class="sb-label">NODES</span><span class="sb-val" id="info-nodes">0</span></div>
+          <div class="sb-row"><span class="sb-label">SEGMENTS</span><span class="sb-val" id="info-segs">0</span></div>
+          <div class="sb-row"><span class="sb-label">SHORTCUTS</span><span class="sb-val" id="info-sc">0</span></div>
+          <div class="sb-row"><span class="sb-label">LOOP CLOSED</span><span class="sb-val" id="info-closed" style="color:var(--danger)">NO</span></div>
+        </div>
+
+        <div class="sb-section" id="race-panel" style="display:none">
+          <span class="sb-title">PREVIEW RACE</span>
+          <div id="lb-list"></div>
+          <div style="margin-top:5px;font-size:8px;color:var(--glow-dim)" id="race-sub"></div>
+        </div>
+
+        <div class="sb-section" id="rotation-section">
+          <span class="sb-title">ROTATION <span id="rot-count" style="color:var(--glow-dim)">(0 tracks)</span></span>
+          <div class="hint" id="rot-empty-hint" style="margin-bottom:4px">Name a track and press <strong>+ SAVE TO ROTATION</strong>.</div>
+          <div id="rot-list" style="display:flex;flex-direction:column;gap:4px;margin-top:4px;"></div>
+          <button class="tb-btn" onclick="newRotationTrack()" style="width:100%;margin-top:8px;border-color:var(--amber);color:var(--amber);">+ NEW TRACK</button>
+          <div style="margin-top:8px">
+            <span class="sb-label" style="display:block;margin-bottom:4px">ROTATION MODE</span>
+            <select id="rot-mode" style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:var(--glow);padding:4px;border-radius:2px;width:100%;outline:none;">
+              <option value="sequential">Sequential (in order)</option>
+              <option value="random">Random (seeded per race)</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="track-status-bar">Switch to TRACKS tab and load a holofeed to begin. Use presets or draw from scratch.</div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// SHARED STATE
+// ════════════════════════════════════════════════════════
+let originalHtml = '';
+let fileName = 'holofeed_edited.html';
+
+// ════════════════════════════════════════════════════════
+// HOLOFEED EDITOR STATE
+// ════════════════════════════════════════════════════════
+let data = {
+  headlines: [], ads: [], racerNames: [], tournNames: [], stocks: [], timing: {}
+};
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR STATE
+// ════════════════════════════════════════════════════════
+const CW=800, CH=450, NODE_R=10, HAND_R=6, LAPS=3;
+const RACER_COLORS=['#ff4444','#44aaff','#44ff88','#ffcc22','#ff88ff','#ff8833'];
+const RACER_NAMES_PREVIEW=["Tano's Pride","Corellian Wind","Scarlet Dust","Iron Hooves","Dusk Runner","Crimson Flash"];
+
+let trackNodes=[], trackSegs=[], loopClosed=false;
+let nextNid=0, nextSid=0;
+let trackRotation=[], editingRotIdx=null, rotIdCounter=0;
+let trackMode='addNode';
+let selected=null, dragging=null, scFrom=null;
+let previewActive=false, racers=[], segLUTs={};
+let raceT0=0, rafId=null, _lastFT=0;
+
+// ════════════════════════════════════════════════════════
+// STATUS HELPERS
+// ════════════════════════════════════════════════════════
+function setGlobalStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg; el.className = type || '';
+}
+function setTrackStatus(msg) {
+  const el = document.getElementById('track-status-bar');
+  if (el) el.textContent = msg;
+}
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (isErr?' err':'');
+  clearTimeout(t._tid); t._tid = setTimeout(() => t.className = '', 3000);
+}
+
+// ════════════════════════════════════════════════════════
+// UNIFIED FILE LOAD
+// ════════════════════════════════════════════════════════
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-area').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0]; if (f) readFile(f);
+}
+function loadFile(input) { if (input.files[0]) readFile(input.files[0]); }
+
+function readFile(file) {
+  fileName = file.name.replace('.html', '_edited.html');
+  const reader = new FileReader();
+  reader.onload = e => {
+    originalHtml = e.target.result;
+    if (!parseHtml(originalHtml)) return;
+
+    // Parse track rotation (optional)
+    const rotation = extractRotationFromHtml(originalHtml);
+    if (rotation && rotation.length > 0) {
+      importTrackRotation(rotation);
+    } else {
+      trackRotation = []; editingRotIdx = null;
+      renderRotation();
+    }
+
+    document.getElementById('load-zone').style.display = 'none';
+    document.getElementById('editor-wrap').classList.add('visible');
+    document.getElementById('save-btn').disabled = false;
+    document.getElementById('preview-btn').disabled = false;
+    document.getElementById('status-file').textContent = file.name;
+    const tCount = trackRotation.length;
+    setGlobalStatus('Loaded: ' + file.name + ' — ' + data.headlines.length + ' headlines, ' + tCount + ' track' + (tCount !== 1 ? 's' : ''), 'ok');
+    renderAll();
+  };
+  reader.readAsText(file);
+}
+
+// ════════════════════════════════════════════════════════
+// HOLOFEED EDITOR — PARSING
+// ════════════════════════════════════════════════════════
+function extractArray(html, varName) {
+  const re = new RegExp('const\\s+' + varName + '\\s*=\\s*\\[([\\s\\S]*?)\\];', 'm');
+  const m = html.match(re); return m ? m[1] : null;
+}
+function parseObjectArray(raw) {
+  const items = []; let depth = 0, start = -1;
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] === '{') { if (depth === 0) start = i; depth++; }
+    else if (raw[i] === '}') {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        try { items.push(Function('"use strict"; return (' + raw.slice(start, i+1) + ')')()); } catch(e) {}
+        start = -1;
+      }
+    }
+  }
+  return items;
+}
+function parseStringArray(raw) {
+  // Properly match both double- and single-quoted strings, respecting escape sequences.
+  // The old [^'"]+ approach broke on apostrophes (e.g. "Tano's Pride") and
+  // then matched the commas between entries as values.
+  const items = [];
+  const re = /(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')/g;
+  let m;
+  while ((m = re.exec(raw)) !== null) {
+    items.push((m[1] !== undefined ? m[1] : m[2]).replace(/\\(.)/g, '$1'));
+  }
+  return items;
+}
+function parseTimingValue(html, varName) {
+  const re = new RegExp('const\\s+' + varName + '\\s*=\\s*([\\d.]+)');
+  const m = html.match(re); return m ? parseFloat(m[1]) : null;
+}
+function parseLapTimes(html) {
+  const re = /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/(\d+)\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/(\d+)/;
+  const m = html.match(re);
+  return m ? { slowLap: parseInt(m[1]), fastLap: parseInt(m[2]) } : { slowLap: 75, fastLap: 45 };
+}
+function parseHtml(html) {
+  try {
+    const hRaw = extractArray(html, 'HEADLINES'), aRaw = extractArray(html, 'ADS');
+    const rRaw = extractArray(html, 'RACER_NAMES'), tRaw = extractArray(html, 'TOURN_NAMES'), sRaw = extractArray(html, 'STOCKS');
+    if (!hRaw || !aRaw || !rRaw || !tRaw || !sRaw) {
+      setGlobalStatus('ERROR: Could not parse holofeed arrays. Is this the right file?', 'err');
+      toast('Parse error — wrong file?', true); return false;
+    }
+    data.headlines = parseObjectArray(hRaw); data.ads = parseObjectArray(aRaw);
+    data.racerNames = parseStringArray(rRaw); data.tournNames = parseStringArray(tRaw);
+    data.stocks = parseObjectArray(sRaw);
+    const laps = parseLapTimes(html);
+    data.timing = {
+      slowLap: laps.slowLap, fastLap: laps.fastLap,
+      raceFlash: parseTimingValue(html, 'FLASH') || 10,
+      raceCountdown: parseTimingValue(html, 'COUNTDOWN') || 20,
+      roundDur: parseTimingValue(html, 'ROUND_DUR') || 240,
+      flashDur: parseTimingValue(html, 'FLASH_DUR') || 240,
+      tournCycle: parseTimingValue(html, 'TOURN_CYCLE') || 1200,
+    };
+    return true;
+  } catch(e) { setGlobalStatus('Parse error: ' + e.message, 'err'); return false; }
+}
+
+// ════════════════════════════════════════════════════════
+// HOLOFEED EDITOR — SERIALIZATION
+// ════════════════════════════════════════════════════════
+function serializeObj(obj) {
+  const parts = Object.entries(obj).map(([k,v]) => {
+    if (typeof v === 'string') return '    ' + k + ':"' + v.replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
+    return '    ' + k + ':' + v;
+  });
+  return '  {\n' + parts.join(',\n') + '\n  }';
+}
+function serializeArray(arr) { return '[\n' + arr.map(serializeObj).join(',\n') + '\n]'; }
+function serializeStringArray(arr) { return '[\n' + arr.map(s => '  "' + s.replace(/"/g,'\\"') + '"').join(',\n') + '\n]'; }
+function replaceArray(html, varName, newContent) {
+  const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)\\[[\\s\\S]*?\\];', 'm');
+  return html.replace(re, '$1' + newContent + ';');
+}
+function replaceTimingConst(html, varName, value) {
+  const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)[\\d.]+');
+  return html.replace(re, '$1' + value);
+}
+function replaceLapTimes(html, slowLap, fastLap) {
+  return html.replace(
+    /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/\d+\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/\d+/,
+    'const BS_MIN = (2*Math.PI)/' + slowLap + ', BS_MAX = (2*Math.PI)/' + fastLap
+  );
+}
+function buildModifiedHtml() {
+  let html = originalHtml;
+  html = replaceArray(html, 'HEADLINES', serializeArray(data.headlines));
+  html = replaceArray(html, 'ADS', serializeArray(data.ads));
+  html = replaceArray(html, 'RACER_NAMES', serializeStringArray(data.racerNames));
+  html = replaceArray(html, 'TOURN_NAMES', serializeStringArray(data.tournNames));
+  html = replaceArray(html, 'STOCKS', serializeArray(data.stocks));
+  html = replaceLapTimes(html, data.timing.slowLap, data.timing.fastLap);
+  html = html.replace(
+    /const\s+FLASH\s*=\s*\d+\s*,\s*COUNTDOWN\s*=\s*\d+/,
+    'const FLASH = ' + data.timing.raceFlash + ', COUNTDOWN = ' + data.timing.raceCountdown
+  );
+  html = replaceTimingConst(html, 'ROUND_DUR', data.timing.roundDur);
+  html = replaceTimingConst(html, 'FLASH_DUR', data.timing.flashDur);
+  html = replaceTimingConst(html, 'TOURN_CYCLE', data.timing.tournCycle);
+  return html;
+}
+
+// ════════════════════════════════════════════════════════
+// UNIFIED EXPORT
+// ════════════════════════════════════════════════════════
+function saveFile() {
+  if (!originalHtml) { toast('No file loaded', true); return; }
+  try {
+    // Step 1: holofeed content changes
+    let html = buildModifiedHtml();
+
+    // Step 2: track injection (if rotation has tracks)
+    if (trackRotation.length > 0) {
+      const exportTracks = trackRotation.map(t => ({ name: t.name, nodes: t.nodes, segments: t.segs }));
+      const injection = buildInjectionScript(exportTracks);
+      const scriptBlock = '\n<!-- HOLOFEED-TRACK-INJECTION -->\n<script>' + injection + '<\/script>\n';
+      if (html.includes('<!-- HOLOFEED-TRACK-INJECTION -->') && html.includes('===HOLOFEED-TRACK-ENGINE-END===')) {
+        html = html.replace(/\n<!-- HOLOFEED-TRACK-INJECTION -->[\s\S]*?===HOLOFEED-TRACK-ENGINE-END===\s*<\/script>\s*\n/, scriptBlock);
+      } else {
+        html = html.replace(/<\/body>/, scriptBlock + '</body>');
+      }
+    }
+
+    const blob = new Blob([html], {type: 'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = fileName; a.click();
+    const n = trackRotation.length;
+    const tNote = n > 0 ? ' + ' + n + ' track' + (n !== 1 ? 's' : '') : '';
+    toast('Exported: ' + fileName + tNote);
+    setGlobalStatus('Exported ' + fileName + tNote, 'ok');
+  } catch(e) { toast('Export error: ' + e.message, true); }
+}
+
+// ════════════════════════════════════════════════════════
+// HOLOFEED EDITOR — RENDERING
+// ════════════════════════════════════════════════════════
+function renderAll() { renderHeadlines(); renderAds(); renderChips('racers'); renderChips('tourn'); renderStocks(); renderTiming(); }
+
+function renderHeadlines() {
+  const list = document.getElementById('news-list'); list.innerHTML = '';
+  document.getElementById('news-count').textContent = data.headlines.length + ' stories';
+  data.headlines.forEach((h, i) => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<div class="card-top"><span class="card-num">#${i+1}</span><div class="card-fields">
+      <div><span class="field-label">HEADLINE</span><input type="text" value="${esc(h.h)}" oninput="data.headlines[${i}].h=this.value"></div>
+      <div><span class="field-label">BODY TEXT</span><textarea oninput="data.headlines[${i}].b=this.value">${esc(h.b)}</textarea></div>
+      <div><span class="field-label">TAG</span><select onchange="data.headlines[${i}].tag=this.value">
+        <option value="standard" ${h.tag==='standard'?'selected':''}>standard — plain DATANET badge</option>
+        <option value="breaking" ${h.tag==='breaking'?'selected':''}>breaking — red BREAKING badge</option>
+      </select></div></div><button class="card-del" onclick="removeItem('headlines',${i})">✕ DEL</button></div>`;
+    list.appendChild(card);
+  });
+}
+function addHeadline() {
+  data.headlines.push({h:'New headline text here', b:'Body paragraph text here.', tag:'standard'});
+  renderHeadlines(); setTimeout(() => document.getElementById('news-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+function renderAds() {
+  const list = document.getElementById('ads-list'); list.innerHTML = '';
+  document.getElementById('ads-count').textContent = data.ads.length + ' ads';
+  data.ads.forEach((ad, i) => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<div class="card-top"><span class="card-num">#${i+1}</span><div class="card-fields">
+      <div><span class="field-label">AD HEADLINE / BUSINESS NAME</span><input type="text" value="${esc(ad.h)}" oninput="data.ads[${i}].h=this.value"></div>
+      <div><span class="field-label">AD COPY</span><textarea oninput="data.ads[${i}].b=this.value">${esc(ad.b)}</textarea></div>
+      </div><button class="card-del" onclick="removeItem('ads',${i})">✕ DEL</button></div>`;
+    list.appendChild(card);
+  });
+}
+function addAd() {
+  data.ads.push({h:'NEW BUSINESS — TAGLINE HERE', b:'Ad copy text here.', tag:'ad'});
+  renderAds(); setTimeout(() => document.getElementById('ads-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+function renderChips(which) {
+  const arr = which === 'racers' ? data.racerNames : data.tournNames;
+  const container = document.getElementById(which + '-chips'); container.innerHTML = '';
+  arr.forEach((name, i) => {
+    const chip = document.createElement('div'); chip.className = 'chip';
+    chip.innerHTML = `${esc(name)} <button class="chip-del" onclick="removeChip('${which}',${i})">✕</button>`;
+    container.appendChild(chip);
+  });
+  const countId = which === 'racers' ? 'racers-count' : 'tourn-count';
+  document.getElementById(countId).textContent = arr.length + ' names' + (which === 'racers' ? ' (min 6)' : ' (min 17)');
+}
+function addChip(which) {
+  const inputId = which === 'racers' ? 'racer-new-input' : 'tourn-new-input';
+  const input = document.getElementById(inputId), name = input.value.trim(); if (!name) return;
+  if (which === 'racers') data.racerNames.push(name); else data.tournNames.push(name);
+  input.value = ''; renderChips(which);
+}
+function removeChip(which, i) {
+  if (which === 'racers') data.racerNames.splice(i, 1); else data.tournNames.splice(i, 1);
+  renderChips(which);
+}
+
+function renderStocks() {
+  const list = document.getElementById('stocks-list'); list.innerHTML = '';
+  document.getElementById('stocks-count').textContent = data.stocks.length + ' listings';
+  data.stocks.forEach((s, i) => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<div class="card-top"><span class="card-num">#${i+1}</span><div class="card-fields">
+      <div class="field-row-3">
+        <div><span class="field-label">COMPANY NAME</span><input type="text" value="${esc(s.name)}" oninput="data.stocks[${i}].name=this.value"></div>
+        <div><span class="field-label">SYMBOL</span><input type="text" value="${esc(s.sym)}" oninput="data.stocks[${i}].sym=this.value"></div>
+        <div><span class="field-label">BASE PRICE</span><input type="number" value="${s.base}" min="1" oninput="data.stocks[${i}].base=parseFloat(this.value)||100"></div>
+        <div><span class="field-label">VOLATILITY</span><input type="number" value="${s.vol}" min="0.001" max="0.2" step="0.001" oninput="data.stocks[${i}].vol=parseFloat(this.value)||0.02"></div>
+      </div></div><button class="card-del" onclick="removeItem('stocks',${i})">✕ DEL</button></div>`;
+    list.appendChild(card);
+  });
+}
+function addStock() {
+  data.stocks.push({name:'New Corporation', sym:'NEW', base:500, vol:0.02});
+  renderStocks(); setTimeout(() => document.getElementById('stocks-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+const TIMING_CONFIG = [
+  {key:'slowLap',label:'MAX LAP TIME (slowest)',desc:'Slowest possible lap, in seconds.',unit:'seconds',min:10,max:300},
+  {key:'fastLap',label:'MIN LAP TIME (fastest)',desc:'Fastest possible lap. Must be less than Max.',unit:'seconds',min:5,max:290},
+  {key:'raceFlash',label:'WINNER FLASH DURATION',desc:'How long winner\'s name flashes after winning.',unit:'seconds',min:1,max:60},
+  {key:'raceCountdown',label:'PRE-RACE COUNTDOWN',desc:'Countdown before a new race starts.',unit:'seconds',min:1,max:120},
+  {key:'roundDur',label:'HOLOCHESS ROUND LENGTH',desc:'How long each tournament round lasts.',unit:'seconds',min:30,max:1800},
+  {key:'flashDur',label:'CHAMPION FLASH DURATION',desc:'How long the tournament champion\'s name flashes.',unit:'seconds',min:10,max:600},
+  {key:'tournCycle',label:'FULL TOURNAMENT CYCLE',desc:'Total cycle length. Default: 4×240+240=1200.',unit:'seconds',min:100,max:7200},
+];
+function renderTiming() {
+  const grid = document.getElementById('timing-grid'); grid.innerHTML = '';
+  TIMING_CONFIG.forEach(cfg => {
+    const card = document.createElement('div'); card.className = 'timing-card';
+    card.innerHTML = `<div class="timing-title">${cfg.label}</div><div class="timing-desc">${cfg.desc}</div>
+      <div class="timing-input-row"><input type="number" value="${data.timing[cfg.key]}" min="${cfg.min}" max="${cfg.max}"
+        oninput="data.timing['${cfg.key}']=parseFloat(this.value)||${data.timing[cfg.key]}">
+        <span class="timing-unit">${cfg.unit}</span></div>`;
+    grid.appendChild(card);
+  });
+}
+
+function removeItem(arr, i) {
+  data[arr].splice(i, 1);
+  if (arr==='headlines') renderHeadlines(); else if (arr==='ads') renderAds(); else if (arr==='stocks') renderStocks();
+}
+
+function showSection(name, btn) {
+  document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sec-pane').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('sec-' + name).classList.add('active');
+  if (name === 'tracks') { redraw(); }
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — MATH
+// ════════════════════════════════════════════════════════
+function mulberry32(a){return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function bpt(p0,c1,c2,p3,t){const u=1-t;return{x:u*u*u*p0.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p3.x,y:u*u*u*p0.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p3.y};}
+function pdist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function nById(id){return trackNodes.find(n=>n.id===id);}
+function sById(id){return trackSegs.find(s=>s.id===id);}
+
+function buildLUT(seg,steps=80){
+  const p0=nById(seg.from),p3=nById(seg.to);if(!p0||!p3)return{pts:[],totalLen:0};
+  let pts=[],cum=0,prev=null;
+  for(let i=0;i<=steps;i++){const t=i/steps,p=bpt(p0,seg.cp1,seg.cp2,p3,t);if(prev)cum+=pdist(prev,p);pts.push({x:p.x,y:p.y,len:cum});prev=p;}
+  return{pts,totalLen:cum};
+}
+function rebuildLUTs(){segLUTs={};trackSegs.forEach(s=>{segLUTs[s.id]=buildLUT(s);});}
+function posFromArc(lut,arc){
+  if(!lut||!lut.pts.length)return{x:0,y:0};const c=Math.max(0,Math.min(arc,lut.totalLen));
+  for(let i=1;i<lut.pts.length;i++){if(lut.pts[i].len>=c){const a=lut.pts[i-1],b=lut.pts[i],f=(b.len-a.len)>0?(c-a.len)/(b.len-a.len):0;return{x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};}}
+  const l=lut.pts[lut.pts.length-1];return{x:l.x,y:l.y};
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — BUILDING
+// ════════════════════════════════════════════════════════
+function defCps(p0,p3){return{cp1:{x:p0.x+(p3.x-p0.x)/3,y:p0.y+(p3.y-p0.y)/3},cp2:{x:p0.x+2*(p3.x-p0.x)/3,y:p0.y+2*(p3.y-p0.y)/3}};}
+
+function addNode(x,y){
+  const id=nextNid++;trackNodes.push({id,x,y});
+  if(trackNodes.length>1){const pv=trackNodes[trackNodes.length-2],cu=trackNodes[trackNodes.length-1];const{cp1,cp2}=defCps(pv,cu);trackSegs.push({id:nextSid++,from:pv.id,to:cu.id,cp1,cp2,type:'main',prob:1});}
+  rebuildLUTs();updateInfo();
+}
+function closeLoop(){
+  if(loopClosed){setTrackStatus('Loop already closed.');return;}
+  if(trackNodes.length<3){setTrackStatus('Need at least 3 nodes.');return;}
+  const first=trackNodes[0],last=trackNodes[trackNodes.length-1];const{cp1,cp2}=defCps(last,first);
+  trackSegs.push({id:nextSid++,from:last.id,to:first.id,cp1,cp2,type:'main',prob:1});
+  loopClosed=true;smoothMain();rebuildLUTs();updateInfo();setTrackStatus('Loop closed. Use SELECT to refine.');redraw();
+}
+function smoothMain(){
+  const m=trackSegs.filter(s=>s.type==='main');const N=m.length;if(N<3)return;
+  const ord=[];let cur=m.find(s=>s.from===trackNodes[0].id);
+  for(let i=0;i<N&&cur;i++){ord.push(cur);const nx=m.find(s=>s.from===cur.to&&s!==cur);if(!nx||nx===ord[0])break;cur=nx;}
+  if(ord.length!==N)return;
+  ord.forEach((seg,i)=>{
+    const pv=ord[(i+N-1)%N],nx=ord[(i+1)%N];const pA=nById(pv.from),p0=nById(seg.from),p1=nById(seg.to),pB=nById(nx.to);
+    if(!pA||!p0||!p1||!pB)return;
+    seg.cp1={x:p0.x+(p1.x-pA.x)/6,y:p0.y+(p1.y-pA.y)/6};seg.cp2={x:p1.x-(pB.x-p0.x)/6,y:p1.y-(pB.y-p0.y)/6};
+  });
+}
+function addShortcut(fid,tid,prob=0.3){
+  const fn=nById(fid),tn=nById(tid);if(!fn||!tn)return;
+  const{cp1,cp2}=defCps(fn,tn);const dx=tn.x-fn.x,dy=tn.y-fn.y,len=Math.hypot(dx,dy)||1;
+  const nx=-dy/len,ny=dx/len,b=Math.min(len*0.3,60);cp1.x+=nx*b;cp1.y+=ny*b;cp2.x+=nx*b;cp2.y+=ny*b;
+  trackSegs.push({id:nextSid++,from:fid,to:tid,cp1,cp2,type:'shortcut',prob});rebuildLUTs();updateInfo();
+}
+function clearTrack(){
+  if(previewActive)stopPreview();
+  trackNodes=[];trackSegs=[];loopClosed=false;nextNid=0;nextSid=0;selected=null;dragging=null;scFrom=null;segLUTs={};editingRotIdx=null;
+  document.getElementById('preset-sel').value='';document.getElementById('track-name').value='';
+  document.getElementById('sel-panel').style.display='none';
+  updateInfo();renderRotation();setTrackStatus('Track cleared.');redraw();
+}
+
+const PRESETS={
+  oval:{nodes:[{id:0,x:680,y:225},{id:1,x:400,y:55},{id:2,x:120,y:225},{id:3,x:400,y:395}],
+    segs:[{id:0,from:0,to:1,cp1:{x:680,y:55},cp2:{x:560,y:55},type:'main',prob:1},{id:1,from:1,to:2,cp1:{x:240,y:55},cp2:{x:120,y:55},type:'main',prob:1},{id:2,from:2,to:3,cp1:{x:120,y:395},cp2:{x:240,y:395},type:'main',prob:1},{id:3,from:3,to:0,cp1:{x:560,y:395},cp2:{x:680,y:395},type:'main',prob:1}]},
+  chicane:{nodes:[{id:0,x:700,y:225},{id:1,x:520,y:100},{id:2,x:370,y:175},{id:3,x:220,y:100},{id:4,x:100,y:225},{id:5,x:220,y:350},{id:6,x:370,y:275},{id:7,x:520,y:350}],
+    segs:[{id:0,from:0,to:1,cp1:{x:700,y:100},cp2:{x:620,y:100},type:'main',prob:1},{id:1,from:1,to:2,cp1:{x:420,y:100},cp2:{x:320,y:140},type:'main',prob:1},{id:2,from:2,to:3,cp1:{x:320,y:210},cp2:{x:270,y:100},type:'main',prob:1},{id:3,from:3,to:4,cp1:{x:170,y:100},cp2:{x:100,y:100},type:'main',prob:1},{id:4,from:4,to:5,cp1:{x:100,y:350},cp2:{x:170,y:350},type:'main',prob:1},{id:5,from:5,to:6,cp1:{x:270,y:350},cp2:{x:320,y:310},type:'main',prob:1},{id:6,from:6,to:7,cp1:{x:420,y:240},cp2:{x:470,y:350},type:'main',prob:1},{id:7,from:7,to:0,cp1:{x:620,y:350},cp2:{x:700,y:350},type:'main',prob:1},{id:8,from:1,to:7,cp1:{x:530,y:180},cp2:{x:510,y:270},type:'shortcut',prob:0.25}]},
+  wedge:{nodes:[{id:0,x:670,y:225},{id:1,x:400,y:55},{id:2,x:130,y:225},{id:3,x:400,y:395}],
+    segs:[{id:0,from:0,to:1,cp1:{x:670,y:80},cp2:{x:530,y:55},type:'main',prob:1},{id:1,from:1,to:2,cp1:{x:270,y:55},cp2:{x:130,y:80},type:'main',prob:1},{id:2,from:2,to:3,cp1:{x:130,y:370},cp2:{x:270,y:395},type:'main',prob:1},{id:3,from:3,to:0,cp1:{x:530,y:395},cp2:{x:670,y:370},type:'main',prob:1},{id:4,from:1,to:3,cp1:{x:370,y:130},cp2:{x:370,y:320},type:'shortcut',prob:0.35},{id:5,from:2,to:0,cp1:{x:200,y:250},cp2:{x:590,y:250},type:'shortcut',prob:0.2}]},
+  figure8:{nodes:[{id:0,x:400,y:225},{id:1,x:600,y:80},{id:2,x:720,y:225},{id:3,x:600,y:370},{id:4,x:200,y:80},{id:5,x:80,y:225},{id:6,x:200,y:370}],
+    segs:[{id:0,from:0,to:1,cp1:{x:500,y:80},cp2:{x:600,y:80},type:'main',prob:1},{id:1,from:1,to:2,cp1:{x:720,y:80},cp2:{x:720,y:155},type:'main',prob:1},{id:2,from:2,to:3,cp1:{x:720,y:295},cp2:{x:720,y:370},type:'main',prob:1},{id:3,from:3,to:0,cp1:{x:600,y:370},cp2:{x:500,y:370},type:'main',prob:1},{id:4,from:0,to:4,cp1:{x:300,y:370},cp2:{x:200,y:370},type:'main',prob:1},{id:5,from:4,to:5,cp1:{x:80,y:370},cp2:{x:80,y:295},type:'main',prob:1},{id:6,from:5,to:6,cp1:{x:80,y:155},cp2:{x:80,y:80},type:'main',prob:1},{id:7,from:6,to:0,cp1:{x:200,y:80},cp2:{x:300,y:80},type:'main',prob:1}]}
+};
+function loadPreset(name){
+  if(!name)return;if(previewActive)stopPreview();const p=PRESETS[name];if(!p)return;
+  trackNodes=p.nodes.map(n=>({...n}));trackSegs=p.segs.map(s=>({...s,cp1:{...s.cp1},cp2:{...s.cp2}}));
+  loopClosed=true;nextNid=Math.max(...trackNodes.map(n=>n.id))+1;nextSid=Math.max(...trackSegs.map(s=>s.id))+1;
+  selected=null;dragging=null;scFrom=null;editingRotIdx=null;
+  document.getElementById('sel-panel').style.display='none';
+  rebuildLUTs();updateInfo();renderRotation();setTrackStatus('Preset loaded.');redraw();
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — ROTATION PARSE/IMPORT
+// ════════════════════════════════════════════════════════
+function extractRotationFromHtml(html){
+  // Only look inside the injection block — the base holofeed also has
+  // a placeholder `let TRACK_ROTATION = [{ name: 'OARIN CIRCUIT' }]`
+  // at the top which indexOf would hit first, giving us empty/bad data.
+  const blockMarker = '===HOLOFEED-TRACK-ENGINE-START===';
+  const blockStart = html.indexOf(blockMarker);
+  // Search only within the injection block; fall back to full html if no block
+  const searchIn = blockStart !== -1 ? html.slice(blockStart) : html;
+
+  const marker = 'TRACK_ROTATION = [';
+  const markerPos = searchIn.indexOf(marker);
+  if (markerPos === -1) return null;
+
+  const arrStart = markerPos + marker.length - 1;
+  let depth=0, i=arrStart, inStr=false, escape=false;
+  while (i < searchIn.length) {
+    const ch = searchIn[i];
+    if (escape) { escape=false; }
+    else if (ch==='\\' && inStr) { escape=true; }
+    else if (ch==='"' && !escape) { inStr=!inStr; }
+    else if (!inStr) {
+      if (ch==='[') depth++;
+      else if (ch===']') { depth--; if (depth===0) break; }
+    }
+    i++;
+  }
+  try {
+    const parsed = JSON.parse(searchIn.slice(arrStart, i+1));
+    // Sanity check: real tracks have nodes and segments, skip placeholder entries
+    const real = parsed.filter(t => t.nodes && t.segments && t.nodes.length > 0);
+    return real.length > 0 ? real : null;
+  } catch(e) { return null; }
+}
+function importTrackRotation(tracks){
+  if(previewActive)stopPreview();trackRotation=[];editingRotIdx=null;
+  tracks.forEach(t=>{
+    trackRotation.push({id:rotIdCounter++,name:t.name,
+      nodes:t.nodes.map(n=>({id:n.id,x:+(n.x*CW).toFixed(1),y:+(n.y*CH).toFixed(1)})),
+      segs:t.segments.map(s=>({id:s.id,from:s.from,to:s.to,cp1:{x:+(s.cp1.x*CW).toFixed(1),y:+(s.cp1.y*CH).toFixed(1)},cp2:{x:+(s.cp2.x*CW).toFixed(1),y:+(s.cp2.y*CH).toFixed(1)},type:s.type,prob:s.prob})),
+      loopClosed:true});
+  });
+  loadFromRotation(0);renderRotation();
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — CANVAS
+// ════════════════════════════════════════════════════════
+const canvas=document.getElementById('track-canvas');
+const ctx=canvas.getContext('2d');
+
+function redraw(){
+  ctx.clearRect(0,0,CW,CH);ctx.fillStyle='#04080a';ctx.fillRect(0,0,CW,CH);
+  ctx.strokeStyle='#090f16';ctx.lineWidth=1;
+  for(let x=0;x<CW;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke();}
+  for(let y=0;y<CH;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke();}
+  trackSegs.filter(s=>s.type==='shortcut').forEach(drawSeg);
+  trackSegs.filter(s=>s.type==='main').forEach(drawSeg);
+  trackNodes.forEach(drawNode);
+  if(selected&&trackMode==='select')drawHandles();
+  if(scFrom!==null){const n=nById(scFrom);if(n){ctx.beginPath();ctx.arc(n.x,n.y,NODE_R+7,0,2*Math.PI);ctx.strokeStyle='#f0c040';ctx.lineWidth=2;ctx.stroke();}}
+  if(previewActive)drawRacers();updateInfo();
+}
+function drawSeg(seg){
+  const p0=nById(seg.from),p3=nById(seg.to);if(!p0||!p3)return;
+  const isSel=selected?.type==='seg'&&selected.id===seg.id;
+  ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(seg.cp1.x,seg.cp1.y,seg.cp2.x,seg.cp2.y,p3.x,p3.y);
+  if(seg.type==='shortcut'){
+    ctx.strokeStyle=isSel?'#ffcc22':'#00ccff55';ctx.lineWidth=5;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(seg.cp1.x,seg.cp1.y,seg.cp2.x,seg.cp2.y,p3.x,p3.y);
+    ctx.strokeStyle=isSel?'#ffcc2288':'#00ccff33';ctx.lineWidth=2;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
+    const mid=bpt(p0,seg.cp1,seg.cp2,p3,0.5);ctx.fillStyle='#f0c040dd';ctx.font='bold 9px "Share Tech Mono"';ctx.textAlign='center';ctx.fillText(Math.round(seg.prob*100)+'%',mid.x,mid.y-8);ctx.textAlign='left';
+  }else{
+    ctx.strokeStyle=isSel?'#2288aa':'#1a3448';ctx.lineWidth=22;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash([]);ctx.stroke();ctx.lineCap='butt';
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(seg.cp1.x,seg.cp1.y,seg.cp2.x,seg.cp2.y,p3.x,p3.y);
+    ctx.strokeStyle=isSel?'#00ccff99':'#1a6a8a55';ctx.lineWidth=1.5;ctx.setLineDash([8,7]);ctx.stroke();ctx.setLineDash([]);
+    const ma=bpt(p0,seg.cp1,seg.cp2,p3,0.5),mb=bpt(p0,seg.cp1,seg.cp2,p3,0.56);
+    const ang=Math.atan2(mb.y-ma.y,mb.x-ma.x);ctx.save();ctx.translate(ma.x,ma.y);ctx.rotate(ang);
+    ctx.fillStyle=isSel?'#00ccff88':'#1a6a8a88';ctx.beginPath();ctx.moveTo(7,0);ctx.lineTo(-4,-4);ctx.lineTo(-4,4);ctx.closePath();ctx.fill();ctx.restore();
+  }
+}
+function drawNode(node){
+  const isSF=node.id===0,isSel=selected?.type==='node'&&selected.id===node.id;
+  ctx.beginPath();ctx.arc(node.x,node.y,NODE_R,0,2*Math.PI);
+  ctx.fillStyle=isSF?'#f0c04033':(isSel?'#00ccff22':'#070e1299');ctx.fill();
+  ctx.strokeStyle=isSF?'#f0c040':(isSel?'#00ccff':'#1a3448');ctx.lineWidth=isSel?2.5:1.5;ctx.stroke();
+  ctx.fillStyle=isSF?'#f0c040':(isSel?'#00ccff':'#1a6a8a');
+  ctx.font='bold 8px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(isSF?'S/F':node.id,node.x,node.y);ctx.textAlign='left';ctx.textBaseline='alphabetic';
+}
+function drawHandles(){
+  let segs=[];
+  if(selected.type==='node') segs=trackSegs.filter(s=>s.from===selected.id||s.to===selected.id);
+  else if(selected.type==='seg') segs=trackSegs.filter(s=>s.id===selected.id);
+  segs.forEach(seg=>{
+    const p0=nById(seg.from),p3=nById(seg.to);if(!p0||!p3)return;
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(seg.cp1.x,seg.cp1.y);ctx.strokeStyle='#f0c04077';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(seg.cp1.x,seg.cp1.y,HAND_R,0,2*Math.PI);ctx.fillStyle='#f0c04033';ctx.fill();ctx.strokeStyle='#f0c040';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(p3.x,p3.y);ctx.lineTo(seg.cp2.x,seg.cp2.y);ctx.strokeStyle='#00ccff77';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(seg.cp2.x,seg.cp2.y,HAND_R,0,2*Math.PI);ctx.fillStyle='#00ccff22';ctx.fill();ctx.strokeStyle='#00ccff';ctx.lineWidth=1.5;ctx.stroke();
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — HIT TESTING & EVENTS
+// ════════════════════════════════════════════════════════
+function getMP(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(CW/r.width),y:(e.clientY-r.top)*(CH/r.height)};}
+function hitNode(p,r=NODE_R+5){return trackNodes.find(n=>pdist(n,p)<=r)||null;}
+function hitHandle(p){
+  let segs=[];if(selected?.type==='node') segs=trackSegs.filter(s=>s.from===selected.id||s.to===selected.id);else if(selected?.type==='seg') segs=trackSegs.filter(s=>s.id===selected.id);
+  for(const seg of segs){if(pdist(seg.cp1,p)<=HAND_R+5)return{cpType:'cp1',segId:seg.id};if(pdist(seg.cp2,p)<=HAND_R+5)return{cpType:'cp2',segId:seg.id};}return null;
+}
+function hitSeg(p){
+  let best=null,bd=14;
+  trackSegs.forEach(seg=>{const p0=nById(seg.from),p3=nById(seg.to);if(!p0||!p3)return;for(let i=0;i<=40;i++){const pt=bpt(p0,seg.cp1,seg.cp2,p3,i/40);const d=pdist(pt,p);if(d<bd){bd=d;best=seg;}}});return best;
+}
+canvas.addEventListener('mousedown',e=>{
+  const p=getMP(e);
+  if(trackMode==='addNode'){
+    if(loopClosed){const s=hitSeg(p);if(s&&s.type==='main'){insertNodeOnSeg(s.id,p.x,p.y);return;}setTrackStatus('Click on a segment to insert a node.');return;}
+    if(trackNodes.length>=3&&!loopClosed){const n0=trackNodes[0];if(pdist(n0,p)<=NODE_R+8){closeLoop();return;}}
+    addNode(p.x,p.y);redraw();return;
+  }
+  if(trackMode==='shortcut'){
+    const n=hitNode(p);if(!n)return;
+    if(scFrom===null){scFrom=n.id;setTrackStatus('Shortcut from node '+n.id+' — click destination.');}
+    else{if(n.id!==scFrom){addShortcut(scFrom,n.id,0.3);setTrackStatus('Shortcut added (30%). Select to adjust.');}scFrom=null;}
+    redraw();return;
+  }
+  if(trackMode==='select'){
+    const h=hitHandle(p);if(h){dragging={type:'handle',cpType:h.cpType,segId:h.segId};return;}
+    const n=hitNode(p);if(n){selected={type:'node',id:n.id};dragging={type:'node',id:n.id,ox:p.x-n.x,oy:p.y-n.y};showSelPanel();redraw();return;}
+    const s=hitSeg(p);if(s){selected={type:'seg',id:s.id};dragging=null;showSelPanel();redraw();return;}
+    selected=null;dragging=null;document.getElementById('sel-panel').style.display='none';redraw();
+  }
+});
+canvas.addEventListener('mousemove',e=>{
+  if(!dragging)return;const p=getMP(e);
+  if(dragging.type==='node'){
+    const n=nById(dragging.id);if(!n)return;const dx=p.x-dragging.ox-n.x,dy=p.y-dragging.oy-n.y;
+    trackSegs.forEach(seg=>{if(seg.from===n.id){seg.cp1.x+=dx;seg.cp1.y+=dy;}if(seg.to===n.id){seg.cp2.x+=dx;seg.cp2.y+=dy;}});
+    n.x=p.x-dragging.ox;n.y=p.y-dragging.oy;rebuildLUTs();redraw();
+  }
+  if(dragging.type==='handle'){const seg=sById(dragging.segId);if(!seg)return;if(dragging.cpType==='cp1'){seg.cp1.x=p.x;seg.cp1.y=p.y;}else{seg.cp2.x=p.x;seg.cp2.y=p.y;}segLUTs[seg.id]=buildLUT(seg);redraw();}
+});
+canvas.addEventListener('mouseup',()=>{dragging=null;});
+canvas.addEventListener('mouseleave',()=>{dragging=null;});
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — SELECTION PANEL
+// ════════════════════════════════════════════════════════
+function showSelPanel(){
+  const panel=document.getElementById('sel-panel'),cont=document.getElementById('sel-content');panel.style.display='block';
+  if(selected?.type==='node'){
+    const n=nById(selected.id);if(!n)return;
+    cont.innerHTML=`<div class="sb-row"><span class="sb-label">NODE</span><span class="sb-val">${n.id}${n.id===0?' (S/F)':''}</span></div>
+      <div class="sb-row"><span class="sb-label">POS</span><span class="sb-val">${Math.round(n.x)}, ${Math.round(n.y)}</span></div>
+      <button class="tb-btn danger" style="width:100%;margin-top:8px" onclick="deleteNode(${n.id})">✕ DELETE NODE</button>`;
+  }else if(selected?.type==='seg'){
+    const seg=sById(selected.id);if(!seg)return;const sc=seg.type==='shortcut';
+    cont.innerHTML=`<div class="sb-row"><span class="sb-label">TYPE</span><span class="sb-val" style="color:${sc?'var(--amber)':'var(--glow)'}">${seg.type.toUpperCase()}</span></div>
+      <div class="sb-row"><span class="sb-label">ROUTE</span><span class="sb-val">${seg.from} → ${seg.to}</span></div>
+      ${sc?`<div style="margin-top:8px"><span class="sb-label" style="display:block;margin-bottom:5px">CHANCE: <span id="pv">${Math.round(seg.prob*100)}%</span></span>
+        <input type="range" min="5" max="90" value="${Math.round(seg.prob*100)}" oninput="setProb(${seg.id},+this.value)">
+        <div class="hint" style="margin-top:5px">Remaining % goes to main path.</div></div>`:''}
+      <button class="tb-btn danger" style="width:100%;margin-top:8px" onclick="deleteSeg(${seg.id})">✕ DELETE SEGMENT</button>`;
+  }
+}
+function setProb(segId,val){const seg=sById(segId);if(!seg)return;seg.prob=val/100;const el=document.getElementById('pv');if(el)el.textContent=val+'%';redraw();}
+function deleteNode(id){
+  if(previewActive)stopPreview();
+  if(trackNodes.length<=3){setTrackStatus('Need at least 3 nodes to delete one.');return;}
+  const mainSegs=trackSegs.filter(s=>s.type==='main');
+  const inSeg=mainSegs.find(s=>s.to===id),outSeg=mainSegs.find(s=>s.from===id);
+  if(inSeg&&outSeg){const prev=nById(inSeg.from),next=nById(outSeg.to);if(prev&&next){const{cp1,cp2}=defCps(prev,next);trackSegs.push({id:nextSid++,from:prev.id,to:next.id,cp1,cp2,type:'main',prob:1});}}
+  trackSegs=trackSegs.filter(s=>s.from!==id&&s.to!==id);trackNodes=trackNodes.filter(n=>n.id!==id);
+  loopClosed=loopClosed&&trackSegs.filter(s=>s.type==='main').length===trackNodes.length;
+  renumberNodes();selected=null;document.getElementById('sel-panel').style.display='none';
+  rebuildLUTs();updateInfo();redraw();setTrackStatus('Node deleted and chain re-bridged.');
+}
+function deleteSeg(id){
+  if(previewActive)stopPreview();trackSegs=trackSegs.filter(s=>s.id!==id);
+  if(trackSegs.filter(s=>s.type==='main').length<trackNodes.length)loopClosed=false;
+  selected=null;document.getElementById('sel-panel').style.display='none';rebuildLUTs();updateInfo();redraw();
+}
+function getOrderedMainNodes(){
+  if(!trackNodes.length)return[];const mainSegs=trackSegs.filter(s=>s.type==='main');const start=trackNodes[0];const ordered=[];const visited=new Set();let cur=start;
+  while(cur&&!visited.has(cur.id)){ordered.push(cur);visited.add(cur.id);const nextSeg=mainSegs.find(s=>s.from===cur.id);if(!nextSeg)break;const nextNode=trackNodes.find(n=>n.id===nextSeg.to);if(!nextNode||nextNode.id===start.id)break;cur=nextNode;}
+  trackNodes.forEach(n=>{if(!visited.has(n.id))ordered.push(n);});return ordered;
+}
+function renumberNodes(){
+  const ordered=getOrderedMainNodes();const idMap=new Map();ordered.forEach((n,i)=>idMap.set(n.id,i));
+  trackNodes.forEach(n=>{n.id=idMap.get(n.id)??n.id;});
+  trackSegs.forEach(s=>{if(idMap.has(s.from))s.from=idMap.get(s.from);if(idMap.has(s.to))s.to=idMap.get(s.to);});
+  trackNodes.sort((a,b)=>a.id-b.id);nextNid=trackNodes.length;nextSid=trackSegs.length?Math.max(...trackSegs.map(s=>s.id))+1:0;
+}
+function insertNodeOnSeg(segId,x,y){
+  const seg=sById(segId);if(!seg||seg.type!=='main'){setTrackStatus('Can only insert on main segments.');return;}
+  const prev=nById(seg.from),next=nById(seg.to);if(!prev||!next)return;
+  const newNode={id:nextNid++,x,y};const prevIdx=trackNodes.findIndex(n=>n.id===prev.id);trackNodes.splice(prevIdx+1,0,newNode);
+  trackSegs=trackSegs.filter(s=>s.id!==seg.id);
+  const{cp1:cpA1,cp2:cpA2}=defCps(prev,newNode),{cp1:cpB1,cp2:cpB2}=defCps(newNode,next);
+  trackSegs.push({id:nextSid++,from:prev.id,to:newNode.id,cp1:cpA1,cp2:cpA2,type:'main',prob:1});
+  trackSegs.push({id:nextSid++,from:newNode.id,to:next.id,cp1:cpB1,cp2:cpB2,type:'main',prob:1});
+  renumberNodes();selected=null;document.getElementById('sel-panel').style.display='none';
+  rebuildLUTs();updateInfo();redraw();setTrackStatus('Node inserted. Use SELECT to adjust.');
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — PREVIEW RACE
+// ════════════════════════════════════════════════════════
+function chooseSeg(rng,outs){
+  if(outs.length===1)return outs[0];const scs=outs.filter(s=>s.type==='shortcut'),mns=outs.filter(s=>s.type==='main');
+  const scP=scs.reduce((a,s)=>a+s.prob,0),mP=Math.max(0,1-scP)/Math.max(1,mns.length);
+  const entries=[...scs.map(s=>({seg:s,p:s.prob})),...mns.map(s=>({seg:s,p:mP}))];
+  const rv=rng();let cum=0;for(const e of entries){cum+=e.p;if(rv<cum)return e.seg;}return outs[0];
+}
+function getOutgoing(nodeId){return trackSegs.filter(s=>s.from===nodeId);}
+function initRacers(){
+  const seed=Date.now();const startSeg=trackSegs.find(s=>s.from===trackNodes[0].id&&s.type==='main')||trackSegs[0];
+  racers=RACER_NAMES_PREVIEW.map((name,i)=>{const rng=mulberry32(seed+i*1337);return{name,color:RACER_COLORS[i],baseSpeed:14+rng()*10,amplitude:0.1+rng()*0.25,period:7+rng()*14,segId:startSeg?.id??0,arcPos:0,laps:0,arcThisLap:0,trail:[],rng:mulberry32(seed+i*919+3),done:false};});
+  raceT0=performance.now()/1000;
+}
+function stepRacer(r,dt,tRace){
+  if(r.done)return;const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period));let adv=Math.max(spd,5)*dt,g=0;
+  while(adv>0.001&&g++<30){const seg=sById(r.segId),lut=segLUTs[r.segId];if(!seg||!lut||lut.totalLen===0){r.done=true;return;}const rem=lut.totalLen-r.arcPos;
+    if(adv>=rem){adv-=rem;if(seg.to===trackNodes[0].id){r.laps++;r.arcThisLap=0;if(r.laps>=LAPS){r.done=true;return;}}const outs=getOutgoing(seg.to);if(!outs.length){r.done=true;return;}r.segId=chooseSeg(r.rng,outs).id;r.arcPos=0;}else{r.arcPos+=adv;r.arcThisLap+=adv;adv=0;}}
+}
+function drawRacers(){
+  racers.forEach((r,ri)=>{
+    const pos=posFromArc(segLUTs[r.segId]||{pts:[],totalLen:0},r.arcPos);r.trail.push({...pos});if(r.trail.length>22)r.trail.shift();
+    for(let j=1;j<r.trail.length;j++){ctx.globalAlpha=(j/r.trail.length)*0.4;ctx.beginPath();ctx.moveTo(r.trail[j-1].x,r.trail[j-1].y);ctx.lineTo(r.trail[j].x,r.trail[j].y);ctx.strokeStyle=r.color;ctx.lineWidth=3;ctx.stroke();}ctx.globalAlpha=1;
+    if(!r.done){const g=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,11);g.addColorStop(0,r.color+'bb');g.addColorStop(1,r.color+'00');ctx.beginPath();ctx.arc(pos.x,pos.y,11,0,2*Math.PI);ctx.fillStyle=g;ctx.fill();}
+    ctx.beginPath();ctx.arc(pos.x,pos.y,5.5,0,2*Math.PI);ctx.fillStyle=r.done?r.color+'55':r.color;ctx.fill();ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 6px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ri+1,pos.x,pos.y);ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  });
+  const sorted=[...racers].sort((a,b)=>a.laps!==b.laps?b.laps-a.laps:b.arcThisLap-a.arcThisLap);
+  const lb=document.getElementById('lb-list');lb.innerHTML='';
+  sorted.forEach((r,pos)=>{const d=document.createElement('div');d.className='lb-entry';d.innerHTML=`<span class="lb-pos">${pos+1}</span><span class="lb-name" style="color:${r.color}">${r.name}</span><span class="lb-laps">${r.laps}/${LAPS}${r.done?'★':''}</span>`;lb.appendChild(d);});
+  if(racers.every(r=>r.done)){stopPreview();setTrackStatus('Race done! '+sorted[0].name+' wins. Press ▶ to run again.');document.getElementById('race-sub').textContent='Finished.';}
+}
+function previewLoop(now){const dt=Math.min((now-_lastFT)/1000,0.05);_lastFT=now;const tRace=now/1000-raceT0;racers.forEach(r=>stepRacer(r,dt,tRace));redraw();if(previewActive)rafId=requestAnimationFrame(previewLoop);}
+function togglePreview(){if(!loopClosed){setTrackStatus('Close the loop before previewing.');return;}previewActive?stopPreview():startPreview();}
+function startPreview(){
+  previewActive=true;document.getElementById('btn-preview').textContent='■ STOP';document.getElementById('btn-preview').classList.add('active');
+  document.getElementById('race-panel').style.display='block';document.getElementById('race-sub').textContent='';
+  initRacers();_lastFT=performance.now();rafId=requestAnimationFrame(previewLoop);
+}
+function stopPreview(){
+  previewActive=false;if(rafId)cancelAnimationFrame(rafId);
+  document.getElementById('btn-preview').textContent='▶ PREVIEW';document.getElementById('btn-preview').classList.remove('active');
+  racers.forEach(r=>r.trail=[]);redraw();
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — MODE
+// ════════════════════════════════════════════════════════
+const MODE_HINTS={
+  addNode:'<strong>ADD NODE:</strong> Click to place nodes. Click near S/F (node 0) to close loop. After closing: click a segment to insert a node.',
+  select:'<strong>SELECT:</strong> Click a node or segment. Drag nodes to move. Drag <span style="color:var(--amber)">amber</span>/<span style="color:var(--glow)">cyan</span> handles to reshape curves.',
+  shortcut:'<strong>SHORTCUT:</strong> Click source node, then destination. Adjust probability in panel.'
+};
+function setTrackMode(m){
+  trackMode=m;scFrom=null;
+  ['addnode','select','shortcut'].forEach(id=>{document.getElementById('btn-'+id).classList.remove('active');});
+  const map={addNode:'addnode',select:'select',shortcut:'shortcut'};
+  document.getElementById('btn-'+map[m]).classList.add('active');
+  canvas.style.cursor=m==='addNode'?'crosshair':'default';
+  document.getElementById('mode-hint').innerHTML=MODE_HINTS[m];
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — INFO
+// ════════════════════════════════════════════════════════
+function updateInfo(){
+  document.getElementById('info-nodes').textContent=trackNodes.length;
+  document.getElementById('info-segs').textContent=trackSegs.length;
+  document.getElementById('info-sc').textContent=trackSegs.filter(s=>s.type==='shortcut').length;
+  const cl=document.getElementById('info-closed');cl.textContent=loopClosed?'YES':'NO';cl.style.color=loopClosed?'var(--success)':'var(--danger)';
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — ROTATION MANAGEMENT
+// ════════════════════════════════════════════════════════
+function syncTrackName(){
+  const name=document.getElementById('track-name').value;
+  if(editingRotIdx!==null&&trackRotation[editingRotIdx]){trackRotation[editingRotIdx].name=name||'Untitled';renderRotation();}
+}
+function saveToRotation(){
+  if(!loopClosed){setTrackStatus('Close the loop first.');return;}if(trackNodes.length<3){setTrackStatus('Need at least 3 nodes.');return;}
+  const rawName=document.getElementById('track-name').value.trim();const name=rawName||('Track '+(trackRotation.length+1));
+  if(!rawName)document.getElementById('track-name').value=name;
+  const snapshot={id:rotIdCounter++,name,nodes:trackNodes.map(n=>({...n})),segs:trackSegs.map(s=>({...s,cp1:{...s.cp1},cp2:{...s.cp2}})),loopClosed:true};
+  if(editingRotIdx!==null&&trackRotation[editingRotIdx]!==undefined){trackRotation[editingRotIdx]=snapshot;setTrackStatus('Updated "'+name+'" in rotation.');}
+  else{trackRotation.push(snapshot);editingRotIdx=trackRotation.length-1;setTrackStatus('"'+name+'" added to rotation.');}
+  renderRotation();
+}
+function newRotationTrack(){
+  if(previewActive)stopPreview();
+  trackNodes=[];trackSegs=[];loopClosed=false;nextNid=0;nextSid=0;selected=null;dragging=null;scFrom=null;segLUTs={};editingRotIdx=null;
+  document.getElementById('preset-sel').value='';document.getElementById('track-name').value='';document.getElementById('sel-panel').style.display='none';
+  updateInfo();renderRotation();redraw();document.getElementById('track-name').focus();
+  setTrackStatus('Canvas cleared — design your next track, then press + SAVE TO ROTATION.');
+}
+function loadFromRotation(idx){
+  if(idx<0||idx>=trackRotation.length)return;if(previewActive)stopPreview();
+  const t=trackRotation[idx];
+  trackNodes=t.nodes.map(n=>({...n}));trackSegs=t.segs.map(s=>({...s,cp1:{...s.cp1},cp2:{...s.cp2}}));loopClosed=t.loopClosed;
+  nextNid=Math.max(...trackNodes.map(n=>n.id))+1;nextSid=Math.max(...trackSegs.map(s=>s.id))+1;
+  selected=null;dragging=null;scFrom=null;document.getElementById('track-name').value=t.name;
+  document.getElementById('preset-sel').value='';document.getElementById('sel-panel').style.display='none';editingRotIdx=idx;
+  rebuildLUTs();updateInfo();renderRotation();redraw();setTrackStatus('Loaded "'+t.name+'" — edit and press SAVE TO ROTATION to update.');
+}
+function removeFromRotation(idx){
+  if(idx<0||idx>=trackRotation.length)return;const name=trackRotation[idx].name;trackRotation.splice(idx,1);
+  if(editingRotIdx===idx){editingRotIdx=null;}else if(editingRotIdx!==null&&editingRotIdx>idx){editingRotIdx--;}
+  renderRotation();setTrackStatus('"'+name+'" removed from rotation.');
+}
+function moveInRotation(idx,dir){
+  const ni=idx+dir;if(ni<0||ni>=trackRotation.length)return;
+  [trackRotation[idx],trackRotation[ni]]=[trackRotation[ni],trackRotation[idx]];
+  if(editingRotIdx===idx)editingRotIdx=ni;else if(editingRotIdx===ni)editingRotIdx=idx;renderRotation();
+}
+function startInlineRename(idx){
+  const nameEl=document.getElementById('rot-name-'+idx);if(!nameEl)return;const cur=trackRotation[idx].name;
+  const inp=document.createElement('input');inp.type='text';inp.value=cur;inp.style.cssText='font-family:var(--mono);font-size:10px;background:var(--panel);border:1px solid var(--glow);color:var(--glow);padding:2px 5px;border-radius:2px;width:100%;outline:none;';
+  inp.onblur=()=>commitRename(idx,inp.value);inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.value=cur;inp.blur();}};
+  nameEl.replaceWith(inp);inp.focus();inp.select();
+}
+function commitRename(idx,val){
+  const name=val.trim()||trackRotation[idx].name;trackRotation[idx].name=name;
+  if(editingRotIdx===idx)document.getElementById('track-name').value=name;renderRotation();
+}
+function renderRotation(){
+  const list=document.getElementById('rot-list'),hint=document.getElementById('rot-empty-hint'),count=document.getElementById('rot-count');
+  const n=trackRotation.length;count.textContent='('+n+' track'+(n!==1?'s':'')+')';
+  if(n===0){hint.style.display='';list.innerHTML='';return;}hint.style.display='none';list.innerHTML='';
+  trackRotation.forEach((t,i)=>{
+    const isEd=editingRotIdx===i;const card=document.createElement('div');
+    card.style.cssText='border:1px solid '+(isEd?'var(--glow)':'var(--border)')+';background:'+(isEd?'rgba(0,204,255,0.06)':'rgba(255,255,255,0.015)')+';border-radius:2px;padding:7px 8px;display:flex;flex-direction:column;gap:5px;';
+    const hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;gap:6px;min-width:0;';
+    const slot=document.createElement('span');slot.style.cssText='font-size:9px;color:var(--glow-dim);min-width:18px;flex-shrink:0;';slot.textContent=String(i+1).padStart(2,'0');
+    const nameSpan=document.createElement('span');nameSpan.id='rot-name-'+i;nameSpan.style.cssText='font-size:10px;color:'+(isEd?'var(--glow)':'var(--amber)')+';flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;';nameSpan.title='Double-click to rename';nameSpan.textContent=t.name;nameSpan.ondblclick=()=>startInlineRename(i);
+    hdr.appendChild(slot);hdr.appendChild(nameSpan);
+    if(isEd){const badge=document.createElement('span');badge.style.cssText='font-size:7px;letter-spacing:1px;color:var(--glow);border:1px solid var(--glow-dim);padding:1px 4px;border-radius:1px;flex-shrink:0;';badge.textContent='EDITING';hdr.appendChild(badge);}
+    const info=document.createElement('div');const mainSegs=t.segs.filter(s=>s.type==='main').length,cuts=t.segs.filter(s=>s.type==='shortcut').length;
+    info.style.cssText='font-size:8px;color:var(--glow-dim);';info.textContent=t.nodes.length+' nodes · '+mainSegs+' seg'+(cuts?' · '+cuts+' cut'+(cuts!==1?'s':''):'');
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:3px;';
+    const mkBtn=(label,col,tip,fn,flex)=>{const b=document.createElement('button');b.className='tb-btn';b.style.cssText='font-size:8px;padding:3px 5px;border-color:'+col+';color:'+col+';' +(flex?'flex:'+flex+';':'')+'text-align:center;';b.textContent=label;b.title=tip;b.onclick=fn;return b;};
+    if(!isEd){btns.appendChild(mkBtn('LOAD','var(--glow)','Load into editor',()=>loadFromRotation(i),1));}
+    else{const save=mkBtn('↓ SAVE','var(--glow)','Save edits back to this slot',()=>saveToRotation(),1);save.style.background='rgba(0,204,255,0.08)';btns.appendChild(save);}
+    btns.appendChild(mkBtn('↑','var(--glow-dim)','Move up',()=>moveInRotation(i,-1),null));
+    btns.appendChild(mkBtn('↓','var(--glow-dim)','Move down',()=>moveInRotation(i,1),null));
+    const del=mkBtn('✕','#884444','Remove from rotation',()=>removeFromRotation(i),null);
+    del.onmouseover=()=>{del.style.borderColor='var(--danger)';del.style.color='var(--danger)';};del.onmouseout=()=>{del.style.borderColor='#884444';del.style.color='#884444';};
+    btns.appendChild(del);card.appendChild(hdr);card.appendChild(info);card.appendChild(btns);list.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// TRACK EDITOR — INJECTION SCRIPT BUILDER
+// ════════════════════════════════════════════════════════
+function buildInjectionScript(tracks){
+const rotationJson=JSON.stringify(tracks.map(t=>({
+  name:t.name,
+  nodes:t.nodes.map(n=>({id:n.id,x:+(n.x/CW).toFixed(4),y:+(n.y/CH).toFixed(4)})),
+  segments:(t.segments||t.segs).map(s=>({id:s.id,from:s.from,to:s.to,cp1:{x:+(s.cp1.x/CW).toFixed(4),y:+(s.cp1.y/CH).toFixed(4)},cp2:{x:+(s.cp2.x/CW).toFixed(4),y:+(s.cp2.y/CH).toFixed(4)},type:s.type,prob:+s.prob.toFixed(2)}))
+})));
+return `
+// ===HOLOFEED-TRACK-ENGINE-START===
+TRACK_ROTATION = ${rotationJson};
+const _TLUTs_ALL=(function(){const W=520,H=230;function _b(p0,c1,c2,p3,t){const u=1-t;return{x:u*u*u*p0.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p3.x,y:u*u*u*p0.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p3.y};}
+return TRACK_ROTATION.map(track=>{const luts={};track.segments.forEach(seg=>{const p0=track.nodes.find(x=>x.id===seg.from),p3=track.nodes.find(x=>x.id===seg.to);const px0={x:p0.x*W,y:p0.y*H},px3={x:p3.x*W,y:p3.y*H};const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};let pts=[],cum=0,prev=null;for(let i=0;i<=100;i++){const t=i/100,p=_b(px0,c1,c2,px3,t);if(prev)cum+=Math.hypot(p.x-prev.x,p.y-prev.y);pts.push({x:p.x,y:p.y,len:cum});prev=p;}luts[seg.id]={pts,totalLen:cum};});return luts;});})();
+const _TMainLen_ALL=TRACK_ROTATION.map((track,ti)=>track.segments.filter(s=>s.type==='main').reduce((a,s)=>a+(_TLUTs_ALL[ti][s.id]?.totalLen||0),0));
+const _TSpdMin_ALL=_TMainLen_ALL.map(l=>12*l/895),_TSpdMax_ALL=_TMainLen_ALL.map(l=>20*l/895);
+if(typeof raceChain!=='undefined'){raceChain=null;}if(typeof lastRaceHour!=='undefined'){lastRaceHour=-1;}
+function _TDef(race){return TRACK_ROTATION[race.trackIdx??0]||TRACK_ROTATION[0];}function _TLuts(race){return _TLUTs_ALL[race.trackIdx??0]||_TLUTs_ALL[0];}
+function _TPosAt(lut,arc){if(!lut||!lut.pts.length)return{x:0,y:0};const c=Math.max(0,Math.min(arc,lut.totalLen));for(let i=1;i<lut.pts.length;i++){if(lut.pts[i].len>=c){const a=lut.pts[i-1],b=lut.pts[i],f=(b.len-a.len)>0?(c-a.len)/(b.len-a.len):0;return{x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};}}const l=lut.pts[lut.pts.length-1];return{x:l.x,y:l.y};}
+function _TChoose(rng,outs){if(outs.length===1)return outs[0];const scs=outs.filter(s=>s.type==='shortcut'),mns=outs.filter(s=>s.type==='main');const scP=scs.reduce((a,s)=>a+s.prob,0),mP=Math.max(0,1-scP)/Math.max(1,mns.length);const es=[...scs.map(s=>({seg:s,p:s.prob})),...mns.map(s=>({seg:s,p:mP}))];const rv=rng();let cum=0;for(const e of es){cum+=e.p;if(rv<cum)return e.seg;}return outs[0];}
+function _TStep(st,r,dt,tRace,track,luts){if(st.done)return;const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period));let adv=Math.max(spd,5)*dt,g=0;while(adv>0.001&&g++<30){const seg=track.segments.find(s=>s.id===st.segId),lut=luts[st.segId];if(!seg||!lut||lut.totalLen===0){st.done=true;return;}const rem=lut.totalLen-st.arcPos;if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=3){st.done=true;return;}}const outs=track.segments.filter(s=>s.from===seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs);st.segId=nx.id;st.arcPos=0;}else{st.arcPos+=adv;st.arcThisLap+=adv;adv=0;}}}
+function makeRacers(seed,trackIdx){trackIdx=trackIdx??0;const rng=mulberry32(seed);const names=pickN(RACER_NAMES,6,rng);const smin=_TSpdMin_ALL[trackIdx]??_TSpdMin_ALL[0],smax=_TSpdMax_ALL[trackIdx]??_TSpdMax_ALL[0];return names.map((name,i)=>({name,color:RACER_COLORS[i],baseSpeed:smin+rng()*(smax-smin),amplitude:0.008+rng()*0.018,period:8+rng()*16,_seed:seed,_idx:i}));}
+function buildRaceChain(hourSeed,hourStart){const chain=[];let t=hourStart,seed=hourSeed*1000;const FLASH=10,COUNTDOWN=20;while(t<hourStart+14400){const trackIdx=chain.length%TRACK_ROTATION.length;const racers=makeRacers(seed,trackIdx);const{duration,winner}=computeRaceDuration(racers,trackIdx);chain.push({seed,startT:t,raceEnd:t+duration,phaseEnd:t+duration+FLASH+COUNTDOWN,racers,winner,duration,trackIdx});t+=duration+FLASH+COUNTDOWN;seed++;}return chain;}
+function computeRaceDuration(racers,trackIdx){trackIdx=trackIdx??0;const track=TRACK_ROTATION[trackIdx]||TRACK_ROTATION[0];const luts=_TLUTs_ALL[trackIdx]||_TLUTs_ALL[0];const dt=0.05;const startSeg=track.segments.find(s=>s.from===0&&s.type==='main')||track.segments[0];const states=racers.map((r,i)=>({segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false}));for(let t=0;t<600;t+=dt){for(let i=0;i<racers.length;i++){if(states[i].done)continue;_TStep(states[i],racers[i],dt,t,track,luts);if(states[i].done)return{duration:t,winner:i};}}return{duration:600,winner:0};}
+const _TCache={};function _TBuildPaths(race){if(_TCache[race.seed])return _TCache[race.seed];const track=_TDef(race),luts=_TLuts(race);const dt=0.05,startSeg=track.segments.find(s=>s.from===0&&s.type==='main')||track.segments[0];const maxT=race.duration+15,frames=Math.ceil(maxT/dt)+1;const paths=race.racers.map((r,i)=>{const st={segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false};const positions=[];for(let fi=0;fi<frames;fi++){const pos=_TPosAt((luts[st.segId])||{pts:[],totalLen:0},st.arcPos);positions.push({x:pos.x,y:pos.y,laps:st.laps,arc:st.arcThisLap});if(!st.done)_TStep(st,r,dt,fi*dt,track,luts);}return{positions};});_TCache[race.seed]={paths,dt};const keys=Object.keys(_TCache);if(keys.length>3)delete _TCache[keys[0]];return _TCache[race.seed];}
+function getLeaderboard(race,tInRace){const data=_TBuildPaths(race);const mainLen=_TMainLen_ALL[race.trackIdx??0]||_TMainLen_ALL[0];const t=Math.min(tInRace,race.duration);const fi=Math.min(Math.floor(t/data.dt),data.paths[0].positions.length-1);return race.racers.map((r,i)=>{const pos=data.paths[i].positions[fi];return{idx:i,name:r.name,color:r.color,laps:pos.laps,totalDist:pos.laps*mainLen+pos.arc,lastLapTime:null};}).sort((a,b)=>b.totalDist-a.totalDist);}
+const _TCanvasCache={};function getTrackCanvas(glowColor,dimColor,borderColor){const nowF=Date.now()/1000;const state=getRaceState(nowF);const ti=state.race.trackIdx??0;const cacheKey=ti+'|'+glowColor;if(_TCanvasCache[cacheKey])return _TCanvasCache[cacheKey];const track=TRACK_ROTATION[ti]||TRACK_ROTATION[0];const luts=_TLUTs_ALL[ti]||_TLUTs_ALL[0];const tc=document.createElement('canvas');tc.width=520;tc.height=230;const ctx=tc.getContext('2d'),W=520,H=230;function _n(id){return track.nodes.find(x=>x.id===id);}function _px(nd){return{x:nd.x*W,y:nd.y*H};}track.segments.filter(s=>s.type==='shortcut').forEach(seg=>{const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=dimColor+'88';ctx.lineWidth=6;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=glowColor+'44';ctx.lineWidth=2;ctx.stroke();});track.segments.filter(s=>s.type==='main').forEach(seg=>{const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=borderColor;ctx.lineWidth=16;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=dimColor;ctx.lineWidth=0.5;ctx.setLineDash([8,6]);ctx.stroke();ctx.setLineDash([]);});const sf0=_n(0),sfx=sf0.x*W,sfy=sf0.y*H;const outSeg=track.segments.find(s=>s.from===0&&s.type==='main');let ang=Math.PI/2;if(outSeg&&luts[outSeg.id]?.pts.length>1){const a=luts[outSeg.id].pts[0],b=luts[outSeg.id].pts[2]||luts[outSeg.id].pts[1];ang=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2;}ctx.save();ctx.translate(sfx,sfy);ctx.rotate(ang);ctx.strokeStyle=glowColor;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();ctx.restore();ctx.fillStyle=dimColor;ctx.font='7px "Share Tech Mono"';ctx.fillText('S/F',sfx+4,sfy-6);_TCanvasCache[cacheKey]=tc;setTimeout(()=>{delete _TCanvasCache[cacheKey];},35000);return tc;}
+function renderRace(){if(document.getElementById('tab-race').style.display==='none')return;const nowF=Date.now()/1000;const state=getRaceState(nowF);const{race,tInRace,phase}=state;const canvas=document.getElementById('race-canvas');const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;const theme=THEMES[currentTheme];ctx.clearRect(0,0,W,H);ctx.fillStyle=theme.bg;ctx.fillRect(0,0,W,H);ctx.drawImage(getTrackCanvas(theme.glow,theme.glowDim,theme.border2),0,0);const t=Math.min(tInRace,race.duration);const pathData=_TBuildPaths(race);const fi=Math.min(Math.floor(t/pathData.dt),pathData.paths[0].positions.length-1);race.racers.forEach((r,i)=>{const key=race.seed+'_'+i;if(!trailBuffers[key])trailBuffers[key]=[];const trail=trailBuffers[key];const pos=pathData.paths[i].positions[fi];trail.push({x:pos.x,y:pos.y});if(trail.length>18)trail.shift();for(let j=1;j<trail.length;j++){ctx.globalAlpha=(j/trail.length)*0.35;ctx.beginPath();ctx.moveTo(trail[j-1].x,trail[j-1].y);ctx.lineTo(trail[j].x,trail[j].y);ctx.strokeStyle=r.color;ctx.lineWidth=3;ctx.stroke();}ctx.globalAlpha=1;});race.racers.forEach((r,i)=>{const pos=pathData.paths[i].positions[fi];const px=pos.x,py=pos.y;const grad=ctx.createRadialGradient(px,py,0,px,py,10);grad.addColorStop(0,r.color+'bb');grad.addColorStop(1,r.color+'00');ctx.beginPath();ctx.arc(px,py,10,0,2*Math.PI);ctx.fillStyle=grad;ctx.fill();ctx.beginPath();ctx.arc(px,py,5.5,0,2*Math.PI);ctx.fillStyle=r.color;ctx.fill();ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();ctx.fillStyle='#000';ctx.font='bold 6.5px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,px,py);});ctx.textAlign='left';ctx.textBaseline='alphabetic';const trackName=(TRACK_ROTATION[race.trackIdx??0]||TRACK_ROTATION[0]).name;const trackLabelEl=document.getElementById('race-track-label');if(trackLabelEl)trackLabelEl.textContent='⬡ '+trackName+' ⬡';const statusEl=document.getElementById('race-status');const lb=getLeaderboard(race,t);if(phase==='countdown'){const cdLeft=Math.ceil(state.cdLeft);let nextName=null;if(raceChain&&TRACK_ROTATION.length>1){const ri=raceChain.indexOf(race);const nr=ri>=0?raceChain[ri+1]:null;if(nr)nextName=(TRACK_ROTATION[nr.trackIdx??0]||TRACK_ROTATION[0]).name;}statusEl.textContent=nextName?'— NEXT: '+nextName+' — IN '+cdLeft+'s —':'— NEW RACE STARTING IN '+cdLeft+'s —';statusEl.style.color='var(--amber)';}else if(phase==='flash'){const wr=race.racers[race.winner];statusEl.textContent='⬡ '+wr.name.toUpperCase()+' WINS! ⬡';statusEl.style.color=wr.color;}else{statusEl.textContent='RACE IN PROGRESS — LEAD: '+lb[0].name.toUpperCase();statusEl.style.color='var(--glow)';}const lbEl=document.getElementById('lb-rows');const isRaceTab=document.getElementById('tab-race').classList.contains('active');if(isRaceTab){lbEl.innerHTML='';lb.forEach((entry,pos)=>{const isWinner=phase==='flash'&&race.racers[race.winner].name===entry.name;const row=document.createElement('div');row.className='lb-row'+(isWinner?' winner-flash':'');row.innerHTML='<span class="lb-pos">'+(pos+1)+'</span><span class="lb-name" style="color:'+entry.color+'">'+entry.name+'</span><span class="lb-laptime">—</span><span class="lb-laps">'+entry.laps+'/3</span>';if(typeof globalTranslated!=='undefined'&&!globalTranslated)row.querySelector('.lb-name').style.fontFamily='var(--font-alien)';lbEl.appendChild(row);});}}
+if(typeof raceRafId!=='undefined'&&raceRafId)cancelAnimationFrame(raceRafId);
+if(typeof trackCanvas!=='undefined')trackCanvas=null;
+if(typeof raceLoop==='function')raceLoop();
+// ===HOLOFEED-TRACK-ENGINE-END===
+`;
+}
+
+// ════════════════════════════════════════════════════════
+// LIVE PREVIEW
+// ════════════════════════════════════════════════════════
+function buildPreviewHtml() {
+  let html = buildModifiedHtml();
+  if (trackRotation.length > 0) {
+    const exportTracks = trackRotation.map(t => ({ name: t.name, nodes: t.nodes, segments: t.segs }));
+    const injection = buildInjectionScript(exportTracks);
+    const scriptBlock = '\n<!-- HOLOFEED-TRACK-INJECTION -->\n<script>' + injection + '<\/script>\n';
+    if (html.includes('<!-- HOLOFEED-TRACK-INJECTION -->') && html.includes('===HOLOFEED-TRACK-ENGINE-END===')) {
+      html = html.replace(/\n<!-- HOLOFEED-TRACK-INJECTION -->[\s\S]*?===HOLOFEED-TRACK-ENGINE-END===\s*<\/script>\s*\n/, scriptBlock);
+    } else {
+      html = html.replace(/<\/body>/, scriptBlock + '</body>');
+    }
+  }
+  return html;
+}
+
+function openPreview() {
+  if (!originalHtml) return;
+  try {
+    const html = buildPreviewHtml();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    // Revoke after a delay to give the new tab time to load
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch(e) {
+    toast('Preview error: ' + e.message, true);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+updateInfo();renderRotation();redraw();
+</script>
+</body>
+</html>

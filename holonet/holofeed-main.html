@@ -1781,187 +1781,37 @@ function toggleUT() {
 <!-- HOLOFEED-TRACK-INJECTION -->
 <script>
 // ===HOLOFEED-TRACK-ENGINE-START===
-const TRACK_DEF = {
-  "nodes": [
-    {
-      "id": 0,
-      "x": 0.4963,
-      "y": 0.4978
-    },
-    {
-      "id": 1,
-      "x": 0.75,
-      "y": 0.1778
-    },
-    {
-      "id": 2,
-      "x": 0.9,
-      "y": 0.5
-    },
-    {
-      "id": 3,
-      "x": 0.75,
-      "y": 0.8222
-    },
-    {
-      "id": 4,
-      "x": 0.25,
-      "y": 0.1778
-    },
-    {
-      "id": 5,
-      "x": 0.1,
-      "y": 0.5
-    },
-    {
-      "id": 6,
-      "x": 0.25,
-      "y": 0.8222
-    }
-  ],
-  "segments": [
-    {
-      "id": 0,
-      "from": 0,
-      "to": 1,
-      "cp1": {
-        "x": 0.6213,
-        "y": 0.1756
-      },
-      "cp2": {
-        "x": 0.75,
-        "y": 0.1778
-      },
-      "type": "main",
-      "prob": 1
-    },
-    {
-      "id": 1,
-      "from": 1,
-      "to": 2,
-      "cp1": {
-        "x": 0.9,
-        "y": 0.1778
-      },
-      "cp2": {
-        "x": 0.9,
-        "y": 0.3444
-      },
-      "type": "main",
-      "prob": 1
-    },
-    {
-      "id": 2,
-      "from": 2,
-      "to": 3,
-      "cp1": {
-        "x": 0.9,
-        "y": 0.6556
-      },
-      "cp2": {
-        "x": 0.9,
-        "y": 0.8222
-      },
-      "type": "main",
-      "prob": 1
-    },
-    {
-      "id": 3,
-      "from": 3,
-      "to": 0,
-      "cp1": {
-        "x": 0.75,
-        "y": 0.8222
-      },
-      "cp2": {
-        "x": 0.6213,
-        "y": 0.82
-      },
-      "type": "main",
-      "prob": 1
-    },
-    {
-      "id": 4,
-      "from": 0,
-      "to": 4,
-      "cp1": {
-        "x": 0.3713,
-        "y": 0.82
-      },
-      "cp2": {
-        "x": 0.25,
-        "y": 0.8222
-      },
-      "type": "main",
-      "prob": 1
-    },
-    {
-      "id": 5,
-      "from": 4,
-      "to": 5,
-      "cp1": {
-        "x": 0.1,
-        "y": 0.8222
-      },
-      "cp2": {
-        "x": 0.1,
-        "y": 0.6556
-      },
-      "type": "main",
-      "prob": 1
-    },
-    {
-      "id": 6,
-      "from": 5,
-      "to": 6,
-      "cp1": {
-        "x": 0.1,
-        "y": 0.3444
-      },
-      "cp2": {
-        "x": 0.1,
-        "y": 0.1778
-      },
-      "type": "main",
-      "prob": 1
-    },
-    {
-      "id": 7,
-      "from": 6,
-      "to": 0,
-      "cp1": {
-        "x": 0.25,
-        "y": 0.1778
-      },
-      "cp2": {
-        "x": 0.3713,
-        "y": 0.1756
-      },
-      "type": "main",
-      "prob": 1
-    }
-  ]
-};
 
-// Build arc-length LUTs (normalized coords → holofeed canvas pixels)
-const _TLUTs = {};
-(function(){
+// Replace the holofeed's track rotation with all exported tracks
+TRACK_ROTATION = [{"name":"Boonta Eve Circuit","nodes":[{"id":0,"x":0.875,"y":0.5},{"id":1,"x":0.731,"y":0.152},{"id":2,"x":0.279,"y":0.152},{"id":3,"x":0.125,"y":0.5},{"id":4,"x":0.279,"y":0.848},{"id":5,"x":0.731,"y":0.848}],"segments":[{"id":0,"from":0,"to":1,"cp1":{"x":0.875,"y":0.326},"cp2":{"x":0.808,"y":0.152},"type":"main","prob":1},{"id":1,"from":1,"to":2,"cp1":{"x":0.615,"y":0.152},"cp2":{"x":0.385,"y":0.152},"type":"main","prob":1},{"id":2,"from":2,"to":3,"cp1":{"x":0.154,"y":0.152},"cp2":{"x":0.125,"y":0.326},"type":"main","prob":1},{"id":3,"from":3,"to":4,"cp1":{"x":0.125,"y":0.674},"cp2":{"x":0.154,"y":0.848},"type":"main","prob":1},{"id":4,"from":4,"to":5,"cp1":{"x":0.385,"y":0.848},"cp2":{"x":0.615,"y":0.848},"type":"main","prob":1},{"id":5,"from":5,"to":0,"cp1":{"x":0.808,"y":0.848},"cp2":{"x":0.875,"y":0.674},"type":"main","prob":1}]},{"name":"Malastare Lowlands","nodes":[{"id":0,"x":0.885,"y":0.5},{"id":1,"x":0.769,"y":0.174},{"id":2,"x":0.538,"y":0.391},{"id":3,"x":0.308,"y":0.174},{"id":4,"x":0.154,"y":0.5},{"id":5,"x":0.308,"y":0.848},{"id":6,"x":0.538,"y":0.63},{"id":7,"x":0.769,"y":0.848}],"segments":[{"id":0,"from":0,"to":1,"cp1":{"x":0.885,"y":0.304},"cp2":{"x":0.846,"y":0.174},"type":"main","prob":1},{"id":1,"from":1,"to":2,"cp1":{"x":0.654,"y":0.174},"cp2":{"x":0.615,"y":0.37},"type":"main","prob":1},{"id":2,"from":2,"to":3,"cp1":{"x":0.462,"y":0.413},"cp2":{"x":0.423,"y":0.174},"type":"main","prob":1},{"id":3,"from":3,"to":4,"cp1":{"x":0.192,"y":0.174},"cp2":{"x":0.154,"y":0.326},"type":"main","prob":1},{"id":4,"from":4,"to":5,"cp1":{"x":0.154,"y":0.674},"cp2":{"x":0.192,"y":0.848},"type":"main","prob":1},{"id":5,"from":5,"to":6,"cp1":{"x":0.423,"y":0.848},"cp2":{"x":0.462,"y":0.652},"type":"main","prob":1},{"id":6,"from":6,"to":7,"cp1":{"x":0.615,"y":0.609},"cp2":{"x":0.692,"y":0.848},"type":"main","prob":1},{"id":7,"from":7,"to":0,"cp1":{"x":0.846,"y":0.848},"cp2":{"x":0.885,"y":0.674},"type":"main","prob":1},{"id":8,"from":1,"to":7,"cp1":{"x":0.885,"y":0.391},"cp2":{"x":0.885,"y":0.63},"type":"shortcut","prob":0.25}]},{"name":"Canto Bight Sprint","nodes":[{"id":0,"x":0.875,"y":0.5},{"id":1,"x":0.731,"y":0.152},{"id":2,"x":0.385,"y":0.13},{"id":3,"x":0.154,"y":0.304},{"id":4,"x":0.115,"y":0.587},{"id":5,"x":0.346,"y":0.848},{"id":6,"x":0.692,"y":0.717}],"segments":[{"id":0,"from":0,"to":1,"cp1":{"x":0.875,"y":0.283},"cp2":{"x":0.808,"y":0.152},"type":"main","prob":1},{"id":1,"from":1,"to":2,"cp1":{"x":0.615,"y":0.13},"cp2":{"x":0.5,"y":0.13},"type":"main","prob":1},{"id":2,"from":2,"to":3,"cp1":{"x":0.25,"y":0.13},"cp2":{"x":0.135,"y":0.196},"type":"main","prob":1},{"id":3,"from":3,"to":4,"cp1":{"x":0.096,"y":0.413},"cp2":{"x":0.096,"y":0.5},"type":"main","prob":1},{"id":4,"from":4,"to":5,"cp1":{"x":0.115,"y":0.739},"cp2":{"x":0.231,"y":0.87},"type":"main","prob":1},{"id":5,"from":5,"to":6,"cp1":{"x":0.5,"y":0.891},"cp2":{"x":0.654,"y":0.826},"type":"main","prob":1},{"id":6,"from":6,"to":0,"cp1":{"x":0.788,"y":0.652},"cp2":{"x":0.875,"y":0.63},"type":"main","prob":1}]}];
+
+// Build arc-length LUTs for every track (normalized coords → canvas pixels)
+const _TLUTs_ALL=(function(){
   const W=520,H=230;
   function _b(p0,c1,c2,p3,t){const u=1-t;return{x:u*u*u*p0.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p3.x,y:u*u*u*p0.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p3.y};}
-  function _n(id){return TRACK_DEF.nodes.find(x=>x.id===id);}
-  TRACK_DEF.segments.forEach(seg=>{
-    const p0=_n(seg.from),p3=_n(seg.to);
-    const px0={x:p0.x*W,y:p0.y*H},px3={x:p3.x*W,y:p3.y*H};
-    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
-    let pts=[],cum=0,prev=null;
-    for(let i=0;i<=100;i++){const t=i/100,p=_b(px0,c1,c2,px3,t);if(prev)cum+=Math.hypot(p.x-prev.x,p.y-prev.y);pts.push({x:p.x,y:p.y,len:cum});prev=p;}
-    _TLUTs[seg.id]={pts,totalLen:cum};
+  return TRACK_ROTATION.map(track=>{
+    const luts={};
+    track.segments.forEach(seg=>{
+      const p0=track.nodes.find(x=>x.id===seg.from),p3=track.nodes.find(x=>x.id===seg.to);
+      const px0={x:p0.x*W,y:p0.y*H},px3={x:p3.x*W,y:p3.y*H};
+      const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
+      let pts=[],cum=0,prev=null;
+      for(let i=0;i<=100;i++){const t=i/100,p=_b(px0,c1,c2,px3,t);if(prev)cum+=Math.hypot(p.x-prev.x,p.y-prev.y);pts.push({x:p.x,y:p.y,len:cum});prev=p;}
+      luts[seg.id]={pts,totalLen:cum};
+    });
+    return luts;
   });
 })();
 
-const _TMainLen = TRACK_DEF.segments.filter(s=>s.type==='main').reduce((a,s)=>a+(_TLUTs[s.id]?.totalLen||0),0);
-const _TSpdScale = _TMainLen / 895;
-const _TSpdMin = 12 * _TSpdScale, _TSpdMax = 20 * _TSpdScale;
+const _TMainLen_ALL=TRACK_ROTATION.map((track,ti)=>track.segments.filter(s=>s.type==='main').reduce((a,s)=>a+(_TLUTs_ALL[ti][s.id]?.totalLen||0),0));
+const _TSpdMin_ALL=_TMainLen_ALL.map(l=>12*l/895);
+const _TSpdMax_ALL=_TMainLen_ALL.map(l=>20*l/895);
+
+if(typeof raceChain!=='undefined'){raceChain=null;}
+if(typeof lastRaceHour!=='undefined'){lastRaceHour=-1;}
+
+function _TDef(race){return TRACK_ROTATION[race.trackIdx??0]||TRACK_ROTATION[0];}
+function _TLuts(race){return _TLUTs_ALL[race.trackIdx??0]||_TLUTs_ALL[0];}
 
 function _TPosAt(lut,arc){
   if(!lut||!lut.pts.length)return{x:0,y:0};
@@ -1969,7 +1819,6 @@ function _TPosAt(lut,arc){
   for(let i=1;i<lut.pts.length;i++){if(lut.pts[i].len>=c){const a=lut.pts[i-1],b=lut.pts[i],f=(b.len-a.len)>0?(c-a.len)/(b.len-a.len):0;return{x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};}}
   const l=lut.pts[lut.pts.length-1];return{x:l.x,y:l.y};
 }
-function _TOut(nodeId){return TRACK_DEF.segments.filter(s=>s.from===nodeId);}
 function _TChoose(rng,outs){
   if(outs.length===1)return outs[0];
   const scs=outs.filter(s=>s.type==='shortcut'),mns=outs.filter(s=>s.type==='main');
@@ -1977,119 +1826,135 @@ function _TChoose(rng,outs){
   const es=[...scs.map(s=>({seg:s,p:s.prob})),...mns.map(s=>({seg:s,p:mP}))];
   const rv=rng();let cum=0;for(const e of es){cum+=e.p;if(rv<cum)return e.seg;}return outs[0];
 }
-function _TStep(st,r,dt,tRace){
+function _TStep(st,r,dt,tRace,track,luts){
   if(st.done)return;
   const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period));
   let adv=Math.max(spd,5)*dt,g=0;
   while(adv>0.001&&g++<30){
-    const seg=TRACK_DEF.segments.find(s=>s.id===st.segId),lut=_TLUTs[st.segId];
+    const seg=track.segments.find(s=>s.id===st.segId),lut=luts[st.segId];
     if(!seg||!lut||lut.totalLen===0){st.done=true;return;}
     const rem=lut.totalLen-st.arcPos;
-    if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=3){st.done=true;return;}}const outs=_TOut(seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs);st.segId=nx.id;st.arcPos=0;}
+    if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=3){st.done=true;return;}}const outs=track.segments.filter(s=>s.from===seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs);st.segId=nx.id;st.arcPos=0;}
     else{st.arcPos+=adv;st.arcThisLap+=adv;adv=0;}
   }
 }
 
-// Precomputed race paths: seed → {paths:[{positions,finishT}], dt}
-const _TCache = {};
-function _TBuildPaths(race){
-  if(_TCache[race.seed])return _TCache[race.seed];
-  const dt=0.05,startSeg=TRACK_DEF.segments.find(s=>s.from===0&&s.type==='main')||TRACK_DEF.segments[0];
-  const maxT=race.duration+15,frames=Math.ceil(maxT/dt)+1;
-  const paths=race.racers.map((r,i)=>{
-    const st={segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false};
-    const positions=[];
-    for(let fi=0;fi<frames;fi++){
-      const pos=_TPosAt(_TLUTs[st.segId]||{pts:[],totalLen:0},st.arcPos);
-      positions.push({x:pos.x,y:pos.y,laps:st.laps,arc:st.arcThisLap});
-      if(!st.done)_TStep(st,r,dt,fi*dt);
-    }
-    return{positions};
-  });
-  _TCache[race.seed]={paths,dt};
-  // Evict old entries (keep last 3)
-  const keys=Object.keys(_TCache);if(keys.length>3)delete _TCache[keys[0]];
-  return _TCache[race.seed];
-}
-
-// OVERRIDE: draw track using bezier paths
-function getTrackCanvas(glowColor,dimColor,borderColor){
-  const tc=document.createElement('canvas');tc.width=520;tc.height=230;
-  const ctx=tc.getContext('2d'),W=520,H=230;
-  function _n(id){return TRACK_DEF.nodes.find(x=>x.id===id);}
-  function _px(nd){return{x:nd.x*W,y:nd.y*H};}
-  TRACK_DEF.segments.filter(s=>s.type==='main').forEach(seg=>{
-    const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));
-    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
-    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
-    ctx.strokeStyle=borderColor;ctx.lineWidth=26;ctx.stroke();
-    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
-    ctx.strokeStyle=dimColor;ctx.lineWidth=0.5;ctx.setLineDash([8,6]);ctx.stroke();ctx.setLineDash([]);
-  });
-  TRACK_DEF.segments.filter(s=>s.type==='shortcut').forEach(seg=>{
-    const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));
-    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
-    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
-    ctx.strokeStyle=dimColor+'88';ctx.lineWidth=10;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);
-    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
-    ctx.strokeStyle=glowColor+'44';ctx.lineWidth=2;ctx.stroke();
-  });
-  // S/F line perpendicular to outgoing segment at node 0
-  const sf0=_n(0),sfx=sf0.x*W,sfy=sf0.y*H;
-  const outSeg=TRACK_DEF.segments.find(s=>s.from===0&&s.type==='main');
-  let ang=Math.PI/2;
-  if(outSeg&&_TLUTs[outSeg.id]?.pts.length>1){
-    const a=_TLUTs[outSeg.id].pts[0],b=_TLUTs[outSeg.id].pts[2]||_TLUTs[outSeg.id].pts[1];
-    ang=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2;
-  }
-  ctx.save();ctx.translate(sfx,sfy);ctx.rotate(ang);
-  ctx.strokeStyle=glowColor;ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();ctx.restore();
-  ctx.fillStyle=dimColor;ctx.font='7px "Share Tech Mono"';ctx.fillText('S/F',sfx+4,sfy-6);
-  return tc;
-}
-
-// OVERRIDE: makeRacers — adds _seed and _idx, uses pixel-based speed
-function makeRacers(seed){
+function makeRacers(seed,trackIdx){
+  trackIdx=trackIdx??0;
   const rng=mulberry32(seed);
   const names=pickN(RACER_NAMES,6,rng);
-  return names.map((name,i)=>({
-    name,color:RACER_COLORS[i],
-    baseSpeed:_TSpdMin+rng()*(_TSpdMax-_TSpdMin),
-    amplitude:0.008+rng()*0.018,
-    period:8+rng()*16,
-    _seed:seed,_idx:i
-  }));
+  const smin=_TSpdMin_ALL[trackIdx]??_TSpdMin_ALL[0];
+  const smax=_TSpdMax_ALL[trackIdx]??_TSpdMax_ALL[0];
+  return names.map((name,i)=>({name,color:RACER_COLORS[i],baseSpeed:smin+rng()*(smax-smin),amplitude:0.008+rng()*0.018,period:8+rng()*16,_seed:seed,_idx:i}));
 }
 
-// OVERRIDE: computeRaceDuration — simulates the bezier path
-function computeRaceDuration(racers){
+function buildRaceChain(hourSeed,hourStart){
+  const chain=[];let t=hourStart;let seed=hourSeed*1000;
+  const FLASH=10,COUNTDOWN=20;
+  while(t<hourStart+14400){
+    const trackIdx=chain.length%TRACK_ROTATION.length;
+    const racers=makeRacers(seed,trackIdx);
+    const{duration,winner}=computeRaceDuration(racers,trackIdx);
+    chain.push({seed,startT:t,raceEnd:t+duration,phaseEnd:t+duration+FLASH+COUNTDOWN,racers,winner,duration,trackIdx});
+    t+=duration+FLASH+COUNTDOWN;seed++;
+  }
+  return chain;
+}
+
+function computeRaceDuration(racers,trackIdx){
+  trackIdx=trackIdx??0;
+  const track=TRACK_ROTATION[trackIdx]||TRACK_ROTATION[0];
+  const luts=_TLUTs_ALL[trackIdx]||_TLUTs_ALL[0];
   const dt=0.05;
-  const startSeg=TRACK_DEF.segments.find(s=>s.from===0&&s.type==='main')||TRACK_DEF.segments[0];
+  const startSeg=track.segments.find(s=>s.from===0&&s.type==='main')||track.segments[0];
   const states=racers.map((r,i)=>({segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false}));
   for(let t=0;t<600;t+=dt){
     for(let i=0;i<racers.length;i++){
       if(states[i].done)continue;
-      _TStep(states[i],racers[i],dt,t);
+      _TStep(states[i],racers[i],dt,t,track,luts);
       if(states[i].done)return{duration:t,winner:i};
     }
   }
   return{duration:600,winner:0};
 }
 
-// OVERRIDE: getLeaderboard — uses precomputed paths
+const _TCache={};
+function _TBuildPaths(race){
+  if(_TCache[race.seed])return _TCache[race.seed];
+  const track=_TDef(race),luts=_TLuts(race);
+  const dt=0.05,startSeg=track.segments.find(s=>s.from===0&&s.type==='main')||track.segments[0];
+  const maxT=race.duration+15,frames=Math.ceil(maxT/dt)+1;
+  const paths=race.racers.map((r,i)=>{
+    const st={segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false};
+    const positions=[];
+    for(let fi=0;fi<frames;fi++){
+      const pos=_TPosAt((luts[st.segId])||{pts:[],totalLen:0},st.arcPos);
+      positions.push({x:pos.x,y:pos.y,laps:st.laps,arc:st.arcThisLap});
+      if(!st.done)_TStep(st,r,dt,fi*dt,track,luts);
+    }
+    return{positions};
+  });
+  _TCache[race.seed]={paths,dt};
+  const keys=Object.keys(_TCache);if(keys.length>3)delete _TCache[keys[0]];
+  return _TCache[race.seed];
+}
+
 function getLeaderboard(race,tInRace){
   const data=_TBuildPaths(race);
+  const mainLen=_TMainLen_ALL[race.trackIdx??0]||_TMainLen_ALL[0];
   const t=Math.min(tInRace,race.duration);
   const fi=Math.min(Math.floor(t/data.dt),data.paths[0].positions.length-1);
   return race.racers.map((r,i)=>{
     const pos=data.paths[i].positions[fi];
-    return{idx:i,name:r.name,color:r.color,laps:pos.laps,
-      totalDist:pos.laps*_TMainLen+pos.arc,lastLapTime:null};
+    return{idx:i,name:r.name,color:r.color,laps:pos.laps,totalDist:pos.laps*mainLen+pos.arc,lastLapTime:null};
   }).sort((a,b)=>b.totalDist-a.totalDist);
 }
 
-// OVERRIDE: renderRace — uses precomputed positions
+const _TCanvasCache={};
+function getTrackCanvas(glowColor,dimColor,borderColor){
+  const nowF=Date.now()/1000;
+  const state=getRaceState(nowF);
+  const ti=state.race.trackIdx??0;
+  const cacheKey=ti+'|'+glowColor;
+  if(_TCanvasCache[cacheKey])return _TCanvasCache[cacheKey];
+  const track=TRACK_ROTATION[ti]||TRACK_ROTATION[0];
+  const luts=_TLUTs_ALL[ti]||_TLUTs_ALL[0];
+  const tc=document.createElement('canvas');tc.width=520;tc.height=230;
+  const ctx=tc.getContext('2d'),W=520,H=230;
+  function _n(id){return track.nodes.find(x=>x.id===id);}
+  function _px(nd){return{x:nd.x*W,y:nd.y*H};}
+  track.segments.filter(s=>s.type==='shortcut').forEach(seg=>{
+    const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));
+    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=dimColor+'88';ctx.lineWidth=6;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=glowColor+'44';ctx.lineWidth=2;ctx.stroke();
+  });
+  track.segments.filter(s=>s.type==='main').forEach(seg=>{
+    const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));
+    const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=borderColor;ctx.lineWidth=16;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();ctx.lineCap='butt';
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);
+    ctx.strokeStyle=dimColor;ctx.lineWidth=0.5;ctx.setLineDash([8,6]);ctx.stroke();ctx.setLineDash([]);
+  });
+  const sf0=_n(0),sfx=sf0.x*W,sfy=sf0.y*H;
+  const outSeg=track.segments.find(s=>s.from===0&&s.type==='main');
+  let ang=Math.PI/2;
+  if(outSeg&&luts[outSeg.id]?.pts.length>1){
+    const a=luts[outSeg.id].pts[0],b=luts[outSeg.id].pts[2]||luts[outSeg.id].pts[1];
+    ang=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2;
+  }
+  ctx.save();ctx.translate(sfx,sfy);ctx.rotate(ang);
+  ctx.strokeStyle=glowColor;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();ctx.restore();
+  ctx.fillStyle=dimColor;ctx.font='7px "Share Tech Mono"';ctx.fillText('S/F',sfx+4,sfy-6);
+  _TCanvasCache[cacheKey]=tc;
+  setTimeout(()=>{delete _TCanvasCache[cacheKey];},35000);
+  return tc;
+}
+
 function renderRace(){
   if(document.getElementById('tab-race').style.display==='none')return;
   const nowF=Date.now()/1000;
@@ -2104,7 +1969,6 @@ function renderRace(){
   const t=Math.min(tInRace,race.duration);
   const pathData=_TBuildPaths(race);
   const fi=Math.min(Math.floor(t/pathData.dt),pathData.paths[0].positions.length-1);
-  // Trails
   race.racers.forEach((r,i)=>{
     const key=race.seed+'_'+i;
     if(!trailBuffers[key])trailBuffers[key]=[];
@@ -2114,7 +1978,6 @@ function renderRace(){
     for(let j=1;j<trail.length;j++){ctx.globalAlpha=(j/trail.length)*0.35;ctx.beginPath();ctx.moveTo(trail[j-1].x,trail[j-1].y);ctx.lineTo(trail[j].x,trail[j].y);ctx.strokeStyle=r.color;ctx.lineWidth=3;ctx.stroke();}
     ctx.globalAlpha=1;
   });
-  // Dots
   race.racers.forEach((r,i)=>{
     const pos=pathData.paths[i].positions[fi];
     const px=pos.x,py=pos.y;
@@ -2125,13 +1988,28 @@ function renderRace(){
     ctx.fillStyle='#000';ctx.font='bold 6.5px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,px,py);
   });
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
-  // Status
+  const trackName=(TRACK_ROTATION[race.trackIdx??0]||TRACK_ROTATION[0]).name;
+  const trackLabelEl=document.getElementById('race-track-label');
+  if(trackLabelEl)trackLabelEl.textContent='⬡ '+trackName+' ⬡';
   const statusEl=document.getElementById('race-status');
   const lb=getLeaderboard(race,t);
-  if(phase==='countdown'){statusEl.textContent='— NEW RACE STARTING IN '+Math.ceil(state.cdLeft)+'s —';statusEl.style.color='var(--amber)';}
-  else if(phase==='flash'){const wr=race.racers[race.winner];statusEl.textContent='⬡ '+wr.name.toUpperCase()+' WINS! ⬡';statusEl.style.color=wr.color;}
-  else{statusEl.textContent='RACE IN PROGRESS — LEAD: '+lb[0].name.toUpperCase();statusEl.style.color='var(--glow)';}
-  // Leaderboard
+  if(phase==='countdown'){
+    const cdLeft=Math.ceil(state.cdLeft);
+    let nextName=null;
+    if(raceChain&&TRACK_ROTATION.length>1){
+      const ri=raceChain.indexOf(race);const nr=ri>=0?raceChain[ri+1]:null;
+      if(nr)nextName=(TRACK_ROTATION[nr.trackIdx??0]||TRACK_ROTATION[0]).name;
+    }
+    statusEl.textContent=nextName?'— NEXT: '+nextName+' — IN '+cdLeft+'s —':'— NEW RACE STARTING IN '+cdLeft+'s —';
+    statusEl.style.color='var(--amber)';
+  } else if(phase==='flash'){
+    const wr=race.racers[race.winner];
+    statusEl.textContent='⬡ '+wr.name.toUpperCase()+' WINS! ⬡';
+    statusEl.style.color=wr.color;
+  } else {
+    statusEl.textContent='RACE IN PROGRESS — LEAD: '+lb[0].name.toUpperCase();
+    statusEl.style.color='var(--glow)';
+  }
   const lbEl=document.getElementById('lb-rows');
   const isRaceTab=document.getElementById('tab-race').classList.contains('active');
   if(isRaceTab){
@@ -2146,7 +2024,6 @@ function renderRace(){
   }
 }
 
-// Restart race RAF with new engine
 if(typeof raceRafId!=='undefined'&&raceRafId)cancelAnimationFrame(raceRafId);
 if(typeof trackCanvas!=='undefined')trackCanvas=null;
 if(typeof raceLoop==='function')raceLoop();
