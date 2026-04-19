@@ -1633,6 +1633,9 @@ function getTrackCanvas(glowColor,dimColor,borderColor,tiOverride){
 
 // Dot trail buffers
 const trailBuffers = {};
+// Explosion effects
+const _explosions = [];
+const _racerPrevState = new Array(6).fill('normal');
 
 
 const _racerMsgTimers=new Array(6).fill(null);
@@ -1713,6 +1716,26 @@ function renderRace(){
   const frac=(t%pathData.dt)/pathData.dt;
   const nowMs=Date.now();
   function _ipos(i){const a=pathData.paths[i].positions[fi],b=pathData.paths[i].positions[fi+1]||a;return{x:a.x+frac*(b.x-a.x),y:a.y+frac*(b.y-a.y),laps:a.laps,arc:a.arc,health:a.health,state:a.state,survived:a.survived};}
+
+  // Leaderboard needed for live rank labels — compute before dot draw
+  const raceLaps=race.laps||3;
+  const lb=getLeaderboard(race,tInRace);
+  const rankMap={};lb.forEach((e,pos)=>{rankMap[e.idx]=pos+1;});
+
+  // Detect new DNFs and spawn explosions
+  race.racers.forEach((r,i)=>{
+    const pos=_ipos(i);
+    if(pos.state==='dnf'&&_racerPrevState[i]!=='dnf'){
+      const particles=Array.from({length:6},()=>{
+        const ang=Math.random()*2*Math.PI,dist=10+Math.random()*16;
+        return{dx:Math.cos(ang)*dist,dy:Math.sin(ang)*dist};
+      });
+      _explosions.push({x:pos.x,y:pos.y,color:r.color,startMs:nowMs,particles});
+    }
+    _racerPrevState[i]=pos.state;
+  });
+
+  // Trails
   race.racers.forEach((r,i)=>{
     const pos=_ipos(i);if(pos.state==='dnf')return;
     const key=race.seed+'_'+i;
@@ -1722,6 +1745,8 @@ function renderRace(){
     for(let j=1;j<trail.length;j++){ctx.globalAlpha=(j/trail.length)*0.35;ctx.beginPath();ctx.moveTo(trail[j-1].x,trail[j-1].y);ctx.lineTo(trail[j].x,trail[j].y);ctx.strokeStyle=r.color;ctx.lineWidth=3;ctx.stroke();}
     ctx.globalAlpha=1;
   });
+
+  // Dots
   race.racers.forEach((r,i)=>{
     const pos=_ipos(i);const{state,health}=pos;
     if(state==='dnf')return;
@@ -1730,17 +1755,49 @@ function renderRace(){
     else if(state==='repairing'){const hz=0.5+(health/100)*3.5;visible=Math.sin(nowMs/1000*hz*2*Math.PI)>0;}
     if(!visible)return;
     const px=pos.x,py=pos.y;
-    const dotColor=state==='limping'?'#ffaa00':r.color;
-    ctx.beginPath();ctx.arc(px,py,10,0,2*Math.PI);ctx.fillStyle=dotColor+'55';ctx.fill();
-    ctx.beginPath();ctx.arc(px,py,5.5,0,2*Math.PI);ctx.fillStyle=dotColor;ctx.fill();
+    const glowColor=state==='danger'?'#ff3333':state==='limping'?'#ffaa00':state==='repairing'?'#44ddff':r.color;
+    ctx.beginPath();ctx.arc(px,py,10,0,2*Math.PI);ctx.fillStyle=glowColor+'55';ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,5.5,0,2*Math.PI);ctx.fillStyle=r.color;ctx.fill();
     ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();
-    ctx.fillStyle='#000';ctx.font='bold 6.5px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,px,py);
+    const label=state==='danger'?'!':state==='repairing'?'\u00B7':String(rankMap[i]||i+1);
+    ctx.fillStyle='#000';ctx.font='bold 9px "Aurebesh"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,px,py);
   });
+
+  // Explosions
+  for(let ei=_explosions.length-1;ei>=0;ei--){
+    const ex=_explosions[ei];
+    const age=(nowMs-ex.startMs)/1000;
+    if(age>0.7){_explosions.splice(ei,1);continue;}
+    // Flash + expanding fill (0–350ms)
+    if(age<0.35){
+      const tp=age/0.35;
+      const fr=5+tp*23,fa=1-tp;
+      ctx.beginPath();ctx.arc(ex.x,ex.y,fr,0,2*Math.PI);
+      ctx.fillStyle='rgba(255,200,80,'+(fa*0.85)+')';ctx.fill();
+      ctx.beginPath();ctx.arc(ex.x,ex.y,fr*0.4,0,2*Math.PI);
+      ctx.fillStyle='rgba(255,255,255,'+fa+')';ctx.fill();
+    }
+    // Expanding ring (0–500ms)
+    if(age<0.5){
+      const tp=age/0.5,rr=8+tp*22,ra=(1-tp)*0.7;
+      ctx.beginPath();ctx.arc(ex.x,ex.y,rr,0,2*Math.PI);
+      ctx.strokeStyle='rgba(255,160,40,'+ra+')';ctx.lineWidth=2;ctx.stroke();
+    }
+    // Debris particles (0–700ms)
+    if(age<0.7){
+      const tp=age/0.7,f=1-Math.pow(1-tp,2);
+      const pa=Math.max(0,1-tp)*0.9;
+      const hexA=Math.round(pa*255).toString(16).padStart(2,'0');
+      ex.particles.forEach(p=>{
+        ctx.beginPath();ctx.arc(ex.x+p.dx*f,ex.y+p.dy*f,2.2,0,2*Math.PI);
+        ctx.fillStyle=ex.color+hexA;ctx.fill();
+      });
+    }
+  }
+
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
   const trackName=(TRACK_ROTATION[race.trackIdx??0]||TRACK_ROTATION[0]).name;
   if(trackLabelEl)trackLabelEl.textContent='⬡ '+trackName+' ⬡';
-  const raceLaps=race.laps||3;
-  const lb=getLeaderboard(race,tInRace);
   if(phase==='racing'&&tInRace>15&&lb.every(e=>e.dnf||e.laps>=raceLaps))phase='flash';
   if(phase==='countdown'){
     const cdLeft=Math.ceil(state.cdLeft);
@@ -1843,6 +1900,8 @@ setInterval(() => {
     });
     lastRaceSeed = state.race.seed;
     _lastEventTime = -1;
+    _explosions.length = 0;
+    _racerPrevState.fill('normal');
     _racerMsgTimers.forEach((t,i)=>{clearTimeout(t);_racerMsgTimers[i]=null;});
     _racerMsgInners.forEach((inner,i)=>{if(inner){inner.textContent='';inner.style.transform='';}_racerTickerX[i]=9999;});
   }
