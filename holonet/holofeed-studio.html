@@ -250,7 +250,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
     <button class="sec-tab active" onclick="showSection('news', this)">📰 HEADLINES</button>
     <button class="sec-tab" onclick="showSection('ads', this)">📢 ADS</button>
     <button class="sec-tab" onclick="showSection('racers', this)">🐎 RACER NAMES</button>
-    <button class="sec-tab" onclick="showSection('tournament', this)">♟ TOURN. NAMES</button>
     <button class="sec-tab" onclick="showSection('stocks', this)">📈 STOCKS</button>
     <button class="sec-tab" onclick="showSection('timing', this)">⏱ TIMING</button>
     <button class="sec-tab" onclick="showSection('tracks', this)">🏁 TRACKS</button>
@@ -287,17 +286,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
     </div>
   </div>
 
-  <!-- TOURNAMENT NAMES -->
-  <div class="sec-pane" id="sec-tournament">
-    <div class="sec-header"><span class="sec-title">SPEED HOLOCHESS PLAYER POOL</span><span class="sec-count" id="tourn-count"></span></div>
-    <div class="hint">16 names are picked each tournament. The previous winner always carries over with a ★.<br>
-    You need <strong>at least 17 names</strong> so there's always someone new to replace the champion.</div>
-    <div class="chip-area" id="tourn-chips"></div>
-    <div class="chip-input-row">
-      <input type="text" id="tourn-new-input" placeholder="New player name..." onkeydown="if(event.key==='Enter')addChip('tourn')">
-      <button class="chip-add-btn" onclick="addChip('tourn')">+ ADD</button>
-    </div>
-  </div>
 
   <!-- STOCKS -->
   <div class="sec-pane" id="sec-stocks">
@@ -327,6 +315,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
       <button class="tb-btn"        id="btn-select"   onclick="setTrackMode('select')">⬤ SELECT</button>
       <button class="tb-btn"        id="btn-shortcut" onclick="setTrackMode('shortcut')">⤷ SHORTCUT</button>
       <button class="tb-btn"        id="btn-closeloop" onclick="closeLoop()">⟲ CLOSE</button>
+      <button class="tb-btn"        id="btn-snap"      onclick="toggleSnap()">⊞ SNAP: OFF</button>
       <div class="tb-sep"></div>
       <label>PRESET:</label>
       <select id="preset-sel" onchange="loadPreset(this.value)">
@@ -341,6 +330,30 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
       <input type="text" id="track-name" placeholder="Track name…"
         style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:var(--glow);padding:3px 7px;border-radius:2px;outline:none;width:120px;"
         oninput="syncTrackName()">
+      <div class="tb-sep"></div>
+      <label>LAPS:</label>
+      <input type="number" id="rs-laps" value="3" min="1" max="10"
+        title="Number of laps for this race"
+        style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:var(--glow);padding:3px 5px;border-radius:2px;outline:none;width:42px;"
+        oninput="syncRaceSettings()">
+      <label title="Fastest theoretical lap in seconds">FAST&nbsp;LAP:</label>
+      <input type="number" id="rs-fast" value="45" min="5" max="290"
+        style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:var(--glow);padding:3px 5px;border-radius:2px;outline:none;width:48px;"
+        oninput="syncRaceSettings()">
+      <label title="Slowest theoretical lap in seconds">SLOW&nbsp;LAP:</label>
+      <input type="number" id="rs-slow" value="75" min="10" max="300"
+        style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:var(--glow);padding:3px 5px;border-radius:2px;outline:none;width:48px;"
+        oninput="syncRaceSettings()">
+      <label title="Track hazard level — scales how fast pod health depletes (0.1=safe, 2.0=brutal)">RISK:</label>
+      <input type="number" id="rs-risk" value="1.0" min="0.1" max="2.0" step="0.1"
+        style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:var(--amber);padding:3px 5px;border-radius:2px;outline:none;width:48px;"
+        oninput="syncRaceSettings()">
+      <label title="Max burst impact events per race (0=none, 5=chaotic)">BURST:</label>
+      <input type="number" id="rs-burst" value="0" min="0" max="5" step="1"
+        style="font-family:var(--mono);font-size:10px;background:var(--panel2);border:1px solid var(--border2);color:#ff6644;padding:3px 5px;border-radius:2px;outline:none;width:40px;"
+        oninput="syncRaceSettings()">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--glow-dim);padding:0 4px;">EST DNF:</span>
+      <span id="rs-dnf-est" style="font-family:var(--mono);font-size:10px;font-weight:bold;padding:0 4px 0 0;">—</span>
       <button class="tb-btn" onclick="saveToRotation()">+ SAVE TO ROTATION</button>
       <div class="tb-sep"></div>
       <button class="tb-btn" id="btn-preview" onclick="togglePreview()">▶ PREVIEW</button>
@@ -432,6 +445,10 @@ let trackMode='addNode';
 let selected=null, dragging=null, scFrom=null;
 let previewActive=false, racers=[], segLUTs={};
 let raceT0=0, rafId=null, _lastFT=0;
+let snapToGrid=false;
+const SNAP_SIZE=20;
+function snap(v){ return snapToGrid ? Math.round(v/SNAP_SIZE)*SNAP_SIZE : v; }
+function toggleSnap(){ snapToGrid=!snapToGrid; const btn=document.getElementById('btn-snap'); if(btn){btn.textContent=snapToGrid?'⊞ SNAP: ON':'⊞ SNAP: OFF'; btn.classList.toggle('active',snapToGrid);} }
 
 // ════════════════════════════════════════════════════════
 // STATUS HELPERS
@@ -525,30 +542,20 @@ function parseTimingValue(html, varName) {
   const re = new RegExp('const\\s+' + varName + '\\s*=\\s*([\\d.]+)');
   const m = html.match(re); return m ? parseFloat(m[1]) : null;
 }
-function parseLapTimes(html) {
-  const re = /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/(\d+)\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/(\d+)/;
-  const m = html.match(re);
-  return m ? { slowLap: parseInt(m[1]), fastLap: parseInt(m[2]) } : { slowLap: 75, fastLap: 45 };
-}
 function parseHtml(html) {
   try {
     const hRaw = extractArray(html, 'HEADLINES'), aRaw = extractArray(html, 'ADS');
-    const rRaw = extractArray(html, 'RACER_NAMES'), tRaw = extractArray(html, 'TOURN_NAMES'), sRaw = extractArray(html, 'STOCKS');
-    if (!hRaw || !aRaw || !rRaw || !tRaw || !sRaw) {
+    const rRaw = extractArray(html, 'RACER_NAMES'), sRaw = extractArray(html, 'STOCKS');
+    if (!hRaw || !aRaw || !rRaw || !sRaw) {
       setGlobalStatus('ERROR: Could not parse holofeed arrays. Is this the right file?', 'err');
       toast('Parse error — wrong file?', true); return false;
     }
     data.headlines = parseObjectArray(hRaw); data.ads = parseObjectArray(aRaw);
-    data.racerNames = parseStringArray(rRaw); data.tournNames = parseStringArray(tRaw);
+    data.racerNames = parseStringArray(rRaw);
     data.stocks = parseObjectArray(sRaw);
-    const laps = parseLapTimes(html);
     data.timing = {
-      slowLap: laps.slowLap, fastLap: laps.fastLap,
       raceFlash: parseTimingValue(html, 'FLASH') || 10,
       raceCountdown: parseTimingValue(html, 'COUNTDOWN') || 20,
-      roundDur: parseTimingValue(html, 'ROUND_DUR') || 240,
-      flashDur: parseTimingValue(html, 'FLASH_DUR') || 240,
-      tournCycle: parseTimingValue(html, 'TOURN_CYCLE') || 1200,
     };
     return true;
   } catch(e) { setGlobalStatus('Parse error: ' + e.message, 'err'); return false; }
@@ -574,27 +581,16 @@ function replaceTimingConst(html, varName, value) {
   const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)[\\d.]+');
   return html.replace(re, '$1' + value);
 }
-function replaceLapTimes(html, slowLap, fastLap) {
-  return html.replace(
-    /const\s+BS_MIN\s*=\s*\(2\*Math\.PI\)\/\d+\s*,\s*BS_MAX\s*=\s*\(2\*Math\.PI\)\/\d+/,
-    'const BS_MIN = (2*Math.PI)/' + slowLap + ', BS_MAX = (2*Math.PI)/' + fastLap
-  );
-}
 function buildModifiedHtml() {
   let html = originalHtml;
   html = replaceArray(html, 'HEADLINES', serializeArray(data.headlines));
   html = replaceArray(html, 'ADS', serializeArray(data.ads));
   html = replaceArray(html, 'RACER_NAMES', serializeStringArray(data.racerNames));
-  html = replaceArray(html, 'TOURN_NAMES', serializeStringArray(data.tournNames));
   html = replaceArray(html, 'STOCKS', serializeArray(data.stocks));
-  html = replaceLapTimes(html, data.timing.slowLap, data.timing.fastLap);
   html = html.replace(
     /const\s+FLASH\s*=\s*\d+\s*,\s*COUNTDOWN\s*=\s*\d+/,
     'const FLASH = ' + data.timing.raceFlash + ', COUNTDOWN = ' + data.timing.raceCountdown
   );
-  html = replaceTimingConst(html, 'ROUND_DUR', data.timing.roundDur);
-  html = replaceTimingConst(html, 'FLASH_DUR', data.timing.flashDur);
-  html = replaceTimingConst(html, 'TOURN_CYCLE', data.timing.tournCycle);
   return html;
 }
 
@@ -607,16 +603,23 @@ function saveFile() {
     // Step 1: holofeed content changes
     let html = buildModifiedHtml();
 
-    // Step 2: track injection (if rotation has tracks)
+    // Step 2: bake track rotation into JSON data island
     if (trackRotation.length > 0) {
-      const exportTracks = trackRotation.map(t => ({ name: t.name, nodes: t.nodes, segments: t.segs }));
-      const injection = buildInjectionScript(exportTracks);
-      const scriptBlock = '\n<!-- HOLOFEED-TRACK-INJECTION -->\n<script>' + injection + '<\/script>\n';
-      if (html.includes('<!-- HOLOFEED-TRACK-INJECTION -->') && html.includes('===HOLOFEED-TRACK-ENGINE-END===')) {
-        html = html.replace(/\n<!-- HOLOFEED-TRACK-INJECTION -->[\s\S]*?===HOLOFEED-TRACK-ENGINE-END===\s*<\/script>\s*\n/, scriptBlock);
-      } else {
-        html = html.replace(/<\/body>/, scriptBlock + '</body>');
-      }
+      const exportTracks = trackRotation.map(t => ({
+        name: t.name, laps: t.laps||3, fastLap: t.fastLap||45, slowLap: t.slowLap||75,
+        riskFactor: t.riskFactor||1.0, burstMax: t.burstMax||0,
+        nodes: t.nodes.map(n => ({ id:n.id, x:+(n.x/CW).toFixed(4), y:+(n.y/CH).toFixed(4) })),
+        segments: (t.segments||t.segs).map(s => ({
+          id:s.id, from:s.from, to:s.to,
+          cp1:{x:+(s.cp1.x/CW).toFixed(4), y:+(s.cp1.y/CH).toFixed(4)},
+          cp2:{x:+(s.cp2.x/CW).toFixed(4), y:+(s.cp2.y/CH).toFixed(4)},
+          type:s.type, prob:+s.prob.toFixed(2)
+        }))
+      }));
+      html = html.replace(
+        /(<script[^>]+id="holofeed-tracks"[^>]*>)[\s\S]*?(<\/script>)/,
+        '$1\n' + JSON.stringify(exportTracks) + '\n$2'
+      );
     }
 
     const blob = new Blob([html], {type: 'text/html'});
@@ -672,24 +675,21 @@ function addAd() {
 }
 
 function renderChips(which) {
-  const arr = which === 'racers' ? data.racerNames : data.tournNames;
   const container = document.getElementById(which + '-chips'); container.innerHTML = '';
-  arr.forEach((name, i) => {
+  data.racerNames.forEach((name, i) => {
     const chip = document.createElement('div'); chip.className = 'chip';
     chip.innerHTML = `${esc(name)} <button class="chip-del" onclick="removeChip('${which}',${i})">✕</button>`;
     container.appendChild(chip);
   });
-  const countId = which === 'racers' ? 'racers-count' : 'tourn-count';
-  document.getElementById(countId).textContent = arr.length + ' names' + (which === 'racers' ? ' (min 6)' : ' (min 17)');
+  document.getElementById('racers-count').textContent = data.racerNames.length + ' names (min 6)';
 }
 function addChip(which) {
-  const inputId = which === 'racers' ? 'racer-new-input' : 'tourn-new-input';
-  const input = document.getElementById(inputId), name = input.value.trim(); if (!name) return;
-  if (which === 'racers') data.racerNames.push(name); else data.tournNames.push(name);
+  const input = document.getElementById('racer-new-input'), name = input.value.trim(); if (!name) return;
+  data.racerNames.push(name);
   input.value = ''; renderChips(which);
 }
 function removeChip(which, i) {
-  if (which === 'racers') data.racerNames.splice(i, 1); else data.tournNames.splice(i, 1);
+  data.racerNames.splice(i, 1);
   renderChips(which);
 }
 
@@ -714,13 +714,8 @@ function addStock() {
 }
 
 const TIMING_CONFIG = [
-  {key:'slowLap',label:'MAX LAP TIME (slowest)',desc:'Slowest possible lap, in seconds.',unit:'seconds',min:10,max:300},
-  {key:'fastLap',label:'MIN LAP TIME (fastest)',desc:'Fastest possible lap. Must be less than Max.',unit:'seconds',min:5,max:290},
   {key:'raceFlash',label:'WINNER FLASH DURATION',desc:'How long winner\'s name flashes after winning.',unit:'seconds',min:1,max:60},
   {key:'raceCountdown',label:'PRE-RACE COUNTDOWN',desc:'Countdown before a new race starts.',unit:'seconds',min:1,max:120},
-  {key:'roundDur',label:'HOLOCHESS ROUND LENGTH',desc:'How long each tournament round lasts.',unit:'seconds',min:30,max:1800},
-  {key:'flashDur',label:'CHAMPION FLASH DURATION',desc:'How long the tournament champion\'s name flashes.',unit:'seconds',min:10,max:600},
-  {key:'tournCycle',label:'FULL TOURNAMENT CYCLE',desc:'Total cycle length. Default: 4×240+240=1200.',unit:'seconds',min:100,max:7200},
 ];
 function renderTiming() {
   const grid = document.getElementById('timing-grid'); grid.innerHTML = '';
@@ -839,34 +834,10 @@ function loadPreset(name){
 // TRACK EDITOR — ROTATION PARSE/IMPORT
 // ════════════════════════════════════════════════════════
 function extractRotationFromHtml(html){
-  // Only look inside the injection block — the base holofeed also has
-  // a placeholder `let TRACK_ROTATION = [{ name: 'OARIN CIRCUIT' }]`
-  // at the top which indexOf would hit first, giving us empty/bad data.
-  const blockMarker = '===HOLOFEED-TRACK-ENGINE-START===';
-  const blockStart = html.indexOf(blockMarker);
-  // Search only within the injection block; fall back to full html if no block
-  const searchIn = blockStart !== -1 ? html.slice(blockStart) : html;
-
-  const marker = 'TRACK_ROTATION = [';
-  const markerPos = searchIn.indexOf(marker);
-  if (markerPos === -1) return null;
-
-  const arrStart = markerPos + marker.length - 1;
-  let depth=0, i=arrStart, inStr=false, escape=false;
-  while (i < searchIn.length) {
-    const ch = searchIn[i];
-    if (escape) { escape=false; }
-    else if (ch==='\\' && inStr) { escape=true; }
-    else if (ch==='"' && !escape) { inStr=!inStr; }
-    else if (!inStr) {
-      if (ch==='[') depth++;
-      else if (ch===']') { depth--; if (depth===0) break; }
-    }
-    i++;
-  }
+  const m = html.match(/<script[^>]+id="holofeed-tracks"[^>]*>([\s\S]*?)<\/script>/);
+  if (!m) return null;
   try {
-    const parsed = JSON.parse(searchIn.slice(arrStart, i+1));
-    // Sanity check: real tracks have nodes and segments, skip placeholder entries
+    const parsed = JSON.parse(m[1]);
     const real = parsed.filter(t => t.nodes && t.segments && t.nodes.length > 0);
     return real.length > 0 ? real : null;
   } catch(e) { return null; }
@@ -875,6 +846,7 @@ function importTrackRotation(tracks){
   if(previewActive)stopPreview();trackRotation=[];editingRotIdx=null;
   tracks.forEach(t=>{
     trackRotation.push({id:rotIdCounter++,name:t.name,
+      laps:t.laps||3, fastLap:t.fastLap||45, slowLap:t.slowLap||75, riskFactor:t.riskFactor||1.0, burstMax:t.burstMax||0,
       nodes:t.nodes.map(n=>({id:n.id,x:+(n.x*CW).toFixed(1),y:+(n.y*CH).toFixed(1)})),
       segs:t.segments.map(s=>({id:s.id,from:s.from,to:s.to,cp1:{x:+(s.cp1.x*CW).toFixed(1),y:+(s.cp1.y*CH).toFixed(1)},cp2:{x:+(s.cp2.x*CW).toFixed(1),y:+(s.cp2.y*CH).toFixed(1)},type:s.type,prob:s.prob})),
       loopClosed:true});
@@ -958,7 +930,7 @@ canvas.addEventListener('mousedown',e=>{
   if(trackMode==='addNode'){
     if(loopClosed){const s=hitSeg(p);if(s&&s.type==='main'){insertNodeOnSeg(s.id,p.x,p.y);return;}setTrackStatus('Click on a segment to insert a node.');return;}
     if(trackNodes.length>=3&&!loopClosed){const n0=trackNodes[0];if(pdist(n0,p)<=NODE_R+8){closeLoop();return;}}
-    addNode(p.x,p.y);redraw();return;
+    addNode(snap(p.x),snap(p.y));redraw();return;
   }
   if(trackMode==='shortcut'){
     const n=hitNode(p);if(!n)return;
@@ -976,9 +948,11 @@ canvas.addEventListener('mousedown',e=>{
 canvas.addEventListener('mousemove',e=>{
   if(!dragging)return;const p=getMP(e);
   if(dragging.type==='node'){
-    const n=nById(dragging.id);if(!n)return;const dx=p.x-dragging.ox-n.x,dy=p.y-dragging.oy-n.y;
+    const n=nById(dragging.id);if(!n)return;
+    const nx=snap(p.x-dragging.ox),ny=snap(p.y-dragging.oy);
+    const dx=nx-n.x,dy=ny-n.y;
     trackSegs.forEach(seg=>{if(seg.from===n.id){seg.cp1.x+=dx;seg.cp1.y+=dy;}if(seg.to===n.id){seg.cp2.x+=dx;seg.cp2.y+=dy;}});
-    n.x=p.x-dragging.ox;n.y=p.y-dragging.oy;rebuildLUTs();redraw();
+    n.x=nx;n.y=ny;rebuildLUTs();redraw();
   }
   if(dragging.type==='handle'){const seg=sById(dragging.segId);if(!seg)return;if(dragging.cpType==='cp1'){seg.cp1.x=p.x;seg.cp1.y=p.y;}else{seg.cp2.x=p.x;seg.cp2.y=p.y;}segLUTs[seg.id]=buildLUT(seg);redraw();}
 });
@@ -1057,13 +1031,18 @@ function chooseSeg(rng,outs){
 function getOutgoing(nodeId){return trackSegs.filter(s=>s.from===nodeId);}
 function initRacers(){
   const seed=Date.now();const startSeg=trackSegs.find(s=>s.from===trackNodes[0].id&&s.type==='main')||trackSegs[0];
-  racers=RACER_NAMES_PREVIEW.map((name,i)=>{const rng=mulberry32(seed+i*1337);return{name,color:RACER_COLORS[i],baseSpeed:14+rng()*10,amplitude:0.1+rng()*0.25,period:7+rng()*14,segId:startSeg?.id??0,arcPos:0,laps:0,arcThisLap:0,trail:[],rng:mulberry32(seed+i*919+3),done:false};});
+  const mainLen=trackSegs.filter(s=>s.type==='main').reduce((a,s)=>a+(segLUTs[s.id]?.totalLen||0),0)||895;
+  const fastLap=parseFloat(document.getElementById('rs-fast')?.value)||45;
+  const slowLap=parseFloat(document.getElementById('rs-slow')?.value)||75;
+  const lapTarget=parseInt(document.getElementById('rs-laps')?.value)||3;
+  const smin=mainLen/slowLap,smax=mainLen/fastLap;
+  racers=RACER_NAMES_PREVIEW.map((name,i)=>{const rng=mulberry32(seed+i*1337);return{name,color:RACER_COLORS[i],baseSpeed:smin+rng()*(smax-smin),amplitude:0.1+rng()*0.25,period:7+rng()*14,segId:startSeg?.id??0,arcPos:0,laps:0,arcThisLap:0,trail:[],rng:mulberry32(seed+i*919+3),done:false,lapTarget};});
   raceT0=performance.now()/1000;
 }
 function stepRacer(r,dt,tRace){
   if(r.done)return;const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period));let adv=Math.max(spd,5)*dt,g=0;
   while(adv>0.001&&g++<30){const seg=sById(r.segId),lut=segLUTs[r.segId];if(!seg||!lut||lut.totalLen===0){r.done=true;return;}const rem=lut.totalLen-r.arcPos;
-    if(adv>=rem){adv-=rem;if(seg.to===trackNodes[0].id){r.laps++;r.arcThisLap=0;if(r.laps>=LAPS){r.done=true;return;}}const outs=getOutgoing(seg.to);if(!outs.length){r.done=true;return;}r.segId=chooseSeg(r.rng,outs).id;r.arcPos=0;}else{r.arcPos+=adv;r.arcThisLap+=adv;adv=0;}}
+    if(adv>=rem){adv-=rem;if(seg.to===trackNodes[0].id){r.laps++;r.arcThisLap=0;if(r.laps>=(r.lapTarget||LAPS)){r.done=true;return;}}const outs=getOutgoing(seg.to);if(!outs.length){r.done=true;return;}r.segId=chooseSeg(r.rng,outs).id;r.arcPos=0;}else{r.arcPos+=adv;r.arcThisLap+=adv;adv=0;}}
 }
 function drawRacers(){
   racers.forEach((r,ri)=>{
@@ -1075,7 +1054,7 @@ function drawRacers(){
   });
   const sorted=[...racers].sort((a,b)=>a.laps!==b.laps?b.laps-a.laps:b.arcThisLap-a.arcThisLap);
   const lb=document.getElementById('lb-list');lb.innerHTML='';
-  sorted.forEach((r,pos)=>{const d=document.createElement('div');d.className='lb-entry';d.innerHTML=`<span class="lb-pos">${pos+1}</span><span class="lb-name" style="color:${r.color}">${r.name}</span><span class="lb-laps">${r.laps}/${LAPS}${r.done?'★':''}</span>`;lb.appendChild(d);});
+  sorted.forEach((r,pos)=>{const d=document.createElement('div');d.className='lb-entry';d.innerHTML=`<span class="lb-pos">${pos+1}</span><span class="lb-name" style="color:${r.color}">${r.name}</span><span class="lb-laps">${r.laps}/${r.lapTarget||LAPS}${r.done?'★':''}</span>`;lb.appendChild(d);});
   if(racers.every(r=>r.done)){stopPreview();setTrackStatus('Race done! '+sorted[0].name+' wins. Press ▶ to run again.');document.getElementById('race-sub').textContent='Finished.';}
 }
 function previewLoop(now){const dt=Math.min((now-_lastFT)/1000,0.05);_lastFT=now;const tRace=now/1000-raceT0;racers.forEach(r=>stepRacer(r,dt,tRace));redraw();if(previewActive)rafId=requestAnimationFrame(previewLoop);}
@@ -1125,11 +1104,55 @@ function syncTrackName(){
   const name=document.getElementById('track-name').value;
   if(editingRotIdx!==null&&trackRotation[editingRotIdx]){trackRotation[editingRotIdx].name=name||'Untitled';renderRotation();}
 }
+function estimateDNFs(laps,fastLap,slowLap,riskFactor,burstMax){
+  const avgLap=((+fastLap||45)+(+slowLap||75))/2;
+  const drain=0.8*(+riskFactor||1)*0.875;
+  const variances=[0.75,0.90,1.05,1.20,1.35,1.50];
+  let deaths=0;
+  variances.forEach(v=>{
+    let hp=100;
+    for(let lap=0;lap<(+laps||3);lap++){
+      hp-=drain*v*avgLap;
+      if(hp<=0){deaths++;break;}
+      const repChance=Math.min(0.9,(100-hp)/100);
+      if(repChance>0.35)hp=Math.min(75,hp+40);
+    }
+  });
+  const burstDeaths=Math.min(2,(+burstMax||0)*0.5*0.4);
+  return Math.min(6,deaths+burstDeaths);
+}
+function _updateDNFEst(){
+  const el=document.getElementById('rs-dnf-est');if(!el)return;
+  const laps=parseInt(document.getElementById('rs-laps')?.value)||3;
+  const fast=parseFloat(document.getElementById('rs-fast')?.value)||45;
+  const slow=parseFloat(document.getElementById('rs-slow')?.value)||75;
+  const risk=parseFloat(document.getElementById('rs-risk')?.value)||1.0;
+  const burst=parseInt(document.getElementById('rs-burst')?.value)||0;
+  const est=estimateDNFs(laps,fast,slow,risk,burst);
+  const rounded=Math.round(est*2)/2;
+  el.textContent='~'+rounded+'/6';
+  el.style.color=rounded<=1?'var(--glow-dim)':rounded<=3?'#ffaa00':'#ff5555';
+}
+function syncRaceSettings(){
+  if(editingRotIdx===null||!trackRotation[editingRotIdx])return;
+  const t=trackRotation[editingRotIdx];
+  t.laps=parseInt(document.getElementById('rs-laps')?.value)||3;
+  t.fastLap=parseFloat(document.getElementById('rs-fast')?.value)||45;
+  t.slowLap=parseFloat(document.getElementById('rs-slow')?.value)||75;
+  t.riskFactor=parseFloat(document.getElementById('rs-risk')?.value)||1.0;
+  t.burstMax=parseInt(document.getElementById('rs-burst')?.value)||0;
+  _updateDNFEst();
+}
 function saveToRotation(){
   if(!loopClosed){setTrackStatus('Close the loop first.');return;}if(trackNodes.length<3){setTrackStatus('Need at least 3 nodes.');return;}
   const rawName=document.getElementById('track-name').value.trim();const name=rawName||('Track '+(trackRotation.length+1));
   if(!rawName)document.getElementById('track-name').value=name;
-  const snapshot={id:rotIdCounter++,name,nodes:trackNodes.map(n=>({...n})),segs:trackSegs.map(s=>({...s,cp1:{...s.cp1},cp2:{...s.cp2}})),loopClosed:true};
+  const lapsVal=parseInt(document.getElementById('rs-laps')?.value)||3;
+  const fastLapVal=parseFloat(document.getElementById('rs-fast')?.value)||45;
+  const slowLapVal=parseFloat(document.getElementById('rs-slow')?.value)||75;
+  const riskVal=parseFloat(document.getElementById('rs-risk')?.value)||1.0;
+  const burstVal=parseInt(document.getElementById('rs-burst')?.value)||0;
+  const snapshot={id:rotIdCounter++,name,laps:lapsVal,fastLap:fastLapVal,slowLap:slowLapVal,riskFactor:riskVal,burstMax:burstVal,nodes:trackNodes.map(n=>({...n})),segs:trackSegs.map(s=>({...s,cp1:{...s.cp1},cp2:{...s.cp2}})),loopClosed:true};
   if(editingRotIdx!==null&&trackRotation[editingRotIdx]!==undefined){trackRotation[editingRotIdx]=snapshot;setTrackStatus('Updated "'+name+'" in rotation.');}
   else{trackRotation.push(snapshot);editingRotIdx=trackRotation.length-1;setTrackStatus('"'+name+'" added to rotation.');}
   renderRotation();
@@ -1148,6 +1171,10 @@ function loadFromRotation(idx){
   nextNid=Math.max(...trackNodes.map(n=>n.id))+1;nextSid=Math.max(...trackSegs.map(s=>s.id))+1;
   selected=null;dragging=null;scFrom=null;document.getElementById('track-name').value=t.name;
   document.getElementById('preset-sel').value='';document.getElementById('sel-panel').style.display='none';editingRotIdx=idx;
+  const rsLaps=document.getElementById('rs-laps'),rsFast=document.getElementById('rs-fast'),rsSlow=document.getElementById('rs-slow'),rsRisk=document.getElementById('rs-risk');
+  if(rsLaps)rsLaps.value=t.laps||3;if(rsFast)rsFast.value=t.fastLap||45;if(rsSlow)rsSlow.value=t.slowLap||75;if(rsRisk)rsRisk.value=t.riskFactor||1.0;
+  const rsBurst=document.getElementById('rs-burst');if(rsBurst)rsBurst.value=t.burstMax||0;
+  _updateDNFEst();
   rebuildLUTs();updateInfo();renderRotation();redraw();setTrackStatus('Loaded "'+t.name+'" — edit and press SAVE TO ROTATION to update.');
 }
 function removeFromRotation(idx){
@@ -1197,54 +1224,26 @@ function renderRotation(){
 }
 
 // ════════════════════════════════════════════════════════
-// TRACK EDITOR — INJECTION SCRIPT BUILDER
-// ════════════════════════════════════════════════════════
-function buildInjectionScript(tracks){
-const rotationJson=JSON.stringify(tracks.map(t=>({
-  name:t.name,
-  nodes:t.nodes.map(n=>({id:n.id,x:+(n.x/CW).toFixed(4),y:+(n.y/CH).toFixed(4)})),
-  segments:(t.segments||t.segs).map(s=>({id:s.id,from:s.from,to:s.to,cp1:{x:+(s.cp1.x/CW).toFixed(4),y:+(s.cp1.y/CH).toFixed(4)},cp2:{x:+(s.cp2.x/CW).toFixed(4),y:+(s.cp2.y/CH).toFixed(4)},type:s.type,prob:+s.prob.toFixed(2)}))
-})));
-return `
-// ===HOLOFEED-TRACK-ENGINE-START===
-TRACK_ROTATION = ${rotationJson};
-const _TLUTs_ALL=(function(){const W=520,H=230;function _b(p0,c1,c2,p3,t){const u=1-t;return{x:u*u*u*p0.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p3.x,y:u*u*u*p0.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p3.y};}
-return TRACK_ROTATION.map(track=>{const luts={};track.segments.forEach(seg=>{const p0=track.nodes.find(x=>x.id===seg.from),p3=track.nodes.find(x=>x.id===seg.to);const px0={x:p0.x*W,y:p0.y*H},px3={x:p3.x*W,y:p3.y*H};const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};let pts=[],cum=0,prev=null;for(let i=0;i<=100;i++){const t=i/100,p=_b(px0,c1,c2,px3,t);if(prev)cum+=Math.hypot(p.x-prev.x,p.y-prev.y);pts.push({x:p.x,y:p.y,len:cum});prev=p;}luts[seg.id]={pts,totalLen:cum};});return luts;});})();
-const _TMainLen_ALL=TRACK_ROTATION.map((track,ti)=>track.segments.filter(s=>s.type==='main').reduce((a,s)=>a+(_TLUTs_ALL[ti][s.id]?.totalLen||0),0));
-const _TSpdMin_ALL=_TMainLen_ALL.map(l=>12*l/895),_TSpdMax_ALL=_TMainLen_ALL.map(l=>20*l/895);
-if(typeof raceChain!=='undefined'){raceChain=null;}if(typeof lastRaceHour!=='undefined'){lastRaceHour=-1;}
-function _TDef(race){return TRACK_ROTATION[race.trackIdx??0]||TRACK_ROTATION[0];}function _TLuts(race){return _TLUTs_ALL[race.trackIdx??0]||_TLUTs_ALL[0];}
-function _TPosAt(lut,arc){if(!lut||!lut.pts.length)return{x:0,y:0};const c=Math.max(0,Math.min(arc,lut.totalLen));for(let i=1;i<lut.pts.length;i++){if(lut.pts[i].len>=c){const a=lut.pts[i-1],b=lut.pts[i],f=(b.len-a.len)>0?(c-a.len)/(b.len-a.len):0;return{x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};}}const l=lut.pts[lut.pts.length-1];return{x:l.x,y:l.y};}
-function _TChoose(rng,outs){if(outs.length===1)return outs[0];const scs=outs.filter(s=>s.type==='shortcut'),mns=outs.filter(s=>s.type==='main');const scP=scs.reduce((a,s)=>a+s.prob,0),mP=Math.max(0,1-scP)/Math.max(1,mns.length);const es=[...scs.map(s=>({seg:s,p:s.prob})),...mns.map(s=>({seg:s,p:mP}))];const rv=rng();let cum=0;for(const e of es){cum+=e.p;if(rv<cum)return e.seg;}return outs[0];}
-function _TStep(st,r,dt,tRace,track,luts){if(st.done)return;const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period));let adv=Math.max(spd,5)*dt,g=0;while(adv>0.001&&g++<30){const seg=track.segments.find(s=>s.id===st.segId),lut=luts[st.segId];if(!seg||!lut||lut.totalLen===0){st.done=true;return;}const rem=lut.totalLen-st.arcPos;if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=3){st.done=true;return;}}const outs=track.segments.filter(s=>s.from===seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs);st.segId=nx.id;st.arcPos=0;}else{st.arcPos+=adv;st.arcThisLap+=adv;adv=0;}}}
-function makeRacers(seed,trackIdx){trackIdx=trackIdx??0;const rng=mulberry32(seed);const names=pickN(RACER_NAMES,6,rng);const smin=_TSpdMin_ALL[trackIdx]??_TSpdMin_ALL[0],smax=_TSpdMax_ALL[trackIdx]??_TSpdMax_ALL[0];return names.map((name,i)=>({name,color:RACER_COLORS[i],baseSpeed:smin+rng()*(smax-smin),amplitude:0.008+rng()*0.018,period:8+rng()*16,_seed:seed,_idx:i}));}
-function buildRaceChain(hourSeed,hourStart){const chain=[];let t=hourStart,seed=hourSeed*1000;const FLASH=10,COUNTDOWN=20;while(t<hourStart+14400){const trackIdx=chain.length%TRACK_ROTATION.length;const racers=makeRacers(seed,trackIdx);const{duration,winner}=computeRaceDuration(racers,trackIdx);chain.push({seed,startT:t,raceEnd:t+duration,phaseEnd:t+duration+FLASH+COUNTDOWN,racers,winner,duration,trackIdx});t+=duration+FLASH+COUNTDOWN;seed++;}return chain;}
-function computeRaceDuration(racers,trackIdx){trackIdx=trackIdx??0;const track=TRACK_ROTATION[trackIdx]||TRACK_ROTATION[0];const luts=_TLUTs_ALL[trackIdx]||_TLUTs_ALL[0];const dt=0.05;const startSeg=track.segments.find(s=>s.from===0&&s.type==='main')||track.segments[0];const states=racers.map((r,i)=>({segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false}));for(let t=0;t<600;t+=dt){for(let i=0;i<racers.length;i++){if(states[i].done)continue;_TStep(states[i],racers[i],dt,t,track,luts);if(states[i].done)return{duration:t,winner:i};}}return{duration:600,winner:0};}
-const _TCache={};function _TBuildPaths(race){if(_TCache[race.seed])return _TCache[race.seed];const track=_TDef(race),luts=_TLuts(race);const dt=0.05,startSeg=track.segments.find(s=>s.from===0&&s.type==='main')||track.segments[0];const maxT=race.duration+15,frames=Math.ceil(maxT/dt)+1;const paths=race.racers.map((r,i)=>{const st={segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false};const positions=[];for(let fi=0;fi<frames;fi++){const pos=_TPosAt((luts[st.segId])||{pts:[],totalLen:0},st.arcPos);positions.push({x:pos.x,y:pos.y,laps:st.laps,arc:st.arcThisLap});if(!st.done)_TStep(st,r,dt,fi*dt,track,luts);}return{positions};});_TCache[race.seed]={paths,dt};const keys=Object.keys(_TCache);if(keys.length>3)delete _TCache[keys[0]];return _TCache[race.seed];}
-function getLeaderboard(race,tInRace){const data=_TBuildPaths(race);const mainLen=_TMainLen_ALL[race.trackIdx??0]||_TMainLen_ALL[0];const t=Math.min(tInRace,race.duration);const fi=Math.min(Math.floor(t/data.dt),data.paths[0].positions.length-1);return race.racers.map((r,i)=>{const pos=data.paths[i].positions[fi];return{idx:i,name:r.name,color:r.color,laps:pos.laps,totalDist:pos.laps*mainLen+pos.arc,lastLapTime:null};}).sort((a,b)=>b.totalDist-a.totalDist);}
-const _TCanvasCache={};function getTrackCanvas(glowColor,dimColor,borderColor){const nowF=Date.now()/1000;const state=getRaceState(nowF);const ti=state.race.trackIdx??0;const cacheKey=ti+'|'+glowColor;if(_TCanvasCache[cacheKey])return _TCanvasCache[cacheKey];const track=TRACK_ROTATION[ti]||TRACK_ROTATION[0];const luts=_TLUTs_ALL[ti]||_TLUTs_ALL[0];const tc=document.createElement('canvas');tc.width=520;tc.height=230;const ctx=tc.getContext('2d'),W=520,H=230;function _n(id){return track.nodes.find(x=>x.id===id);}function _px(nd){return{x:nd.x*W,y:nd.y*H};}track.segments.filter(s=>s.type==='shortcut').forEach(seg=>{const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=dimColor+'88';ctx.lineWidth=6;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=glowColor+'44';ctx.lineWidth=2;ctx.stroke();});track.segments.filter(s=>s.type==='main').forEach(seg=>{const p0=_px(_n(seg.from)),p3=_px(_n(seg.to));const c1={x:seg.cp1.x*W,y:seg.cp1.y*H},c2={x:seg.cp2.x*W,y:seg.cp2.y*H};ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=borderColor;ctx.lineWidth=16;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,p3.x,p3.y);ctx.strokeStyle=dimColor;ctx.lineWidth=0.5;ctx.setLineDash([8,6]);ctx.stroke();ctx.setLineDash([]);});const sf0=_n(0),sfx=sf0.x*W,sfy=sf0.y*H;const outSeg=track.segments.find(s=>s.from===0&&s.type==='main');let ang=Math.PI/2;if(outSeg&&luts[outSeg.id]?.pts.length>1){const a=luts[outSeg.id].pts[0],b=luts[outSeg.id].pts[2]||luts[outSeg.id].pts[1];ang=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2;}ctx.save();ctx.translate(sfx,sfy);ctx.rotate(ang);ctx.strokeStyle=glowColor;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();ctx.restore();ctx.fillStyle=dimColor;ctx.font='7px "Share Tech Mono"';ctx.fillText('S/F',sfx+4,sfy-6);_TCanvasCache[cacheKey]=tc;setTimeout(()=>{delete _TCanvasCache[cacheKey];},35000);return tc;}
-function renderRace(){if(document.getElementById('tab-race').style.display==='none')return;const nowF=Date.now()/1000;const state=getRaceState(nowF);const{race,tInRace,phase}=state;const canvas=document.getElementById('race-canvas');const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;const theme=THEMES[currentTheme];ctx.clearRect(0,0,W,H);ctx.fillStyle=theme.bg;ctx.fillRect(0,0,W,H);ctx.drawImage(getTrackCanvas(theme.glow,theme.glowDim,theme.border2),0,0);const t=Math.min(tInRace,race.duration);const pathData=_TBuildPaths(race);const fi=Math.min(Math.floor(t/pathData.dt),pathData.paths[0].positions.length-1);race.racers.forEach((r,i)=>{const key=race.seed+'_'+i;if(!trailBuffers[key])trailBuffers[key]=[];const trail=trailBuffers[key];const pos=pathData.paths[i].positions[fi];trail.push({x:pos.x,y:pos.y});if(trail.length>18)trail.shift();for(let j=1;j<trail.length;j++){ctx.globalAlpha=(j/trail.length)*0.35;ctx.beginPath();ctx.moveTo(trail[j-1].x,trail[j-1].y);ctx.lineTo(trail[j].x,trail[j].y);ctx.strokeStyle=r.color;ctx.lineWidth=3;ctx.stroke();}ctx.globalAlpha=1;});race.racers.forEach((r,i)=>{const pos=pathData.paths[i].positions[fi];const px=pos.x,py=pos.y;const grad=ctx.createRadialGradient(px,py,0,px,py,10);grad.addColorStop(0,r.color+'bb');grad.addColorStop(1,r.color+'00');ctx.beginPath();ctx.arc(px,py,10,0,2*Math.PI);ctx.fillStyle=grad;ctx.fill();ctx.beginPath();ctx.arc(px,py,5.5,0,2*Math.PI);ctx.fillStyle=r.color;ctx.fill();ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();ctx.fillStyle='#000';ctx.font='bold 6.5px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,px,py);});ctx.textAlign='left';ctx.textBaseline='alphabetic';const trackName=(TRACK_ROTATION[race.trackIdx??0]||TRACK_ROTATION[0]).name;const trackLabelEl=document.getElementById('race-track-label');if(trackLabelEl)trackLabelEl.textContent='⬡ '+trackName+' ⬡';const statusEl=document.getElementById('race-status');const lb=getLeaderboard(race,t);if(phase==='countdown'){const cdLeft=Math.ceil(state.cdLeft);let nextName=null;if(raceChain&&TRACK_ROTATION.length>1){const ri=raceChain.indexOf(race);const nr=ri>=0?raceChain[ri+1]:null;if(nr)nextName=(TRACK_ROTATION[nr.trackIdx??0]||TRACK_ROTATION[0]).name;}statusEl.textContent=nextName?'— NEXT: '+nextName+' — IN '+cdLeft+'s —':'— NEW RACE STARTING IN '+cdLeft+'s —';statusEl.style.color='var(--amber)';}else if(phase==='flash'){const wr=race.racers[race.winner];statusEl.textContent='⬡ '+wr.name.toUpperCase()+' WINS! ⬡';statusEl.style.color=wr.color;}else{statusEl.textContent='RACE IN PROGRESS — LEAD: '+lb[0].name.toUpperCase();statusEl.style.color='var(--glow)';}const lbEl=document.getElementById('lb-rows');const isRaceTab=document.getElementById('tab-race').classList.contains('active');if(isRaceTab){lbEl.innerHTML='';lb.forEach((entry,pos)=>{const isWinner=phase==='flash'&&race.racers[race.winner].name===entry.name;const row=document.createElement('div');row.className='lb-row'+(isWinner?' winner-flash':'');row.innerHTML='<span class="lb-pos">'+(pos+1)+'</span><span class="lb-name" style="color:'+entry.color+'">'+entry.name+'</span><span class="lb-laptime">—</span><span class="lb-laps">'+entry.laps+'/3</span>';if(typeof globalTranslated!=='undefined'&&!globalTranslated)row.querySelector('.lb-name').style.fontFamily='var(--font-alien)';lbEl.appendChild(row);});}}
-if(typeof raceRafId!=='undefined'&&raceRafId)cancelAnimationFrame(raceRafId);
-if(typeof trackCanvas!=='undefined')trackCanvas=null;
-if(typeof raceLoop==='function')raceLoop();
-// ===HOLOFEED-TRACK-ENGINE-END===
-`;
-}
-
-// ════════════════════════════════════════════════════════
 // LIVE PREVIEW
 // ════════════════════════════════════════════════════════
 function buildPreviewHtml() {
   let html = buildModifiedHtml();
   if (trackRotation.length > 0) {
-    const exportTracks = trackRotation.map(t => ({ name: t.name, nodes: t.nodes, segments: t.segs }));
-    const injection = buildInjectionScript(exportTracks);
-    const scriptBlock = '\n<!-- HOLOFEED-TRACK-INJECTION -->\n<script>' + injection + '<\/script>\n';
-    if (html.includes('<!-- HOLOFEED-TRACK-INJECTION -->') && html.includes('===HOLOFEED-TRACK-ENGINE-END===')) {
-      html = html.replace(/\n<!-- HOLOFEED-TRACK-INJECTION -->[\s\S]*?===HOLOFEED-TRACK-ENGINE-END===\s*<\/script>\s*\n/, scriptBlock);
-    } else {
-      html = html.replace(/<\/body>/, scriptBlock + '</body>');
-    }
+    const exportTracks = trackRotation.map(t => ({
+      name: t.name, laps: t.laps||3, fastLap: t.fastLap||45, slowLap: t.slowLap||75,
+      riskFactor: t.riskFactor||1.0, burstMax: t.burstMax||0,
+      nodes: t.nodes.map(n => ({ id:n.id, x:+(n.x/CW).toFixed(4), y:+(n.y/CH).toFixed(4) })),
+      segments: (t.segments||t.segs).map(s => ({
+        id:s.id, from:s.from, to:s.to,
+        cp1:{x:+(s.cp1.x/CW).toFixed(4), y:+(s.cp1.y/CH).toFixed(4)},
+        cp2:{x:+(s.cp2.x/CW).toFixed(4), y:+(s.cp2.y/CH).toFixed(4)},
+        type:s.type, prob:+s.prob.toFixed(2)
+      }))
+    }));
+    html = html.replace(
+      /(<script[^>]+id="holofeed-tracks"[^>]*>)[\s\S]*?(<\/script>)/,
+      '$1\n' + JSON.stringify(exportTracks) + '\n$2'
+    );
   }
   return html;
 }
