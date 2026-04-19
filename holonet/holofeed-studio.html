@@ -40,6 +40,13 @@ body::before {
 .btn-save { background: rgba(0,204,255,0.08); border-color: var(--glow); color: var(--glow); }
 .btn-save:hover { background: rgba(0,204,255,0.18); box-shadow: 0 0 12px rgba(0,204,255,0.3); }
 .btn-save:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-gh-fetch { background: none; border-color: #44cc88; color: #44cc88; }
+.btn-gh-fetch:hover { background: rgba(68,204,136,0.12); box-shadow: 0 0 8px rgba(68,204,136,0.25); }
+.btn-gh-push { background: rgba(68,204,136,0.1); border-color: #44cc88; color: #44cc88; }
+.btn-gh-push:hover { background: rgba(68,204,136,0.22); box-shadow: 0 0 12px rgba(68,204,136,0.3); }
+.btn-gh-push:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-pat { background: none; border-color: #666; color: #666; padding: 7px 10px; }
+.btn-pat:hover { border-color: #aaa; color: #aaa; }
 .btn-preview { background: rgba(240,192,64,0.08); border-color: var(--amber); color: var(--amber); }
 .btn-preview:hover { background: rgba(240,192,64,0.18); box-shadow: 0 0 10px rgba(240,192,64,0.3); }
 .btn-preview:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -219,10 +226,13 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
     <div id="topbar-sub">DATANET CONFIGURATION TERMINAL — v2.0</div>
   </div>
   <div id="topbar-actions">
-    <button class="top-btn btn-load" onclick="document.getElementById('file-input').click()">⬡ LOAD HOLOFEED.HTML</button>
+    <button class="top-btn btn-load" onclick="document.getElementById('file-input').click()">⬡ LOAD LOCAL FILE</button>
     <input type="file" id="file-input" accept=".html" onchange="loadFile(this)">
-    <button class="top-btn btn-preview" id="preview-btn" onclick="openPreview()" disabled>👁 PREVIEW HOLOFEED</button>
-    <button class="top-btn btn-save" id="save-btn" onclick="saveFile()" disabled>▼ EXPORT MODIFIED FILE</button>
+    <button class="top-btn btn-gh-fetch" onclick="ghFetch()">⬇ FETCH FROM GITHUB</button>
+    <button class="top-btn btn-preview" id="preview-btn" onclick="openPreview()" disabled>👁 PREVIEW</button>
+    <button class="top-btn btn-save" id="save-btn" onclick="saveFile()" disabled>▼ EXPORT LOCAL</button>
+    <button class="top-btn btn-gh-push" id="gh-push-btn" onclick="ghPush()" disabled>▲ PUSH TO GITHUB</button>
+    <button class="top-btn btn-pat" onclick="ghSetPAT()" title="Set GitHub Personal Access Token">🔑</button>
   </div>
 </div>
 
@@ -425,6 +435,74 @@ let originalHtml = '';
 let fileName = 'holofeed_edited.html';
 
 // ════════════════════════════════════════════════════════
+// GITHUB INTEGRATION
+// ════════════════════════════════════════════════════════
+const GH_REPO='Flint-Inferno/cantina-obscura';
+const GH_PATH='holonet/holofeed-main.html';
+const GH_API='https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_PATH;
+
+function ghGetPAT(){return localStorage.getItem('hf_studio_gh_pat')||'';}
+function ghSetPAT(){
+  const cur=ghGetPAT();
+  const p=prompt('GitHub Personal Access Token\n(stored in your browser only — never sent anywhere but api.github.com)',cur);
+  if(p!==null){localStorage.setItem('hf_studio_gh_pat',p.trim());toast(p.trim()?'PAT saved':'PAT cleared');}
+}
+function _ghHeaders(){
+  const pat=ghGetPAT();
+  if(!pat){toast('Set your GitHub PAT first (🔑 button)',true);return null;}
+  return{'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+}
+async function ghFetch(){
+  const h=_ghHeaders();if(!h)return;
+  toast('Fetching from GitHub...');
+  try{
+    const r=await fetch(GH_API,{headers:h});
+    const j=await r.json();
+    if(!r.ok){toast('Fetch failed: '+j.message,true);return;}
+    const html=decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))));
+    const fakeFile={name:'holofeed-main.html (GitHub)',_ghSha:j.sha};
+    originalHtml=html;
+    fileName='holofeed-main.html';
+    window._ghCurrentSha=j.sha;
+    if(!parseHtml(originalHtml)){toast('Parse error',true);return;}
+    const rotation=extractRotationFromHtml(originalHtml);
+    if(rotation)importTrackRotation(rotation);
+    renderAll();
+    document.getElementById('load-zone').style.display='none';
+    document.getElementById('editor-wrap').classList.add('visible');
+    document.getElementById('save-btn').disabled=false;
+    document.getElementById('preview-btn').disabled=false;
+    document.getElementById('gh-push-btn').disabled=false;
+    document.getElementById('status-file').textContent='GitHub: holofeed-main.html';
+    const tCount=trackRotation.length;
+    setGlobalStatus('Loaded from GitHub — '+data.headlines.length+' headlines, '+tCount+' track'+(tCount!==1?'s':''),'ok');
+  }catch(e){toast('Fetch error: '+e.message,true);}
+}
+async function ghPush(){
+  const h=_ghHeaders();if(!h)return;
+  if(!originalHtml){toast('No file loaded',true);return;}
+  toast('Pushing to GitHub...');
+  try{
+    // Always fetch fresh SHA to avoid conflicts
+    const shaRes=await fetch(GH_API,{headers:h});
+    const shaJson=await shaRes.json();
+    if(!shaRes.ok){toast('Could not fetch SHA: '+shaJson.message,true);return;}
+    const sha=shaJson.sha;
+    // Build the full modified HTML with tracks baked in
+    let html=buildPreviewHtml();
+    // Encode as base64 (handles UTF-8)
+    const encoded=btoa(unescape(encodeURIComponent(html)));
+    const body=JSON.stringify({message:'Update holofeed-main via studio editor',content:encoded,sha});
+    const r=await fetch(GH_API,{method:'PUT',headers:h,body});
+    const j=await r.json();
+    if(!r.ok){toast('Push failed: '+j.message,true);return;}
+    window._ghCurrentSha=j.content.sha;
+    toast('✓ Pushed to GitHub successfully!');
+    setGlobalStatus('Pushed to GitHub — '+new Date().toLocaleTimeString(),'ok');
+  }catch(e){toast('Push error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════════
 // HOLOFEED EDITOR STATE
 // ════════════════════════════════════════════════════════
 let data = {
@@ -497,6 +575,7 @@ function readFile(file) {
     document.getElementById('editor-wrap').classList.add('visible');
     document.getElementById('save-btn').disabled = false;
     document.getElementById('preview-btn').disabled = false;
+    document.getElementById('gh-push-btn').disabled = false;
     document.getElementById('status-file').textContent = file.name;
     const tCount = trackRotation.length;
     setGlobalStatus('Loaded: ' + file.name + ' — ' + data.headlines.length + ' headlines, ' + tCount + ' track' + (tCount !== 1 ? 's' : ''), 'ok');
