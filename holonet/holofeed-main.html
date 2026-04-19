@@ -1760,38 +1760,46 @@ function renderRace(){
     ctx.beginPath();ctx.arc(px,py,5.5,0,2*Math.PI);ctx.fillStyle=r.color;ctx.fill();
     ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();
     const label=state==='danger'?'!':state==='repairing'?'\u00B7':String(rankMap[i]||i+1);
-    ctx.fillStyle='#000';ctx.font='bold 9px "Aurebesh"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,px,py);
+    ctx.fillStyle='#000';ctx.font='bold 8px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,px,py);
   });
 
-  // Explosions
+  // Explosions + persistent DNF markers
   for(let ei=_explosions.length-1;ei>=0;ei--){
     const ex=_explosions[ei];
     const age=(nowMs-ex.startMs)/1000;
-    if(age>0.7){_explosions.splice(ei,1);continue;}
-    // Flash + expanding fill (0–350ms)
-    if(age<0.35){
-      const tp=age/0.35;
-      const fr=5+tp*23,fa=1-tp;
+    if(age>8){_explosions.splice(ei,1);continue;}
+    // Flash + expanding fill (0–700ms)
+    if(age<0.7){
+      const tp=age/0.7;
+      const fr=5+tp*26,fa=1-tp;
       ctx.beginPath();ctx.arc(ex.x,ex.y,fr,0,2*Math.PI);
       ctx.fillStyle='rgba(255,200,80,'+(fa*0.85)+')';ctx.fill();
       ctx.beginPath();ctx.arc(ex.x,ex.y,fr*0.4,0,2*Math.PI);
       ctx.fillStyle='rgba(255,255,255,'+fa+')';ctx.fill();
     }
-    // Expanding ring (0–500ms)
-    if(age<0.5){
-      const tp=age/0.5,rr=8+tp*22,ra=(1-tp)*0.7;
+    // Expanding ring (0–1200ms)
+    if(age<1.2){
+      const tp=age/1.2,rr=8+tp*26,ra=(1-tp)*0.7;
       ctx.beginPath();ctx.arc(ex.x,ex.y,rr,0,2*Math.PI);
       ctx.strokeStyle='rgba(255,160,40,'+ra+')';ctx.lineWidth=2;ctx.stroke();
     }
-    // Debris particles (0–700ms)
-    if(age<0.7){
-      const tp=age/0.7,f=1-Math.pow(1-tp,2);
-      const pa=Math.max(0,1-tp)*0.9;
+    // Debris particles (0–1500ms)
+    if(age<1.5){
+      const tp=age/1.5,f=1-Math.pow(1-tp,2);
+      const pa=Math.max(0,(1-tp)*0.9);
       const hexA=Math.round(pa*255).toString(16).padStart(2,'0');
       ex.particles.forEach(p=>{
         ctx.beginPath();ctx.arc(ex.x+p.dx*f,ex.y+p.dy*f,2.2,0,2*Math.PI);
         ctx.fillStyle=ex.color+hexA;ctx.fill();
       });
+    }
+    // Persistent DNF marker — small X that lingers and slowly fades (1.5–8s)
+    if(age>1.2){
+      const fade=Math.max(0,1-(age-1.2)/6.8);
+      const ma=fade*0.55,ms=4.5;
+      ctx.strokeStyle='rgba(255,80,80,'+ma+')';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(ex.x-ms,ex.y-ms);ctx.lineTo(ex.x+ms,ex.y+ms);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex.x+ms,ex.y-ms);ctx.lineTo(ex.x-ms,ex.y+ms);ctx.stroke();
     }
   }
 
