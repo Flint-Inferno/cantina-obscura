@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cantina Obscura Directory</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --text: #c9d1d9;
+            --link: #58a6ff;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; 
+            background-color: var(--bg);
+            color: var(--text);
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        header {
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+        h1 { color: #ffffff; margin-bottom: 0.5rem; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, border-color 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--link);
+        }
+        .card h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--link);
+            font-size: 1.25rem;
+        }
+        .card p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #8b949e;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 20px;
+            background: #238636;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Cantina Obscura</h1>
+    <p>Live project directory for Flint-Inferno's repository.</p>
+</header>
+
+<div class="grid">
+    <a href="https://Flint-Inferno.github.io/cantina-obscura/simple-site/" class="card" target="_blank">
+        <span class="badge">Live Page</span>
+        <h3>Simple Site</h3>
+        <p>A foundational layout project.</p>
+    </a>
+
+    <a href="https://Flint-Inferno.github.io/cantina-obscura/media-queries-site/" class="card" target="_blank">
+        <span class="badge">Live Page</span>
+        <h3>Media Queries Site</h3>
+        <p>Responsive design and mobile-first layouts.</p>
+    </a>
+
+    <a href="https://Flint-Inferno.github.io/cantina-obscura/the-cantina/index.html" class="card" target="_blank">
+        <span class="badge">Main Project</span>
+        <h3>The Cantina</h3>
+        <p>The core interactive experience of the repository.</p>
+    </a>
+
+    <a href="https://Flint-Inferno.github.io/cantina-obscura/projects/project-one/" class="card" target="_blank">
+        <span class="badge">Nested</span>
+        <h3>Project One</h3>
+        <p>Located within the /projects/ directory.</p>
+    </a>
+
+    <a href="https://Flint-Inferno.github.io/cantina-obscura/projects/project-two/" class="card" target="_blank">
+        <span class="badge">Nested</span>
+        <h3>Project Two</h3>
+        <p>Located within the /projects/ directory.</p>
+    </a>
+</div>
+
+</body>
+  </html>
