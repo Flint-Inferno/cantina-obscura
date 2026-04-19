@@ -295,10 +295,11 @@ body::after {
 
 #leaderboard { padding: 8px 14px; }
 .lb-title { font-family: var(--font-eng); font-weight: bold; font-size: 9px; color: var(--glow-dim); letter-spacing: 3px; margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
-.lb-row { display: grid; grid-template-columns: 20px 110px 1fr 44px 60px 52px; gap: 4px; align-items: center; padding: 3px 0; border-bottom: 1px solid rgba(26,44,20,0.5); font-size: 13px; }
+.lb-row { display: grid; grid-template-columns: 20px 110px 1fr 44px 60px 52px; gap: 4px; align-items: center; padding: 3px 0; border-bottom: 1px solid rgba(26,44,20,0.5); font-size: 13px; position: absolute; width: 100%; box-sizing: border-box; transition: top 0.2s ease; }
 .lb-health { font-family: var(--font-eng); font-weight: bold; font-size: 10px; text-align: right; }
 .lb-laptime { font-family: var(--font-eng); font-weight: bold; font-size: 10px; color: var(--glow-dim); text-align: right; }
-.lb-msg { font-family: var(--font-eng); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity 0.4s ease; letter-spacing: 0.5px; padding: 0 4px; }
+.lb-msg { font-family: var(--font-eng); font-size: 9px; white-space: nowrap; overflow: hidden; letter-spacing: 0.5px; padding: 0 4px; }
+.lb-msg-inner { display: inline-block; white-space: nowrap; will-change: transform; }
 .lb-pos { color: var(--glow-dim); font-family: var(--font-eng); font-weight: bold; font-size: 10px; }
 .lb-laptime { font-family: var(--font-eng); font-weight: bold; font-size: 10px; color: var(--glow-dim); text-align: right; }
 .lb-laps { font-family: var(--font-eng); font-weight: bold; font-size: 10px; color: var(--amber-dim); text-align: right; }
@@ -1189,14 +1190,15 @@ function _TPosAt(lut,arc){
   for(let i=1;i<lut.pts.length;i++){if(lut.pts[i].len>=c){const a=lut.pts[i-1],b=lut.pts[i],f=(b.len-a.len)>0?(c-a.len)/(b.len-a.len):0;return{x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};}}
   const l=lut.pts[lut.pts.length-1];return{x:l.x,y:l.y};
 }
-function _TChoose(rng,outs){
+function _TChoose(rng,outs,forceShortcut){
   if(outs.length===1)return outs[0];
   const scs=outs.filter(s=>s.type==='shortcut'),mns=outs.filter(s=>s.type==='main');
+  if(forceShortcut&&scs.length>0)return scs[Math.floor(rng()*scs.length)];
   const scP=scs.reduce((a,s)=>a+s.prob,0),mP=Math.max(0,1-scP)/Math.max(1,mns.length);
   const es=[...scs.map(s=>({seg:s,p:s.prob})),...mns.map(s=>({seg:s,p:mP}))];
   const rv=rng();let cum=0;for(const e of es){cum+=e.p;if(rv<cum)return e.seg;}return outs[0];
 }
-function _TStep(st,r,dt,tRace,track,luts,spdMul){
+function _TStep(st,r,dt,tRace,track,luts,spdMul,forceShortcut){
   if(st.done)return;
   spdMul=spdMul||1;
   const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period))*spdMul;
@@ -1205,7 +1207,7 @@ function _TStep(st,r,dt,tRace,track,luts,spdMul){
     const seg=track.segments.find(s=>s.id===st.segId),lut=luts[st.segId];
     if(!seg||!lut||lut.totalLen===0){st.done=true;return;}
     const rem=lut.totalLen-st.arcPos;
-    if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=(track.laps||3)){st.done=true;return;}}const outs=track.segments.filter(s=>s.from===seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs);st.segId=nx.id;st.arcPos=0;}
+    if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=(track.laps||3)){st.done=true;return;}}const outs=track.segments.filter(s=>s.from===seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs,forceShortcut);st.segId=nx.id;st.arcPos=0;}
     else{st.arcPos+=adv;st.arcThisLap+=adv;adv=0;}
   }
 }
@@ -1356,7 +1358,7 @@ function computeRaceDuration(racers,trackIdx){
     if(finishTimes.every(ft=>ft!==null))break;
   }
   finishTimes.forEach((ft,i)=>{if(ft===null)finishTimes[i]=600;});
-  if(winner===null)winner=0;
+  if(winner===null)winner=states.reduce((best,s,i)=>s.laps>states[best].laps?i:best,0);
   return{duration:Math.max(...finishTimes),winner,finishTimes};
 }
 
@@ -1403,10 +1405,10 @@ function _TBuildPaths(race){
   const hs=race.racers.map((r,i)=>{
     const hrng=mulberry32(r._seed*99991+i*17+3);
     const drainVariance=0.7+hrng()*0.8;
-    const limpThreshold=15+Math.floor(hrng()*51);
+    const limpThreshold=5+Math.floor(hrng()*11);
     const riskTolerance=hrng();
     return{health:100,drainVariance,hrng,limpThreshold,riskTolerance,repairing:false,repairElapsed:0,repairDuration:0,
-           repairStartH:0,repairTargetH:100,limping:false,ignoring:false,dnf:false,survived:null,warned:false,warned10:false};
+           repairStartH:0,repairTargetH:100,limping:false,ignoring:false,dnf:false,survived:null,warned:false,limpTriggered:false};
   });
 
   const paths=race.racers.map((r,i)=>{
@@ -1443,7 +1445,7 @@ function _TBuildPaths(race){
       if(!st.done){
         const spdMul=h.limping?0.3:1;
         const prevLaps=st.laps;
-        _TStep(st,r,dt,timeNow,track,luts,spdMul);
+        _TStep(st,r,dt,timeNow,track,luts,spdMul,h.limping);
         if(st.done&&bFinT===null)bFinT=timeNow;
         if(st.laps>prevLaps){
           lapEndTimes.push(timeNow);
@@ -1477,7 +1479,7 @@ function _TBuildPaths(race){
         while(burstPtr<myBursts.length&&myBursts[burstPtr].time<=timeNow){
           const bst=myBursts[burstPtr++];
           if(!h.dnf&&!h.repairing){
-            h.health=bst.targetHealth;
+            h.health=Math.min(h.health,bst.targetHealth);
             const msg=bst.knockout
               ?'💥 '+r.name.toUpperCase()+' — CATASTROPHIC IMPACT'
               :'⚡ '+r.name.toUpperCase()+' — COLLISION — CRITICAL DAMAGE';
@@ -1493,10 +1495,11 @@ function _TBuildPaths(race){
           events.push({time:timeNow,racerIdx:i,type:'warning',
             message:'⚠ '+r.name.toUpperCase()+' — '+msg});
         }
-        if(!h.warned10&&h.health<h.limpThreshold){
-          h.warned10=true;
+        if(!h.limpTriggered&&h.health<h.limpThreshold){
+          h.limpTriggered=true;
           const isFinalLap=st.laps>=(track.laps||3)-1;
-          const ignoreChance=isFinalLap?0.8:0.3;
+          const baseIgnore=isFinalLap?0.8:0.3;
+          const ignoreChance=Math.min(0.95,baseIgnore+(h.riskTolerance-0.5)*0.3);
           if(h.hrng()<ignoreChance){
             h.ignoring=true;
             events.push({time:timeNow,racerIdx:i,type:'critical',
@@ -1633,23 +1636,30 @@ const trailBuffers = {};
 
 
 const _racerMsgTimers=new Array(6).fill(null);
-const _racerMsgSpans=[];
+const _racerRows=[];
+const _racerMsgInners=[];
+const _racerTickerX=[];
+let _lastTickerMs=0;
 const _racerIdxToRow=new Array(6).fill(0);
 
 function _showRacerMsg(racerIdx,ev){
-  const span=_racerMsgSpans[_racerIdxToRow[racerIdx]];
-  if(!span)return;
+  const inner=_racerMsgInners[racerIdx];
+  if(!inner)return;
   clearTimeout(_racerMsgTimers[racerIdx]);
   const isKill=ev.type==='dnf_killed';
   const isCrit=ev.type==='critical'||ev.type==='warning';
   let msg=ev.message;
   if(ev.racerName){msg=msg.replace(ev.racerName+' \u2014 ','').replace(ev.racerName,'');}
   msg=msg.replace(/^[\u26a0\u26a1\uD83D\uDCA5\u2020\s]+/,'').trim();
-  span.textContent=msg;
-  span.style.color=isKill?'#ff5555':isCrit?'var(--amber)':'var(--glow-dim)';
-  span.style.opacity='1';
+  inner.textContent=msg;
+  inner.style.color=isKill?'#ff5555':isCrit?'var(--amber)':'var(--glow-dim)';
+  // start ticker from right edge of container
+  const container=inner.parentElement;
+  const containerW=container?container.offsetWidth||100:100;
+  _racerTickerX[racerIdx]=containerW+8;
+  inner.style.transform='translateX('+(containerW+8)+'px)';
   const dur=isKill?9000:6000;
-  _racerMsgTimers[racerIdx]=setTimeout(()=>{span.style.opacity='0';},dur);
+  _racerMsgTimers[racerIdx]=setTimeout(()=>{inner.textContent='';inner.style.transform='';},dur);
 }
 
 function _queueEvent(ev){
@@ -1739,9 +1749,9 @@ function renderRace(){
     statusEl.textContent=nextName?'— NEXT: '+nextName+' — IN '+cdLeft+'s —':'— NEW RACE STARTING IN '+cdLeft+'s —';
     statusEl.style.color='var(--amber)';
   } else if(phase==='flash'){
-    const wr=race.racers[race.winner];
-    statusEl.textContent='⬡ '+wr.name.toUpperCase()+' WINS! ⬡';
-    statusEl.style.color=wr.color;
+    const actualWinner=lb.find(e=>e.finished)||lb[0];
+    statusEl.textContent='⬡ '+actualWinner.name.toUpperCase()+' WINS! ⬡';
+    statusEl.style.color=actualWinner.color;
   } else {
     const lead=lb.find(e=>!e.dnf);
     statusEl.textContent='RACE IN PROGRESS — LEAD: '+(lead?lead.name.toUpperCase():'');
@@ -1749,10 +1759,15 @@ function renderRace(){
   }
   const isRaceTab=_dom('tab-race').classList.contains('active');
   if(isRaceTab){
+    const nowMs=Date.now();
+    const dtTicker=Math.min(0.1,_lastTickerMs?((nowMs-_lastTickerMs)/1000):0);
+    _lastTickerMs=nowMs;
+    const actualWinnerName=(phase==='flash')?(lb.find(e=>e.finished)||lb[0]).name:'';
     lb.forEach((entry,pos)=>{
-      const row=_lbRows[pos];if(!row)return;
+      const row=_racerRows[entry.idx];if(!row)return;
       _racerIdxToRow[entry.idx]=pos;
-      const isWinner=phase==='flash'&&race.racers[race.winner].name===entry.name;
+      row.style.top=(pos*ROW_HEIGHT)+'px';
+      const isWinner=phase==='flash'&&entry.name===actualWinnerName;
       row.className='lb-row'+(isWinner?' winner-flash':'');
       const lapsText=entry.dnf?'DNF':entry.laps+'/'+raceLaps;
       const hp=entry.dnf?0:Math.round(entry.health||100);
@@ -1764,10 +1779,18 @@ function renderRace(){
       spans[1].textContent=entry.name;spans[1].style.color=entry.dnf?(entry.survived?'#666666':'#444444'):entry.color;
       if(typeof globalTranslated!=='undefined'&&!globalTranslated&&!entry.dnf)spans[1].style.fontFamily='var(--font-alien)';
       else spans[1].style.fontFamily='';
-      // spans[2] is .lb-msg — managed by _showRacerMsg, not touched here
+      // spans[3-5] are health, laptime, laps
       spans[3].textContent=hText;spans[3].style.color=hColor;
       spans[4].textContent=ltText;
       spans[5].textContent=lapsText;
+      // ticker scroll
+      const inner=_racerMsgInners[entry.idx];
+      if(inner&&inner.textContent){
+        _racerTickerX[entry.idx]-=38*dtTicker;
+        const containerW=spans[2].offsetWidth||100;
+        if(_racerTickerX[entry.idx]<-(inner.scrollWidth||80))_racerTickerX[entry.idx]=containerW+8;
+        inner.style.transform='translateX('+_racerTickerX[entry.idx]+'px)';
+      }
     });
   }
   // Pre-build next hour's chain when within 3 minutes of hour boundary
@@ -1790,8 +1813,22 @@ function raceLoop() {
   }
   raceRafId = requestAnimationFrame(raceLoop);
 }
-const _lbRows=[];
-(function(){const lbEl=document.getElementById('lb-rows');for(let i=0;i<6;i++){const row=document.createElement('div');row.className='lb-row';row.innerHTML='<span class="lb-pos"></span><span class="lb-name"></span><span class="lb-msg"></span><span class="lb-health"></span><span class="lb-laptime"></span><span class="lb-laps"></span>';lbEl.appendChild(row);_lbRows.push(row);_racerMsgSpans.push(row.children[2]);}})();
+const ROW_HEIGHT=24;
+(function(){
+  const lbEl=document.getElementById('lb-rows');
+  lbEl.style.position='relative';
+  lbEl.style.height=(6*ROW_HEIGHT)+'px';
+  for(let i=0;i<6;i++){
+    const row=document.createElement('div');
+    row.className='lb-row';
+    row.style.top=(i*ROW_HEIGHT)+'px';
+    row.innerHTML='<span class="lb-pos"></span><span class="lb-name"></span><span class="lb-msg"><span class="lb-msg-inner"></span></span><span class="lb-health"></span><span class="lb-laptime"></span><span class="lb-laps"></span>';
+    lbEl.appendChild(row);
+    _racerRows.push(row);
+    _racerMsgInners.push(row.querySelector('.lb-msg-inner'));
+    _racerTickerX.push(9999);
+  }
+})();
 raceLoop();
 
 // Clean up old trails when race changes
@@ -1807,7 +1844,7 @@ setInterval(() => {
     lastRaceSeed = state.race.seed;
     _lastEventTime = -1;
     _racerMsgTimers.forEach((t,i)=>{clearTimeout(t);_racerMsgTimers[i]=null;});
-    _racerMsgSpans.forEach(s=>{if(s)s.style.opacity='0';});
+    _racerMsgInners.forEach((inner,i)=>{if(inner){inner.textContent='';inner.style.transform='';}_racerTickerX[i]=9999;});
   }
 }, 2000);
 
