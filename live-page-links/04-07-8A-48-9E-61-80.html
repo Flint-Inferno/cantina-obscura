@@ -739,7 +739,41 @@
         }
       } catch(_) {}
     })();
-  
+      // ── Access code gate ─────────────────────────────────────
+      (function initSecurityGate() {
+        var el = document.getElementById('mission-security');
+        if (!el) return;
+        var cfg;
+        try { cfg = JSON.parse(el.textContent); } catch(_) { return; }
+        if (!cfg || !cfg.enabled) return;
+        document.getElementById('security-gate').style.display = '';
+        document.getElementById('security-code-input').addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') submitSecurityCode();
+        });
+      })();
+
+      function submitSecurityCode() {
+        var el = document.getElementById('mission-security');
+        if (!el) return;
+        var cfg;
+        try { cfg = JSON.parse(el.textContent); } catch(_) { return; }
+        var input = (document.getElementById('security-code-input').value || '').trim();
+        var codes = cfg.codes || [];
+        var match = codes.some(function(c) {
+          return cfg.caseSensitive ? c === input : c.toLowerCase() === input.toLowerCase();
+        });
+        var errEl = document.getElementById('security-error');
+        if (match) {
+          document.getElementById('security-gate').style.display = 'none';
+          var reveal = document.getElementById('security-success-reveal');
+          reveal.classList.add('visible');
+          document.getElementById('security-success-msg').textContent = cfg.successMsg || '';
+          errEl.classList.remove('visible');
+        } else {
+          errEl.classList.add('visible');
+          setTimeout(function() { errEl.classList.remove('visible'); }, 2500);
+        }
+      }
   </script>
   <!-- =============================================================
        EVENT LOGO SCRIPT
