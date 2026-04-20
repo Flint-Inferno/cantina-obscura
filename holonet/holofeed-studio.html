@@ -506,7 +506,7 @@ async function ghPush(){
 // HOLOFEED EDITOR STATE
 // ════════════════════════════════════════════════════════
 let data = {
-  headlines: [], ads: [], racerNames: [], tournNames: [], stocks: [], timing: {}
+  headlines: [], ads: [], racerNames: [], stocks: [], timing: {}
 };
 
 // ════════════════════════════════════════════════════════
@@ -588,8 +588,15 @@ function readFile(file) {
 // HOLOFEED EDITOR — PARSING
 // ════════════════════════════════════════════════════════
 function extractArray(html, varName) {
-  const re = new RegExp('const\\s+' + varName + '\\s*=\\s*\\[([\\s\\S]*?)\\];', 'm');
-  const m = html.match(re); return m ? m[1] : null;
+  const startIdx = html.search(new RegExp('const\\s+' + varName + '\\s*=\\s*\\['));
+  if (startIdx === -1) return null;
+  const openBracket = html.indexOf('[', startIdx);
+  let depth = 0, i = openBracket;
+  for (; i < html.length; i++) {
+    if (html[i] === '[') depth++;
+    else if (html[i] === ']') { depth--; if (depth === 0) break; }
+  }
+  return html.slice(openBracket + 1, i);
 }
 function parseObjectArray(raw) {
   const items = []; let depth = 0, start = -1;
@@ -653,8 +660,18 @@ function serializeObj(obj) {
 function serializeArray(arr) { return '[\n' + arr.map(serializeObj).join(',\n') + '\n]'; }
 function serializeStringArray(arr) { return '[\n' + arr.map(s => '  "' + s.replace(/"/g,'\\"') + '"').join(',\n') + '\n]'; }
 function replaceArray(html, varName, newContent) {
-  const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)\\[[\\s\\S]*?\\];', 'm');
-  return html.replace(re, '$1' + newContent + ';');
+  const startIdx = html.search(new RegExp('const\\s+' + varName + '\\s*=\\s*\\['));
+  if (startIdx === -1) return html;
+  const openBracket = html.indexOf('[', startIdx);
+  let depth = 0, i = openBracket;
+  for (; i < html.length; i++) {
+    if (html[i] === '[') depth++;
+    else if (html[i] === ']') { depth--; if (depth === 0) break; }
+  }
+  let end = i + 1;
+  if (html[end] === ';') end++;
+  const eqPos = html.indexOf('=', startIdx);
+  return html.slice(0, eqPos + 1) + ' ' + newContent + ';' + html.slice(end);
 }
 function replaceTimingConst(html, varName, value) {
   const re = new RegExp('(const\\s+' + varName + '\\s*=\\s*)[\\d.]+');
@@ -714,7 +731,7 @@ function saveFile() {
 // ════════════════════════════════════════════════════════
 // HOLOFEED EDITOR — RENDERING
 // ════════════════════════════════════════════════════════
-function renderAll() { renderHeadlines(); renderAds(); renderChips('racers'); renderChips('tourn'); renderStocks(); renderTiming(); }
+function renderAll() { renderHeadlines(); renderAds(); renderChips('racers'); renderStocks(); renderTiming(); }
 
 function renderHeadlines() {
   const list = document.getElementById('news-list'); list.innerHTML = '';
