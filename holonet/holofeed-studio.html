@@ -1051,7 +1051,7 @@ canvas.addEventListener('mousemove',e=>{
     trackSegs.forEach(seg=>{if(seg.from===n.id){seg.cp1.x+=dx;seg.cp1.y+=dy;}if(seg.to===n.id){seg.cp2.x+=dx;seg.cp2.y+=dy;}});
     n.x=nx;n.y=ny;rebuildLUTs();redraw();
   }
-  if(dragging.type==='handle'){const seg=sById(dragging.segId);if(!seg)return;if(dragging.cpType==='cp1'){seg.cp1.x=p.x;seg.cp1.y=p.y;}else{seg.cp2.x=p.x;seg.cp2.y=p.y;}segLUTs[seg.id]=buildLUT(seg);redraw();}
+  if(dragging.type==='handle'){const seg=sById(dragging.segId);if(!seg)return;if(dragging.cpType==='cp1'){seg.cp1.x=snap(p.x);seg.cp1.y=snap(p.y);}else{seg.cp2.x=snap(p.x);seg.cp2.y=snap(p.y);}segLUTs[seg.id]=buildLUT(seg);redraw();}
 });
 canvas.addEventListener('mouseup',()=>{dragging=null;});
 canvas.addEventListener('mouseleave',()=>{dragging=null;});
