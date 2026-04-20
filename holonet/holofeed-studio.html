@@ -459,7 +459,8 @@ async function ghFetch(){
     const r=await fetch(GH_API,{headers:h});
     const j=await r.json();
     if(!r.ok){toast('Fetch failed: '+j.message,true);return;}
-    const html=decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))));
+    const bytes=Uint8Array.from(atob(j.content.replace(/\n/g,'')),c=>c.charCodeAt(0));
+    const html=new TextDecoder('utf-8').decode(bytes);
     const fakeFile={name:'holofeed-main.html (GitHub)',_ghSha:j.sha};
     originalHtml=html;
     fileName='holofeed-main.html';
@@ -491,7 +492,7 @@ async function ghPush(){
     // Build the full modified HTML with tracks baked in
     let html=buildPreviewHtml();
     // Encode as base64 (handles UTF-8)
-    const encoded=btoa(unescape(encodeURIComponent(html)));
+    const _enc=new TextEncoder().encode(html);let _b64='';_enc.forEach(b=>_b64+=String.fromCharCode(b));const encoded=btoa(_b64);
     const body=JSON.stringify({message:'Update holofeed-main via studio editor',content:encoded,sha});
     const r=await fetch(GH_API,{method:'PUT',headers:h,body});
     const j=await r.json();
