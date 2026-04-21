@@ -606,7 +606,7 @@ function parseObjectArray(raw) {
     else if (raw[i] === '}') {
       depth--;
       if (depth === 0 && start >= 0) {
-        try { items.push(Function('"use strict"; return (' + raw.slice(start, i+1) + ')')()); } catch(e) {}
+        try { const src=raw.slice(start,i+1).replace(/\r\n/g,'\\n').replace(/\r/g,'\\n').replace(/\n/g,'\\n'); items.push(Function('"use strict"; return (' + src + ')')());} catch(e) {}
         start = -1;
       }
     }
@@ -653,7 +653,7 @@ function parseHtml(html) {
 // ════════════════════════════════════════════════════════
 function serializeObj(obj) {
   const parts = Object.entries(obj).map(([k,v]) => {
-    if (typeof v === 'string') return '    ' + k + ':"' + v.replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
+    if (typeof v === 'string') return '    ' + k + ':"' + v.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\r\n/g,'\\n').replace(/\r/g,'\\n').replace(/\n/g,'\\n') + '"';
     return '    ' + k + ':' + v;
   });
   return '  {\n' + parts.join(',\n') + '\n  }';
