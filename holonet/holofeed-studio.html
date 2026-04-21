@@ -599,6 +599,19 @@ function extractArray(html, varName) {
   }
   return html.slice(openBracket + 1, i);
 }
+function _escapeNewlinesInStrings(src) {
+  let out='', inStr=false, q='';
+  for(let i=0;i<src.length;i++){
+    const c=src[i];
+    if(!inStr&&(c==='"'||c==="'")){inStr=true;q=c;out+=c;}
+    else if(inStr&&c==='\\'){out+=c+src[++i];}
+    else if(inStr&&c===q){inStr=false;out+=c;}
+    else if(inStr&&c==='\r'&&src[i+1]==='\n'){out+='\\n';i++;}
+    else if(inStr&&(c==='\n'||c==='\r')){out+='\\n';}
+    else{out+=c;}
+  }
+  return out;
+}
 function parseObjectArray(raw) {
   const items = []; let depth = 0, start = -1;
   for (let i = 0; i < raw.length; i++) {
@@ -606,7 +619,7 @@ function parseObjectArray(raw) {
     else if (raw[i] === '}') {
       depth--;
       if (depth === 0 && start >= 0) {
-        try { const src=raw.slice(start,i+1).replace(/\r\n/g,'\\n').replace(/\r/g,'\\n').replace(/\n/g,'\\n'); items.push(Function('"use strict"; return (' + src + ')')());} catch(e) {}
+        try { items.push(Function('"use strict"; return (' + _escapeNewlinesInStrings(raw.slice(start, i+1)) + ')')()); } catch(e) {}
         start = -1;
       }
     }
