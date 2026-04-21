@@ -1175,11 +1175,11 @@ const _feedRng = mulberry32(65261);
 const _scheduleShape = [];
 {
   let hi = 0, ai = 0;
-  while (hi < 30 || ai < 10) {
-    for (let k = 0; k < 3 && hi < 30; k++, hi++) {
+  while (hi < HEADLINES.length || ai < ADS.length) {
+    for (let k = 0; k < 3 && hi < HEADLINES.length; k++, hi++) {
       _scheduleShape.push({type:'headline', pos:hi, interval: 180 + Math.floor(_feedRng()*120)});
     }
-    if (ai < 10) {
+    if (ai < ADS.length) {
       _scheduleShape.push({type:'ad', pos:ai, interval: 180 + Math.floor(_feedRng()*120)});
       ai++;
     }
@@ -1201,8 +1201,8 @@ function buildNewsFeed(now) {
   for (let c = Math.max(0, cycleNum - 1); c <= cycleNum; c++) {
     const cycleStart = c * CYCLE;
     // Each cycle gets its own shuffle so content order varies per loop
-    const hOrder = shuffle(Array.from({length:30},(_,i)=>i), mulberry32(c * 54321 + 1));
-    const aOrder = shuffle(Array.from({length:10},(_,i)=>i), mulberry32(c * 54321 + 2));
+    const hOrder = shuffle(Array.from({length:HEADLINES.length},(_,i)=>i), mulberry32(c * 54321 + 1));
+    const aOrder = shuffle(Array.from({length:ADS.length},(_,i)=>i), mulberry32(c * 54321 + 2));
 
     _scheduleShape.forEach(s => {
       const t = cycleStart + s.offset;
@@ -1237,6 +1237,7 @@ function renderNews() {
   feed.forEach(item => {
     const isAd = item.type === 'ad';
     const data = isAd ? ADS[item.idx] : HEADLINES[item.idx];
+    if (!data) return;
     const key = item.type + item.idx;
     const isTranslated = globalTranslated || newsTranslated.has(key);
     const isExpanded = expandedNews.has(key);
