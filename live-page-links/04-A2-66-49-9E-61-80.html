@@ -52,35 +52,35 @@
        ---------------------------------------------------------------
 
        SCOUNDREL / NEUTRAL (amber-gold) — LOGO_COLOR: '#f0c060'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #050f05; --text: #33ff33; --accent: #00cc00;
+         --border: #1a4a1a; --dim: #1a3a1a;
 
        IMPERIAL (green terminal) — LOGO_COLOR: '#00cc00'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #050f05; --text: #33ff33; --accent: #00cc00;
+         --border: #1a4a1a; --dim: #1a3a1a;
 
        REPUBLIC / JEDI (blue holographic) — LOGO_COLOR: '#00aaff'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #050f05; --text: #33ff33; --accent: #00cc00;
+         --border: #1a4a1a; --dim: #1a3a1a;
 
        SITH / DARK SIDE (red) — LOGO_COLOR: '#cc0000'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #050f05; --text: #33ff33; --accent: #00cc00;
+         --border: #1a4a1a; --dim: #1a3a1a;
 
        MANDALORIAN (steel-blue/grey) — LOGO_COLOR: '#7ec8e3'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #050f05; --text: #33ff33; --accent: #00cc00;
+         --border: #1a4a1a; --dim: #1a3a1a;
 
        ============================================================= */
 
     /* EDIT: Paste your chosen color values here ↓ */
     :root {
-      --bg:          #0d0b07;
-      --text:        #d4a843;
-      --accent:      #f0c060;
-      --border:      #3a2e14;
-      --dim:         #1a1508;
-      --danger:      #f0c060;
+      --bg:          #050f05;
+      --text:        #33ff33;
+      --accent:      #00cc00;
+      --border:      #1a4a1a;
+      --dim:         #1a3a1a;
+      --danger:      #00cc00;
       --font-main:   'Share Tech Mono', monospace;
       --font-title:  'Orbitron', sans-serif;
       --font-aurebesh: 'Aurebesh', sans-serif;
@@ -254,12 +254,12 @@
 
     /* ── High contrast mode ──────────────────────────────────── */
     body.hi-contrast {
-      --text:   #ffffff;
-      --bg:     #000000;
-      --border: #555555;
-      --dim:    #1a1a1a;
-      --accent: #e0e0e0;
-      --danger: #ff9999;
+      --text:   #33ff33;
+      --bg:     #050f05;
+      --border: #1a4a1a;
+      --dim:    #1a3a1a;
+      --accent: #00cc00;
+      --danger: #00cc00;
     }
     body.hi-contrast .mission-id    { opacity: 1; }
     body.hi-contrast .section-label { opacity: 1; }
@@ -559,8 +559,8 @@
       letter-spacing: 0.05em;
     }
   </style>
-<meta name="logo-title" content="" data-color="#f0c060"><meta name="logo-footer" content="" data-color="#f0c060"><meta name="logo-watermark" content="" data-color="#f0c060">  <script id="mission-security" type="application/json">{"enabled":false}</script>
-</head>
+<meta name="logo-title" content="" data-color="#f0c060"><meta name="logo-footer" content="" data-color="#00cc00"><meta name="logo-watermark" content="" data-color="#00cc00">  <script id="mission-security" type="application/json">{"enabled":false,"codes":[],"caseSensitive":false,"successMsg":""}</script>
+<meta name="mission-status" content="not-started"></head>
 <body>
 
   <!-- ── Full-screen overlays (outside card) ────────────────── -->
@@ -613,13 +613,13 @@
         ─────────────────────────────────────────────────────────── -->
         <div class="title-row">
           <canvas id="logo-title"></canvas>
-          <h1 class="mission-title">MISSION TITLE HERE</h1>
+          <h1 class="mission-title">Hired Help</h1>
         </div>
 
         <!-- ── Mission ID line ────────────────────────────────────
              EDIT: Replace placeholders with mission code, faction, date.
         ─────────────────────────────────────────────────────────── -->
-        <p class="mission-id">MISSION ID: 04-A2-66-49-9E-61-80 &nbsp;|&nbsp; ISSUED BY: [FACTION] &nbsp;|&nbsp; DIFFICULTY: * &nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span></p>
+        <p class="mission-id">MISSION ID: 04-A2-66-49-9E-61-80 &nbsp;|&nbsp; ISSUED BY: Not Applicable &nbsp;|&nbsp; DIFFICULTY: *&nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span></p>
 
         <!-- ── Mission briefing block ─────────────────────────────
              EDIT: Replace placeholder content with your mission objectives.
@@ -629,11 +629,7 @@
             Mission Briefing
             &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">◆ SECURE CHANNEL</span>
           </p>
-          <div class="mission-instructions"><p>[ REPLACE THIS TEXT WITH MISSION OBJECTIVES ]</p>
-<p>You can use a simple paragraph, or a list like this:</p>
-<p>Objective one — describe the first task here</p>
-<p>Objective two — describe the second task here</p>
-<p>Objective three — add or remove items as needed</p></div>
+          <div class="mission-instructions"><p style="font-size: 12.48px;">Things move faster in the Outer Rim when you have someone watching your back. There's plenty of people here who are currently in over their heads with their own contracts. Sometimes, a job just needs an extra set of eyes, a distraction, or a bit of muscle.</p><p style="font-size: 12.48px;"></p><ul style="font-size: 12.48px;"><li>Find another patron currently working on a mission and offer your services as a "sub-contractor."</li><li>Aid them in successfully completing their objective; your mission only counts if they explicitly accept your help and finish their task.</li><li>(Optional) Negotiate a credit split from their payout. Regardless of your deal with them, return to an Informant to collect your 15-credit reward for ensuring the job got done.</li></ul></div>
         </div>
 
       </div><!-- /.datapad-main -->
@@ -648,7 +644,7 @@
         ─────────────────────────────────────────────────────────── -->
         <div class="credit-box">
           <span class="credit-label">PAYOUT</span>
-          <span class="credit-amount">$000</span>
+          <span class="credit-amount">$15</span>
           <span class="credit-unit">CREDITS</span>
         </div>
 
@@ -667,14 +663,13 @@
           <div class="security-gate" id="security-gate" style="display:none">
             <p class="section-label">ACCESS CODE REQUIRED</p>
             <div class="security-input-row">
-              <input type="text" id="security-code-input" placeholder="ENTER CODE"
-                     autocomplete="off" spellcheck="false" autocapitalize="characters">
-              <button onclick="submitSecurityCode()">&#9658; SUBMIT</button>
+              <input type="text" id="security-code-input" placeholder="ENTER CODE" autocomplete="off" spellcheck="false" autocapitalize="characters">
+              <button onclick="submitSecurityCode()">► SUBMIT</button>
             </div>
-            <div class="security-error" id="security-error">&#x2717; INVALID CODE</div>
+            <div class="security-error" id="security-error">✗ INVALID CODE</div>
           </div>
           <div class="security-success-reveal" id="security-success-reveal">
-            <div class="access-granted">&#x2713; ACCESS GRANTED</div>
+            <div class="access-granted">✓ ACCESS GRANTED</div>
             <div class="security-success-msg" id="security-success-msg"></div>
           </div>
 
@@ -795,7 +790,7 @@
          Mandalorian:        '#7ec8e3'
        ============================================================= -->
   <script>
-    const LOGO_COLOR = '#f0c060'; /* EDIT: match your --accent color */
+    const LOGO_COLOR = '#00cc00'; /* EDIT: match your --accent color */
 
     /* ── Core drawing logic (from logo-final.html) ──────────── */
     const VX = 130.56, VY = 106.56, VW = 152.44, VH = 130.87;
@@ -875,4 +870,4 @@
 
 
 
-<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#f0c060"},'logo-footer':{data:null,color:"#f0c060"},'logo-watermark':{data:null,color:"#f0c060"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script><script data-signal-watchdog="1">(function(){var m=window.matchMedia("(hover: none) and (pointer: coarse)").matches;if(!m)return;var h=null;document.addEventListener("visibilitychange",function(){if(document.hidden){h=Date.now();}else{if(h!==null&&Date.now()-h>=30000){window.location.replace("https://flint-inferno.github.io/cantina-obscura/signal-lost.html");}h=null;}});})();</script></body></html>
+<script data-signal-watchdog="1">(function(){var m=window.matchMedia("(hover: none) and (pointer: coarse)").matches;if(!m)return;var h=null;document.addEventListener("visibilitychange",function(){if(document.hidden){h=Date.now();}else{if(h!==null&&Date.now()-h>=30000){window.location.replace("https://flint-inferno.github.io/cantina-obscura/signal-lost.html");}h=null;}});})();</script><script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#f0c060"},'logo-footer':{data:null,color:"#00cc00"},'logo-watermark':{data:null,color:"#00cc00"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
