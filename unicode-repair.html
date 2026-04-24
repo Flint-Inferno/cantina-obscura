@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNICODE REPAIR // CANTINA OBSCURA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:     #060608;
+      --panel:  #0d0d12;
+      --border: #1e2030;
+      --accent: #f0c060;
+      --text:   #a0a8c0;
+      --dim:    #3a3d50;
+      --green:  #00cc88;
+      --red:    #cc3333;
+      --amber:  #e07840;
+      --font:   'Share Tech Mono', monospace;
+      --hd:     'Orbitron', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.8rem;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ─────────────────────────────────────── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 0.45rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .logo { font-family: var(--hd); font-size: 0.62rem; letter-spacing: 0.18em; color: var(--accent); white-space: nowrap; }
+    #cur-file { flex: 1; font-size: 0.72rem; color: var(--accent); opacity: 0.65; letter-spacing: 0.07em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #status { font-size: 0.68rem; letter-spacing: 0.07em; opacity: 0.5; white-space: nowrap; min-width: 240px; text-align: right; }
+    #status.ok   { color: var(--green);  opacity: 1; }
+    #status.err  { color: var(--red);    opacity: 1; }
+    #status.warn { color: var(--amber);  opacity: 1; }
+
+    .btn {
+      font-family: var(--font); font-size: 0.68rem; letter-spacing: 0.09em;
+      padding: 0.28rem 0.75rem; border-radius: 2px; cursor: pointer;
+      border: 1px solid var(--dim); background: transparent; color: var(--text);
+      transition: border-color 0.15s, color 0.15s, background 0.15s; white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--text); color: #fff; }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.primary:hover { background: rgba(240,192,96,0.1); }
+    .btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+    /* ── Main layout ─────────────────────────────────── */
+    #main { display: grid; grid-template-columns: 270px 1fr; flex: 1; overflow: hidden; }
+
+    /* ── Left panel ──────────────────────────────────── */
+    #left {
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: var(--panel); overflow: hidden;
+    }
+
+    #left-head {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.52rem; letter-spacing: 0.2em;
+      color: var(--accent); opacity: 0.45;
+      text-transform: uppercase; flex-shrink: 0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #left-head span.repo-label { font-size: 0.5rem; letter-spacing: 0.08em; color: var(--text); opacity: 0.4; }
+
+    #pat-row {
+      display: flex; gap: 0.35rem; align-items: center;
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    #pat-row input {
+      flex: 1; font-family: var(--font); font-size: 0.68rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.22rem 0.4rem; outline: none; min-width: 0;
+    }
+    #pat-row input:focus { border-color: var(--dim); }
+    #pat-row input::placeholder { opacity: 0.25; }
+    #pat-save-btn { flex-shrink: 0; }
+
+    #tree-wrap {
+      flex: 1; overflow-y: auto;
+      padding: 0.25rem 0;
+    }
+    #tree-wrap::-webkit-scrollbar { width: 3px; }
+    #tree-wrap::-webkit-scrollbar-track { background: transparent; }
+    #tree-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .tree-msg { padding: 0.5rem 0.75rem; font-size: 0.65rem; opacity: 0.35; }
+    .tree-msg.err { color: var(--red); opacity: 0.8; }
+
+    .t-folder {
+      display: flex; align-items: center; gap: 0.38rem;
+      cursor: pointer; padding: 0.2rem 0.5rem;
+      font-size: 0.7rem; user-select: none;
+      transition: background 0.1s;
+    }
+    .t-folder:hover { background: rgba(255,255,255,0.03); }
+    .t-file {
+      display: flex; align-items: center; gap: 0.38rem;
+      cursor: pointer; padding: 0.2rem 0.5rem;
+      font-size: 0.7rem; user-select: none;
+      transition: background 0.12s;
+    }
+    .t-file:hover  { background: rgba(240,192,96,0.07); }
+    .t-file.active { background: rgba(240,192,96,0.13); color: var(--accent); }
+
+    .t-arrow { width: 0.65rem; font-size: 0.5rem; opacity: 0.45; flex-shrink: 0; transition: transform 0.15s; }
+    .t-arrow.open { transform: rotate(90deg); opacity: 0.7; }
+    .t-icon  { font-size: 0.58rem; opacity: 0.4; flex-shrink: 0; width: 0.8rem; }
+    .t-name  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .t-children { padding-left: 0.95rem; }
+    .t-children.closed { display: none; }
+
+    #local-row {
+      border-top: 1px solid var(--border);
+      padding: 0.5rem 0.6rem; flex-shrink: 0;
+    }
+    .btn-block { display: block; width: 100%; text-align: center; cursor: pointer; }
+
+    /* ── Right panel ─────────────────────────────────── */
+    #right { display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Scan bar */
+    #scan-bar {
+      display: none; align-items: center; gap: 0.65rem;
+      padding: 0.4rem 1rem;
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #scan-bar.on { display: flex; }
+    #scan-summary { flex: 1; font-size: 0.7rem; letter-spacing: 0.06em; }
+    .s-bad { color: var(--red); }
+    .s-ok  { color: var(--green); }
+    .s-dim { opacity: 0.5; }
+    #detail-toggle {
+      font-size: 0.6rem; opacity: 0.5; cursor: pointer;
+      padding: 0.12rem 0.4rem; border: 1px solid var(--border);
+      border-radius: 2px; letter-spacing: 0.06em;
+      transition: opacity 0.15s;
+    }
+    #detail-toggle:hover { opacity: 1; }
+
+    /* Scan detail list */
+    #scan-detail {
+      display: none; overflow-y: auto; max-height: 175px;
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #scan-detail.on { display: block; }
+    #scan-detail::-webkit-scrollbar { width: 3px; }
+    #scan-detail::-webkit-scrollbar-track { background: transparent; }
+    #scan-detail::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .sd-row {
+      display: flex; gap: 0.6rem; align-items: baseline;
+      padding: 0.18rem 1rem;
+      border-bottom: 1px solid rgba(30,32,48,0.6);
+      font-size: 0.65rem; line-height: 1.4;
+    }
+    .sd-row:last-child { border-bottom: none; }
+    .sd-ln  { color: var(--accent); opacity: 0.45; font-size: 0.58rem; min-width: 60px; flex-shrink: 0; }
+    .sd-ct  { opacity: 0.35; font-size: 0.58rem; flex-shrink: 0; }
+    .sd-old { color: var(--red);   opacity: 0.75; word-break: break-all; }
+    .sd-arr { opacity: 0.25; flex-shrink: 0; }
+    .sd-new { color: var(--green); word-break: break-all; }
+
+    /* View controls */
+    #view-bar {
+      display: none; align-items: center; gap: 0.45rem;
+      padding: 0.38rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel); flex-shrink: 0;
+    }
+    #view-bar.on { display: flex; }
+    .vbtn {
+      font-family: var(--font); font-size: 0.6rem; letter-spacing: 0.1em;
+      padding: 0.18rem 0.6rem; border: 1px solid var(--border);
+      background: transparent; color: var(--text);
+      opacity: 0.45; cursor: pointer; border-radius: 2px;
+      transition: all 0.12s;
+    }
+    .vbtn:hover  { opacity: 0.85; border-color: var(--dim); }
+    .vbtn.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    #vbar-spacer { flex: 1; }
+
+    /* Preview / diff area */
+    #content-area { flex: 1; position: relative; overflow: hidden; background: #000; }
+
+    #empty {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.65rem; opacity: 0.15; pointer-events: none;
+    }
+    #empty .ei { font-size: 2.2rem; }
+    #empty p   { font-size: 0.62rem; letter-spacing: 0.14em; text-align: center; line-height: 1.9; }
+
+    #preview { width: 100%; height: 100%; border: none; }
+
+    #diff-view {
+      display: none; position: absolute; inset: 0;
+      overflow-y: auto; background: var(--bg);
+      font-size: 0.7rem; line-height: 1.55;
+    }
+    #diff-view::-webkit-scrollbar { width: 4px; }
+    #diff-view::-webkit-scrollbar-track { background: transparent; }
+    #diff-view::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .dk-head { padding: 0.2rem 1rem; background: rgba(240,192,96,0.04); color: var(--accent); opacity: 0.4; font-size: 0.58rem; letter-spacing: 0.1em; border-bottom: 1px solid var(--border); }
+    .dk-sep  { border-top: 1px solid var(--border); margin-top: 0.35rem; }
+
+    .dl {
+      display: flex; align-items: baseline;
+      padding: 0 1rem; white-space: pre-wrap; word-break: break-all;
+    }
+    .dl.ctx { opacity: 0.28; }
+    .dl.rem { background: rgba(204,51,51,0.07); }
+    .dl.add { background: rgba(0,204,136,0.055); }
+    .dl-ln  { width: 58px; font-size: 0.58rem; opacity: 0.35; text-align: right; padding-right: 0.65rem; flex-shrink: 0; user-select: none; }
+    .dl-sg  { width: 0.9rem; font-size: 0.68rem; flex-shrink: 0; }
+    .dl.rem .dl-sg { color: var(--red); }
+    .dl.add .dl-sg { color: var(--green); }
+    .dl-txt { flex: 1; }
+    .hi-old { background: rgba(204,51,51,0.38); border-radius: 1px; }
+    .hi-new { background: rgba(0,204,136,0.32); border-radius: 1px; }
+
+    /* PAT overlay */
+    #pat-ovl {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.93);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #pat-ovl.hidden { display: none; }
+    #pat-box {
+      background: var(--panel); border: 1px solid var(--accent);
+      border-radius: 4px; padding: 1.5rem 2rem;
+      width: min(400px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.8rem;
+    }
+    #pat-box h2 { font-family: var(--hd); font-size: 0.68rem; letter-spacing: 0.2em; color: var(--accent); }
+    #pat-box p  { font-size: 0.68rem; line-height: 1.65; opacity: 0.55; }
+    #pat-box-in {
+      font-family: var(--font); font-size: 0.75rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.38rem 0.55rem; width: 100%; outline: none;
+    }
+    #pat-box-in:focus { border-color: var(--accent); }
+    #pat-box-acts { display: flex; gap: 0.55rem; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">◈ UNICODE REPAIR</div>
+  <div id="cur-file">— no file loaded —</div>
+  <div id="status">READY</div>
+  <button class="btn" onclick="openPatOvl()">◧ TOKEN</button>
+</div>
+
+<div id="main">
+
+  <!-- Left: file tree -->
+  <div id="left">
+    <div id="left-head">
+      <span>REPOSITORY</span>
+      <span class="repo-label">Flint-Inferno / cantina-obscura</span>
+    </div>
+
+    <div id="pat-row">
+      <input id="pat-inline" type="password" placeholder="ghp_ token (optional if saved)" />
+      <button class="btn pat-save-btn" onclick="savePatInline()">SAVE</button>
+    </div>
+
+    <div id="tree-wrap">
+      <div class="tree-msg">Enter token above, then tree will load.</div>
+    </div>
+
+    <div id="local-row">
+      <label class="btn btn-block">
+        ◧ OPEN LOCAL FILE
+        <input type="file" accept=".html" style="display:none" onchange="openLocal(this)" />
+      </label>
+    </div>
+  </div>
+
+  <!-- Right: scan + view -->
+  <div id="right">
+
+    <div id="scan-bar">
+      <div id="scan-summary"></div>
+      <div id="detail-toggle" onclick="toggleDetail()">DETAILS ▾</div>
+    </div>
+
+    <div id="scan-detail"></div>
+
+    <div id="view-bar">
+      <button class="vbtn" id="vb-before" onclick="setView('before')">BEFORE</button>
+      <button class="vbtn active" id="vb-after"  onclick="setView('after')">AFTER</button>
+      <button class="vbtn" id="vb-diff"   onclick="setView('diff')">CODE DIFF</button>
+      <div id="vbar-spacer"></div>
+      <button class="btn primary" id="commit-btn" onclick="commitFile()" disabled>◈ COMMIT TO GITHUB</button>
+      <button class="btn" id="export-btn" onclick="exportFile()" disabled>⬇ EXPORT</button>
+    </div>
+
+    <div id="content-area">
+      <div id="empty">
+        <div class="ei">◈</div>
+        <p>SELECT A FILE FROM THE REPO TREE<br>OR OPEN A LOCAL FILE</p>
+      </div>
+      <iframe id="preview" style="display:none"></iframe>
+      <div id="diff-view"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAT overlay -->
+<div id="pat-ovl" class="hidden">
+  <div id="pat-box">
+    <h2>GITHUB ACCESS TOKEN</h2>
+    <p>A Personal Access Token with <code>contents: read/write</code> permission on the cantina-obscura repository.</p>
+    <input id="pat-box-in" type="password" placeholder="ghp_..." />
+    <div id="pat-box-acts">
+      <button class="btn" onclick="closePatOvl()">CANCEL</button>
+      <button class="btn primary" onclick="savePatOvl()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const GH_OWNER  = 'Flint-Inferno';
+const GH_REPO   = 'cantina-obscura';
+const PAT_SKEY  = 'co-repair-pat';
+
+let loaded    = null;   // {path, sha, isLocal, origHTML, fixedHTML, scan}
+let curView   = 'after';
+let detailOpen = false;
+let activeRow  = null;
+
+// ── PAT ───────────────────────────────────────────────────────
+function getPat() {
+  return document.getElementById('pat-inline').value.trim()
+      || sessionStorage.getItem(PAT_SKEY)
+      || '';
+}
+function savePatInline() {
+  const v = document.getElementById('pat-inline').value.trim();
+  if (!v) return;
+  sessionStorage.setItem(PAT_SKEY, v);
+  setStatus('TOKEN SAVED', 'ok');
+  loadTree('', document.getElementById('tree-wrap'));
+}
+function openPatOvl() {
+  document.getElementById('pat-box-in').value = getPat();
+  document.getElementById('pat-ovl').classList.remove('hidden');
+  setTimeout(() => document.getElementById('pat-box-in').focus(), 40);
+}
+function closePatOvl() { document.getElementById('pat-ovl').classList.add('hidden'); }
+function savePatOvl() {
+  const v = document.getElementById('pat-box-in').value.trim();
+  if (v) {
+    sessionStorage.setItem(PAT_SKEY, v);
+    document.getElementById('pat-inline').value = v;
+    closePatOvl();
+    setStatus('TOKEN SAVED', 'ok');
+    loadTree('', document.getElementById('tree-wrap'));
+  }
+}
+
+function ghHdr() {
+  const p = getPat();
+  const h = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  if (p) h.Authorization = 'Bearer ' + p;
+  return h;
+}
+
+// ── Mojibake repair + scan ────────────────────────────────────
+// Returns {result, count} — count = number of repaired runs
+function repairLine(str) {
+  const parts = [];
+  let i = 0, count = 0;
+  while (i < str.length) {
+    const c = str.charCodeAt(i);
+    if (c >= 0x80 && c <= 0xFF) {
+      let j = i + 1;
+      while (j < str.length && str.charCodeAt(j) >= 0x80 && str.charCodeAt(j) <= 0xFF) j++;
+      const run   = str.slice(i, j);
+      const bytes = new Uint8Array(j - i);
+      for (let k = 0; k < run.length; k++) bytes[k] = run.charCodeAt(k);
+      try {
+        const dec = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        parts.push(dec);
+        if (dec !== run) count++;
+      } catch (_) { parts.push(run); }
+      i = j;
+    } else {
+      let j = i + 1;
+      while (j < str.length && (str.charCodeAt(j) < 0x80 || str.charCodeAt(j) > 0xFF)) j++;
+      parts.push(str.slice(i, j));
+      i = j;
+    }
+  }
+  return { result: parts.join(''), count };
+}
+
+function scanHTML(html) {
+  const lines      = html.split('\n');
+  const changed    = [];   // {lineIdx, lineNum, orig, fixed, count}
+  let   totalCount = 0;
+
+  lines.forEach((line, idx) => {
+    const { result, count } = repairLine(line);
+    if (count > 0) {
+      totalCount += count;
+      changed.push({ lineIdx: idx, lineNum: idx + 1, orig: line, fixed: result, count });
+    }
+  });
+
+  let fixedHTML = html;
+  if (changed.length) {
+    const map = new Map(changed.map(c => [c.lineIdx, c.fixed]));
+    fixedHTML  = lines.map((l, i) => map.has(i) ? map.get(i) : l).join('\n');
+  }
+
+  return { fixedHTML, changed, totalCount, hasChanges: changed.length > 0 };
+}
+
+// ── b64 decode ────────────────────────────────────────────────
+function b64dec(b64) {
+  return decodeURIComponent(escape(atob(b64.replace(/\n/g, ''))));
+}
+
+// ── File tree ─────────────────────────────────────────────────
+async function loadTree(path, container, depth = 0) {
+  if (!path) container.innerHTML = '<div class="tree-msg">Loading…</div>';
+  try {
+    const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
+    const res = await fetch(url, { headers: ghHdr() });
+    if (res.status === 401 || res.status === 403) {
+      if (!path) container.innerHTML = '<div class="tree-msg err">Auth error — enter token above</div>';
+      return null;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const items = await res.json();
+
+    items.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    if (!path) container.innerHTML = '';
+    renderItems(container, items, depth);
+    return items;
+  } catch (e) {
+    if (!path) container.innerHTML = `<div class="tree-msg err">Error: ${e.message}</div>`;
+    return null;
+  }
+}
+
+function renderItems(container, items, depth) {
+  const pad = 0.45 + depth * 0.9;
+  items.forEach(item => {
+    if (item.type === 'dir') {
+      const wrap = document.createElement('div');
+
+      const row = document.createElement('div');
+      row.className = 't-folder';
+      row.style.paddingLeft = pad + 'rem';
+      row.innerHTML = `<span class="t-arrow">▶</span><span class="t-icon" style="opacity:0.3">◧</span><span class="t-name">${esc(item.name)}</span>`;
+      row.onclick = () => toggleDir(row, item.path, depth + 1);
+
+      const kids = document.createElement('div');
+      kids.className = 't-children closed';
+      kids.dataset.path   = item.path;
+      kids.dataset.loaded = '0';
+
+      wrap.appendChild(row);
+      wrap.appendChild(kids);
+      container.appendChild(wrap);
+    } else if (item.name.endsWith('.html')) {
+      const row = document.createElement('div');
+      row.className = 't-file';
+      row.style.paddingLeft = (pad + 0.55) + 'rem';
+      row.dataset.path = item.path;
+      row.dataset.sha  = item.sha;
+      row.innerHTML = `<span class="t-icon">◈</span><span class="t-name">${esc(item.name)}</span>`;
+      row.onclick = () => selectFile(item.path, item.sha, row);
+      container.appendChild(row);
+    }
+  });
+}
+
+async function toggleDir(row, path, depth) {
+  const arrow = row.querySelector('.t-arrow');
+  const kids  = row.nextElementSibling;
+  if (!kids) return;
+  const isOpen = !kids.classList.contains('closed');
+  if (isOpen) { kids.classList.add('closed'); arrow.classList.remove('open'); return; }
+
+  arrow.classList.add('open');
+  kids.classList.remove('closed');
+  if (kids.dataset.loaded === '1') return;
+
+  kids.innerHTML = '<div class="tree-msg" style="font-size:0.6rem;padding:0.18rem 0.5rem;">Loading…</div>';
+  const items = await loadTree(path, kids, depth);
+  kids.innerHTML = '';
+  if (items && items.length) {
+    renderItems(kids, items, depth);
+  } else {
+    kids.innerHTML = '<div class="tree-msg" style="font-size:0.58rem;opacity:0.2;padding:0.15rem 0.5rem;">Empty</div>';
+  }
+  kids.dataset.loaded = '1';
+}
+
+// ── Select & load file ────────────────────────────────────────
+async function selectFile(path, sha, rowEl) {
+  if (activeRow) activeRow.classList.remove('active');
+  activeRow = rowEl;
+  rowEl.classList.add('active');
+  document.getElementById('cur-file').textContent = path;
+  setStatus('LOADING…', '');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}`,
+      { headers: ghHdr() }
+    );
+    if (res.status === 401 || res.status === 403) { setStatus('AUTH ERROR', 'err'); openPatOvl(); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    processFile(b64dec(data.content), path, data.sha, false);
+  } catch (e) {
+    setStatus('LOAD ERROR: ' + e.message, 'err');
+  }
+}
+
+function openLocal(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  if (activeRow) { activeRow.classList.remove('active'); activeRow = null; }
+  const r = new FileReader();
+  r.onload = e => {
+    document.getElementById('cur-file').textContent = file.name + '  (local)';
+    processFile(e.target.result, file.name, null, true);
+  };
+  r.readAsText(file);
+}
+
+function processFile(html, path, sha, isLocal) {
+  const scan = scanHTML(html);
+  loaded = { path, sha, isLocal, origHTML: html, fixedHTML: scan.fixedHTML, scan };
+
+  renderScanBar(scan);
+  showViewBar();
+  setView('after');
+
+  document.getElementById('commit-btn').disabled = !scan.hasChanges || isLocal;
+  document.getElementById('export-btn').disabled = !scan.hasChanges;
+
+  if (scan.hasChanges) {
+    setStatus(`${scan.totalCount} instance${scan.totalCount === 1 ? '' : 's'} across ${scan.changed.length} line${scan.changed.length === 1 ? '' : 's'}`, 'warn');
+  } else {
+    setStatus('NO CORRUPTION FOUND', 'ok');
+  }
+}
+
+// ── Scan bar + detail ─────────────────────────────────────────
+function renderScanBar(scan) {
+  const bar  = document.getElementById('scan-bar');
+  const summ = document.getElementById('scan-summary');
+  const det  = document.getElementById('scan-detail');
+  const dtog = document.getElementById('detail-toggle');
+
+  bar.classList.add('on');
+
+  if (!scan.hasChanges) {
+    summ.innerHTML = '<span class="s-ok">✓ NO CORRUPTION FOUND</span>';
+    det.innerHTML  = '';
+    det.classList.remove('on');
+    dtog.style.display = 'none';
+    return;
+  }
+
+  dtog.style.display = '';
+  const i = scan.totalCount, l = scan.changed.length;
+  summ.innerHTML =
+    `<span class="s-bad">◆ ${i} corrupt instance${i===1?'':'s'}</span>` +
+    `<span class="s-dim"> across ${l} line${l===1?'':'s'}</span>`;
+
+  det.innerHTML = '';
+  scan.changed.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'sd-row';
+    row.innerHTML =
+      `<span class="sd-ln">LINE ${item.lineNum}</span>` +
+      `<span class="sd-ct">(${item.count}×)</span>` +
+      `<span class="sd-old">${esc(clip(item.orig.trim(), 55))}</span>` +
+      `<span class="sd-arr"> → </span>` +
+      `<span class="sd-new">${esc(clip(item.fixed.trim(), 55))}</span>`;
+    det.appendChild(row);
+  });
+}
+
+function toggleDetail() {
+  const det  = document.getElementById('scan-detail');
+  const dtog = document.getElementById('detail-toggle');
+  detailOpen = !detailOpen;
+  det.classList.toggle('on', detailOpen);
+  dtog.textContent = detailOpen ? 'DETAILS ▴' : 'DETAILS ▾';
+}
+
+// ── View controls ─────────────────────────────────────────────
+function showViewBar() {
+  document.getElementById('view-bar').classList.add('on');
+  document.getElementById('empty').style.display = 'none';
+}
+
+function setView(mode) {
+  curView = mode;
+  ['before','after','diff'].forEach(m =>
+    document.getElementById('vb-' + m).classList.toggle('active', m === mode)
+  );
+  const frame = document.getElementById('preview');
+  const dv    = document.getElementById('diff-view');
+
+  if (mode === 'diff') {
+    frame.style.display = 'none';
+    dv.style.display    = 'block';
+    if (loaded) renderDiff();
+  } else {
+    dv.style.display    = 'none';
+    frame.style.display = '';
+    if (loaded) frame.srcdoc = mode === 'before' ? loaded.origHTML : loaded.fixedHTML;
+  }
+}
+
+// ── Code diff ─────────────────────────────────────────────────
+function renderDiff() {
+  const dv = document.getElementById('diff-view');
+  if (!loaded || !loaded.scan.hasChanges) {
+    dv.innerHTML = '<div style="padding:2rem;opacity:0.25;text-align:center;letter-spacing:0.1em;">NO CHANGES TO DISPLAY</div>';
+    return;
+  }
+
+  const origLines  = loaded.origHTML.split('\n');
+  const changedSet = new Set(loaded.scan.changed.map(c => c.lineIdx));
+  const CTX        = 2;
+  const show       = new Set();
+  changedSet.forEach(i => { for (let d = -CTX; d <= CTX; d++) { const x = i + d; if (x >= 0 && x < origLines.length) show.add(x); } });
+
+  const sorted = [...show].sort((a,b) => a - b);
+  const html   = [];
+  let lastIdx  = -99;
+
+  sorted.forEach(idx => {
+    if (idx > lastIdx + 1) {
+      if (html.length) html.push('<div class="dk-sep"></div>');
+      html.push(`<div class="dk-head">── line ${idx + 1} ──</div>`);
+    }
+    lastIdx = idx;
+    const line = origLines[idx];
+    if (changedSet.has(idx)) {
+      html.push(`<div class="dl rem"><span class="dl-ln">${idx+1}</span><span class="dl-sg">−</span><span class="dl-txt">${diffHtml(line, 'old')}</span></div>`);
+      html.push(`<div class="dl add"><span class="dl-ln">${idx+1}</span><span class="dl-sg">+</span><span class="dl-txt">${diffHtml(line, 'new')}</span></div>`);
+    } else {
+      html.push(`<div class="dl ctx"><span class="dl-ln">${idx+1}</span><span class="dl-sg"> </span><span class="dl-txt">${esc(line)}</span></div>`);
+    }
+  });
+
+  dv.innerHTML = html.join('');
+}
+
+// Build highlighted HTML for a changed line.
+// mode='old': highlight the corrupt run in red
+// mode='new': show the repaired character highlighted in green
+function diffHtml(line, mode) {
+  let out = '';
+  let i   = 0;
+  while (i < line.length) {
+    const c = line.charCodeAt(i);
+    if (c >= 0x80 && c <= 0xFF) {
+      let j = i + 1;
+      while (j < line.length && line.charCodeAt(j) >= 0x80 && line.charCodeAt(j) <= 0xFF) j++;
+      const run   = line.slice(i, j);
+      const bytes = new Uint8Array(j - i);
+      for (let k = 0; k < run.length; k++) bytes[k] = run.charCodeAt(k);
+      let decoded = run, isMojibake = false;
+      try {
+        const d = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        if (d !== run) { decoded = d; isMojibake = true; }
+      } catch (_) {}
+      if (isMojibake) {
+        out += mode === 'old'
+          ? `<span class="hi-old">${esc(run)}</span>`
+          : `<span class="hi-new">${esc(decoded)}</span>`;
+      } else {
+        out += esc(run);
+      }
+      i = j;
+    } else {
+      out += esc(line[i]);
+      i++;
+    }
+  }
+  return out;
+}
+
+// ── Commit ────────────────────────────────────────────────────
+async function commitFile() {
+  if (!loaded || !loaded.scan.hasChanges || loaded.isLocal) return;
+  document.getElementById('commit-btn').disabled = true;
+  setStatus('COMMITTING…', '');
+  try {
+    // Refresh SHA
+    const head = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(loaded.path)}`,
+      { headers: ghHdr() }
+    );
+    if (head.ok) loaded.sha = (await head.json()).sha;
+
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(loaded.path)}`,
+      {
+        method:  'PUT',
+        headers: { ...ghHdr(), 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          message: `Repair Unicode encoding in ${loaded.path}`,
+          content: btoa(unescape(encodeURIComponent(loaded.fixedHTML))),
+          sha:     loaded.sha,
+        }),
+      }
+    );
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message || `HTTP ${res.status}`); }
+    const data       = await res.json();
+    loaded.sha       = data.content.sha;
+    loaded.origHTML  = loaded.fixedHTML;
+    loaded.scan      = { ...loaded.scan, hasChanges: false };
+    setStatus('COMMITTED ✓', 'ok');
+    document.getElementById('export-btn').disabled = true;
+  } catch (e) {
+    setStatus('COMMIT ERROR: ' + e.message, 'err');
+    document.getElementById('commit-btn').disabled = false;
+  }
+}
+
+// ── Export ────────────────────────────────────────────────────
+function exportFile() {
+  if (!loaded) return;
+  const name = loaded.path.split('/').pop();
+  const blob = new Blob([loaded.fixedHTML], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+  setStatus('EXPORTED — ' + name, 'ok');
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function setStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className   = cls || '';
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function clip(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePatOvl();
+  if (e.key === 'Enter' && !document.getElementById('pat-ovl').classList.contains('hidden')) savePatOvl();
+});
+
+// If a PAT was saved in a previous session, restore it and load the tree
+const savedPat = sessionStorage.getItem(PAT_SKEY);
+if (savedPat) {
+  document.getElementById('pat-inline').value = savedPat;
+  loadTree('', document.getElementById('tree-wrap'));
+}
+</script>
+</body>
+</html>
