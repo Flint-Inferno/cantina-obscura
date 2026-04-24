@@ -1,0 +1,2505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MISSION EDITOR // CANTINA OBSCURA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #060608;
+      --panel:    #0d0d12;
+      --border:   #1e2030;
+      --accent:   #f0c060;
+      --text:     #a0a8c0;
+      --dim:      #3a3d50;
+      --green:    #00cc88;
+      --red:      #cc3333;
+      --font:     'Share Tech Mono', monospace;
+      --font-hd:  'Orbitron', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.8rem;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #topbar .logo {
+      font-family: var(--font-hd);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+    #topbar-filename {
+      font-family: var(--font);
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      opacity: 0.7;
+      flex: 1;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      outline: none;
+      padding: 0.15rem 0.35rem;
+      transition: border-color 0.15s, opacity 0.15s;
+      min-width: 0;
+    }
+    #topbar-filename:hover { border-color: var(--dim); opacity: 0.9; }
+    #topbar-filename:focus { border-color: var(--accent); opacity: 1; }
+    #status-msg {
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+      min-width: 220px;
+      text-align: right;
+    }
+    #status-msg.ok   { color: var(--green); opacity: 1; }
+    #status-msg.err  { color: var(--red);   opacity: 1; }
+
+    .btn {
+      font-family: var(--font);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      padding: 0.35rem 0.9rem;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--text);
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--text); color: #fff; }
+    .btn.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn.primary:hover { background: rgba(240,192,96,0.1); }
+    .btn.primary:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    #main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Left column wrapper ─────────────────────────────────── */
+    #left-col {
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+    }
+    #left-tabs {
+      display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .left-tab {
+      flex: 1; padding: 0.5rem 0.75rem; font-size: 0.65rem;
+      background: none; border: none; border-bottom: 2px solid transparent;
+      color: var(--dim); cursor: pointer; font-family: inherit;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .left-tab:hover { color: var(--text); }
+    .left-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Left panel: form ────────────────────────────────────── */
+    #form-panel {
+      overflow-y: auto; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.85rem; flex: 1;
+    }
+    #form-panel.ltab-hidden { display: none; }
+
+    /* ── Left panel: security ────────────────────────────────── */
+    #security-panel {
+      display: none; overflow-y: auto; padding: 1rem;
+      flex-direction: column; gap: 1.1rem; flex: 1;
+    }
+    #security-panel.panel-active { display: flex; }
+    .sec-enable-row { display: flex; align-items: center; gap: 0.6rem; }
+    .sec-enable-row input[type="checkbox"] { width:1rem; height:1rem; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+    .sec-enable-row label { cursor:pointer; font-size:0.8rem; color:var(--text); letter-spacing:0.05em; user-select:none; }
+    #security-fields { display:flex; flex-direction:column; gap:1.1rem; }
+    #security-fields.sec-disabled { opacity:0.35; pointer-events:none; }
+    .sec-case-row { display:flex; align-items:center; gap:0.6rem; }
+    .sec-case-row input[type="checkbox"] { width:1rem; height:1rem; accent-color:var(--accent); cursor:pointer; }
+    .sec-case-row label { cursor:pointer; font-size:0.75rem; color:var(--text); user-select:none; }
+    .experimental-block { border-top:1px solid var(--border); padding-top:1rem; }
+    .experimental-block .section-heading { opacity:0.4; }
+    .experimental-block .sec-exp-row { display:flex; align-items:center; gap:0.6rem; opacity:0.35; margin-top:0.5rem; }
+    .experimental-block .sec-exp-row input { cursor:not-allowed; }
+    .experimental-block .sec-exp-row label { font-size:0.72rem; color:var(--dim); cursor:not-allowed; user-select:none; }
+
+    .section-heading {
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      opacity: 0.5;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.1rem;
+      text-transform: uppercase;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .field label {
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      color: var(--text);
+      opacity: 0.55;
+      text-transform: uppercase;
+    }
+    .field input, .field textarea, .field select {
+      font-family: var(--font);
+      font-size: 0.78rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.35rem 0.5rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--dim);
+      color: #d0d8f0;
+    }
+    .field textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+    .field select option { background: #111; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    /* Briefing mode toggle */
+    /* ── Rich text toolbar ──────────────────────────────────── */
+    .rt-wrap { display: flex; flex-direction: column; gap: 0; margin-top: 0.4rem; }
+    .rt-toolbar {
+      display: flex; flex-wrap: wrap; gap: 2px;
+      padding: 0.25rem 0.3rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-bottom: none; border-radius: 2px 2px 0 0;
+    }
+    .rt-btn {
+      font-family: var(--font); font-size: 0.68rem;
+      padding: 0.15rem 0.45rem; border: 1px solid transparent;
+      background: transparent; color: var(--text);
+      border-radius: 2px; cursor: pointer; letter-spacing: 0.06em;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .rt-btn:hover { border-color: var(--dim); background: rgba(255,255,255,0.04); }
+    .rt-btn.active { border-color: var(--accent); color: var(--accent); }
+    .rt-btn b { font-weight: bold; }
+    .rt-btn i { font-style: italic; }
+    .rt-color-wrap { position: relative; display: inline-flex; align-items: center; }
+    .rt-color-input { position: absolute; width: 26px; height: 22px; opacity: 0; cursor: pointer; left: 0; top: 0; }
+    .rt-field {
+      font-family: var(--font); font-size: 0.78rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 0 0 2px 2px;
+      padding: 0.35rem 0.5rem; min-height: 120px;
+      outline: none; line-height: 1.6;
+      transition: border-color 0.15s; white-space: pre-wrap;
+    }
+    .rt-field:focus { border-color: var(--dim); }
+    .rt-field a { color: var(--accent); text-decoration: underline; }
+    .rt-field ul, .rt-field ol { padding-left: 1.4em; }
+    /* ── Link picker overlay ────────────────────────────────── */
+    #brief-link-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #brief-link-overlay.hidden { display: none; }
+    #brief-link-box {
+      background: var(--panel); border: 1px solid var(--accent);
+      border-radius: 4px; padding: 1.25rem;
+      width: min(460px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    #brief-link-box h2 { font-family: var(--font-hd); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); }
+    .blp-tabs { display: flex; gap: 0.3rem; }
+    .blp-tab {
+      font-family: var(--font); font-size: 0.6rem; letter-spacing: 0.12em;
+      padding: 0.2rem 0.55rem; border: 1px solid var(--border);
+      background: transparent; color: var(--text);
+      border-radius: 2px; cursor: pointer; opacity: 0.6;
+      transition: opacity 0.15s, border-color 0.15s;
+    }
+    .blp-tab:hover { opacity: 1; }
+    .blp-tab.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    #brief-link-list {
+      max-height: 200px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 0.2rem;
+    }
+    .blp-item {
+      font-size: 0.72rem; padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border); border-radius: 2px;
+      cursor: pointer; transition: border-color 0.12s, color 0.12s;
+    }
+    .blp-item:hover { border-color: var(--accent); color: var(--accent); }
+    #brief-link-manual { display: none; }
+    #brief-link-manual input {
+      width: 100%; font-family: var(--font); font-size: 0.75rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.3rem 0.5rem; outline: none;
+    }
+    #brief-link-manual input:focus { border-color: var(--dim); }
+
+    /* Page status toggle */
+    .status-toggle {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.35rem;
+    }
+    .status-toggle button {
+      flex: 1;
+      font-family: var(--font);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      padding: 0.25rem 0.4rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      opacity: 0.4;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    #page-status-not-started.active { border-color: var(--dim);    color: var(--text);   opacity: 0.75; }
+    #page-status-in-progress.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    #page-status-complete.active    { border-color: var(--green);  color: var(--green);  opacity: 1; }
+
+    /* Browse status badge */
+    .browse-status-badge {
+      display: inline-block;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      padding: 0.1rem 0.35rem;
+      border-radius: 2px;
+      border: 1px solid;
+    }
+    .bstatus-not-started { color: var(--dim);    border-color: var(--dim);    opacity: 0.7; }
+    .bstatus-in-progress { color: var(--accent); border-color: var(--accent); opacity: 0.9; }
+    .bstatus-complete    { color: var(--green);  border-color: var(--green);  opacity: 0.9; }
+
+    /* Dirty (unsaved changes) flag */
+    #dirty-flag {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
+    /* Color swatches */
+    #faction-swatches {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.35rem;
+      margin-top: 0.35rem;
+    }
+    .swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 3px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.active { border-color: #fff; }
+    .swatch-label {
+      font-size: 0.5rem;
+      letter-spacing: 0.06em;
+      opacity: 0.4;
+      margin-top: 0.15rem;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .swatch-group { display: flex; flex-direction: column; align-items: center; }
+
+    /* Custom color inputs */
+    .color-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-top: 0.6rem;
+    }
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .color-row label {
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      opacity: 0.5;
+      width: 58px;
+      flex-shrink: 0;
+    }
+    .color-row input[type="color"] {
+      width: 26px;
+      height: 20px;
+      padding: 1px 2px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .color-row input[type="text"] {
+      font-family: var(--font);
+      font-size: 0.72rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.18rem 0.4rem;
+      flex: 1;
+      outline: none;
+      min-width: 0;
+    }
+    .color-row input[type="text"]:focus { border-color: var(--dim); }
+
+    /* Logo upload rows */
+    .logo-rows { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.35rem; }
+    .logo-row { display: flex; flex-direction: column; gap: 0.28rem; }
+    .logo-row-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      opacity: 0.5;
+    }
+    .logo-row-controls { display: flex; align-items: center; gap: 0.4rem; }
+    .logo-upload-btn {
+      font-family: var(--font);
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.55rem;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--text);
+      border-radius: 2px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .logo-upload-btn:hover { border-color: var(--text); color: #fff; }
+    .logo-preview-img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      display: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: #000;
+      flex-shrink: 0;
+    }
+    .logo-clear-btn {
+      font-family: var(--font);
+      font-size: 0.62rem;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--red);
+      border-radius: 2px;
+      cursor: pointer;
+      display: none;
+    }
+    .logo-clear-btn:hover { border-color: var(--red); }
+    .logo-reset-btn {
+      font-family: var(--font);
+      font-size: 0.68rem;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--dim);
+      background: transparent;
+      color: var(--text);
+      opacity: 0.6;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .logo-reset-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+    /* ── Right panel: preview ────────────────────────────────── */
+    #preview-panel {
+      position: relative;
+      background: #000;
+      overflow: hidden;
+    }
+    #preview-label {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.75rem;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      opacity: 0.35;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #preview-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+
+    /* ── Scrollbar ───────────────────────────────────────────── */
+    #form-panel::-webkit-scrollbar, #security-panel::-webkit-scrollbar { width: 4px; }
+    #form-panel::-webkit-scrollbar-track, #security-panel::-webkit-scrollbar-track { background: transparent; }
+    #form-panel::-webkit-scrollbar-thumb, #security-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── PAT overlay ─────────────────────────────────────────── */
+    #pat-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #pat-overlay.hidden { display: none; }
+    #pat-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.5rem 2rem;
+      width: min(420px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    #pat-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+    }
+    #pat-box p {
+      font-size: 0.7rem;
+      line-height: 1.6;
+      color: var(--text);
+      opacity: 0.7;
+    }
+    #pat-input {
+      font-family: var(--font);
+      font-size: 0.75rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.4rem 0.6rem;
+      width: 100%;
+      outline: none;
+    }
+    #pat-input:focus { border-color: var(--accent); }
+    #pat-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+    /* ── Password / change-password overlays ─────────────────── */
+    #pw-overlay, #changepw-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.96);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    #changepw-overlay.hidden { display: none; }
+    #pw-box, #changepw-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.75rem 2rem;
+      width: min(380px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    #pw-box h2, #changepw-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      color: var(--accent);
+    }
+    #pw-box p, #changepw-box p {
+      font-size: 0.68rem;
+      line-height: 1.6;
+      color: var(--text);
+      opacity: 0.6;
+    }
+    #pw-input, #changepw-input, #changepw-confirm {
+      font-family: var(--font);
+      font-size: 0.8rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.45rem 0.65rem;
+      width: 100%;
+      outline: none;
+      letter-spacing: 0.08em;
+    }
+    #pw-input:focus, #changepw-input:focus, #changepw-confirm:focus { border-color: var(--accent); }
+    #pw-status, #changepw-status {
+      font-size: 0.65rem;
+      min-height: 1rem;
+      color: var(--red);
+    }
+    #pw-status.ok { color: var(--green); }
+    #pw-actions, #changepw-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+    #pw-owner-link {
+      font-size: 0.6rem;
+      color: var(--text);
+      opacity: 0.3;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: 0.08em;
+      transition: opacity 0.15s;
+    }
+    #pw-owner-link:hover { opacity: 0.7; }
+    #inactivity-warning {
+      position: fixed;
+      bottom: 1rem; right: 1rem;
+      font-family: var(--font);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--red);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 500;
+    }
+    #inactivity-warning.visible { opacity: 1; }
+
+    /* ── Browse overlay ──────────────────────────────────────── */
+    #browse-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #browse-overlay.hidden { display: none; }
+    #browse-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      width: min(480px, calc(100vw - 2rem));
+      max-height: 85vh;
+      display: flex; flex-direction: column; gap: 0.65rem;
+    }
+    #browse-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    #browse-sort-bar {
+      display: flex;
+      gap: 0.35rem;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .sort-btn {
+      font-family: var(--font);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.55rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      opacity: 0.5;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .sort-btn:hover { opacity: 0.85; border-color: var(--dim); }
+    .sort-btn.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    #browse-list {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex: 1;
+    }
+    #browse-list::-webkit-scrollbar { width: 4px; }
+    #browse-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .browse-item {
+      font-family: var(--font);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      padding: 0.35rem 0.6rem;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.1s, background 0.1s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .browse-item:hover { border-color: var(--accent); background: rgba(240,192,96,0.06); }
+    .browse-item:hover .browse-title { color: var(--accent); }
+    .browse-title {
+      font-size: 0.78rem;
+      color: var(--text);
+      transition: color 0.1s;
+    }
+    .browse-title.loading { opacity: 0.3; font-style: italic; }
+    .browse-meta {
+      font-size: 0.6rem;
+      opacity: 0.45;
+      letter-spacing: 0.06em;
+    }
+    .browse-fname {
+      font-size: 0.6rem;
+      opacity: 0.3;
+      letter-spacing: 0.08em;
+    }
+    #browse-status {
+      font-size: 0.65rem;
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+    #browse-actions { display: flex; justify-content: flex-end; flex-shrink: 0; }
+
+    /* ── Commit confirm overlay ─────────────────────────────────── */
+    #commit-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #commit-overlay.hidden { display: none; }
+    #agent-picker-overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #agent-picker-overlay.hidden { display: none; }
+    #commit-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.5rem 2rem;
+      width: min(440px, calc(100vw - 2rem));
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    #commit-box h2 {
+      font-family: var(--font-hd);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+    }
+    #commit-box p {
+      font-size: 0.72rem;
+      line-height: 1.65;
+      color: var(--text);
+      opacity: 0.75;
+    }
+    #commit-box p strong { color: var(--accent); opacity: 1; font-style: normal; }
+    #commit-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+    /* ── Topbar secondary group — transparent passthrough on desktop ── */
+    #topbar-actions { display: contents; }
+
+    /* ── Mobile tab bar — hidden on desktop ─────────────────────── */
+    #mobile-tabs { display: none; }
+
+    /* ── Mobile responsive ───────────────────────────────────────── */
+    @media (max-width: 700px) {
+      /* Single-column layout */
+      #main { grid-template-columns: 1fr; }
+      #preview-panel { display: none; }
+      #preview-panel.tab-active { display: block; }
+      #form-panel.tab-hidden { display: none; }
+      #left-col.col-hidden { display: none; }
+      #security-panel.panel-active { display: none; }
+      #security-panel.tab-active { display: flex; }
+
+      /* Topbar: two rows */
+      #topbar { flex-wrap: wrap; gap: 0.5rem; }
+      #topbar .logo { display: none; }
+      #topbar-filename { min-width: 0; }
+      #topbar-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        flex-basis: 100%;
+        padding-top: 0.35rem;
+        border-top: 1px solid var(--border);
+      }
+      #status-msg {
+        min-width: 0;
+        flex: 1;
+        text-align: left;
+        font-size: 0.65rem;
+      }
+
+      /* Mobile tab bar */
+      #mobile-tabs {
+        display: flex;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .mobile-tab {
+        flex: 1;
+        font-family: var(--font);
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        padding: 0.65rem 0.5rem;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--text);
+        opacity: 0.5;
+        cursor: pointer;
+        transition: color 0.15s, opacity 0.15s, border-color 0.15s;
+      }
+      .mobile-tab.active {
+        color: var(--accent);
+        opacity: 1;
+        border-bottom-color: var(--accent);
+      }
+
+      /* Touch targets */
+      .btn { padding: 0.55rem 0.9rem; font-size: 0.75rem; }
+      .color-row input[type="color"] { width: 36px; height: 30px; }
+      .browse-item { padding: 0.55rem 0.75rem; }
+      .sort-btn { padding: 0.4rem 0.75rem; font-size: 0.65rem; }
+      .mode-toggle button, .status-toggle button { padding: 0.4rem 0.75rem; }
+
+      /* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
+      .field input, .field textarea, .field select {
+        font-size: 1rem;
+        padding: 0.5rem 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Password overlay (shown by default until authenticated) ──── -->
+  <div id="pw-overlay">
+    <div id="pw-box">
+      <h2>◈ CANTINA OBSCURA</h2>
+      <p>Enter the access password to continue.</p>
+      <input type="password" id="pw-input" placeholder="Password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitPassword()" />
+      <div id="pw-status"></div>
+      <div id="pw-actions">
+        <button class="btn primary" onclick="submitPassword()">ENTER</button>
+      </div>
+      <div id="pw-owner-link" onclick="openPat()">⚿ Owner login</div>
+    </div>
+  </div>
+
+  <!-- ── Change password overlay (owner only) ─────────────────────── -->
+  <div id="changepw-overlay" class="hidden">
+    <div id="changepw-box">
+      <h2>⚿ CHANGE COLLABORATOR PASSWORD</h2>
+      <p>Set the shared password collaborators use to access the editor. Your PAT will be encrypted with this password and stored in the repo.</p>
+      <input type="password" id="changepw-input" placeholder="New password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') document.getElementById('changepw-confirm').focus()" />
+      <input type="password" id="changepw-confirm" placeholder="Confirm password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitChangePw()" />
+      <div id="changepw-status"></div>
+      <div id="changepw-actions">
+        <button class="btn" onclick="closeChangePw()">CANCEL</button>
+        <button class="btn primary" onclick="submitChangePw()">SAVE PASSWORD</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inactivity-warning">SESSION EXPIRING...</div>
+
+  <!-- ── Browse overlay ──────────────────────────────────────────── -->
+  <div id="browse-overlay" class="hidden">
+    <div id="browse-box">
+      <h2>▤ BROWSE — live-page-links/</h2>
+      <div id="browse-sort-bar">
+        <button class="sort-btn active" onclick="setBrowseSort('name')">NAME</button>
+        <button class="sort-btn" onclick="setBrowseSort('title')">TITLE</button>
+        <button class="sort-btn" onclick="setBrowseSort('difficulty')">DIFFICULTY</button>
+        <button class="sort-btn" onclick="setBrowseSort('status')">STATUS</button>
+        <button class="sort-btn" onclick="setBrowseSort('updated')">LAST UPDATED</button>
+        <button class="sort-btn" onclick="setBrowseSort('size')">SIZE</button>
+      </div>
+      <div id="browse-list"></div>
+      <div id="browse-status">Loading...</div>
+      <div id="browse-actions">
+        <button class="btn" onclick="closeBrowse()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Commit confirm overlay ───────────────────────────────── -->
+  <div id="commit-overlay" class="hidden">
+    <div id="commit-box">
+      <h2>▲ CONFIRM COMMIT</h2>
+      <p>This will push <strong id="commit-fname"></strong> to the live GitHub Pages site.<br>The change will be publicly visible immediately.</p>
+      <div id="commit-actions">
+        <button class="btn" onclick="cancelCommit()">CANCEL</button>
+        <button class="btn primary" onclick="confirmCommit()">PUSH LIVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAT overlay ──────────────────────────────────────────── -->
+  <div id="pat-overlay" class="hidden">
+    <div id="pat-box">
+      <h2>⚿ GITHUB TOKEN</h2>
+      <p>Enter a classic GitHub PAT with <code>repo</code> scope to enable saving directly to the <code>live-page-links/</code> folder in the cantina-obscura repo.<br><br>Token is stored in localStorage only — never sent anywhere except GitHub's API.</p>
+      <input type="password" id="pat-input" placeholder="ghp_..." spellcheck="false" />
+      <div id="pat-actions">
+        <button class="btn" onclick="closePat()">CANCEL</button>
+        <button class="btn primary" onclick="savePat()">SAVE TOKEN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Brief link picker overlay ───────────────────────────── -->
+  <div id="brief-link-overlay" class="hidden">
+    <div id="brief-link-box">
+      <h2>↗ INSERT LINK</h2>
+      <div class="blp-tabs">
+        <button class="blp-tab active" onclick="setBriefLpTab('characters')">CHARACTERS</button>
+        <button class="blp-tab"        onclick="setBriefLpTab('missions')">MISSIONS</button>
+        <button class="blp-tab"        onclick="setBriefLpTab('manual')">MANUAL URL</button>
+      </div>
+      <div id="brief-link-list"></div>
+      <div id="brief-link-manual">
+        <input type="text" id="brief-link-manual-input" placeholder="https://...">
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.25rem;">
+        <button class="btn primary" onclick="confirmBriefLink()" style="flex:1;font-size:0.68rem;">INSERT</button>
+        <button class="btn"         onclick="closeBriefLink()"   style="flex:1;font-size:0.68rem;">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Agent picker overlay ────────────────────────────────── -->
+  <div id="agent-picker-overlay" class="hidden">
+    <div id="agent-picker-box" style="background:var(--panel);border:1px solid var(--accent);border-radius:4px;padding:1.25rem;width:300px;max-height:420px;display:flex;flex-direction:column;gap:0.5rem;">
+      <div style="font-family:var(--font-title,monospace);font-size:0.75rem;letter-spacing:0.18em;color:var(--accent);">PICK CHARACTER</div>
+      <div id="agent-picker-list" style="display:flex;flex-direction:column;gap:0.25rem;overflow-y:auto;max-height:260px;"></div>
+      <button class="btn" onclick="pickAgent('anyone')" style="width:100%;margin-top:0.25rem;font-size:0.68rem;">◈ ANYONE (links to full roster)</button>
+      <button class="btn" onclick="closeAgentPicker()" style="width:100%;font-size:0.68rem;">✕ CANCEL</button>
+    </div>
+  </div>
+
+  <!-- ── Top bar ──────────────────────────────────────────────── -->
+  <div id="topbar">
+    <div class="logo">◈ MISSION EDITOR</div>
+    <input type="text" id="topbar-filename" value="—" spellcheck="false" />
+    <div id="topbar-actions">
+      <div id="status-msg">LOADING...</div>
+      <input type="file" id="upload-input" accept=".html" style="display:none" onchange="openLocalFile(this)">
+      <button class="btn" onclick="document.getElementById('upload-input').click()">▲ OPEN</button>
+      <button class="btn" onclick="saveLocal()">⬇ SAVE</button>
+      <button class="btn" onclick="openLive()">↗ PREVIEW</button>
+      <button class="btn" onclick="openBrowse()">▤ BROWSE</button>
+      <button class="btn" id="changepw-btn" onclick="showChangePw()" style="display:none" title="Change collaborator password">⚿ PASSWORD</button>
+      <button class="btn" id="token-btn" onclick="openPat()" style="display:none" title="Set GitHub PAT">⚿ TOKEN</button>
+    </div>
+    <span id="dirty-flag" style="display:none">● UNSAVED</span>
+    <button class="btn primary" id="save-btn" onclick="saveFile()" disabled>▲ COMMIT</button>
+  </div>
+
+  <!-- ── Mobile tab bar (hidden on desktop) ────────────────────── -->
+  <div id="mobile-tabs">
+    <button class="mobile-tab active" id="tab-form"     onclick="setMobileTab('form')">✏ EDIT</button>
+    <button class="mobile-tab"        id="tab-security" onclick="setMobileTab('security')">⚿ CODE</button>
+    <button class="mobile-tab"        id="tab-preview"  onclick="setMobileTab('preview')">◉ PREVIEW</button>
+  </div>
+
+  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <div id="main">
+
+    <!-- LEFT: form + security -->
+    <div id="left-col">
+    <div id="left-tabs">
+      <button class="left-tab active" id="ltab-content" onclick="setLeftTab('content')">✏ CONTENT</button>
+      <button class="left-tab" id="ltab-security" onclick="setLeftTab('security')">⚿ SECURITY</button>
+    </div>
+    <div id="form-panel">
+
+      <!-- Page status -->
+      <div>
+        <div class="section-heading">Page Status</div>
+        <div class="status-toggle">
+          <button id="page-status-not-started" class="active" onclick="setPageStatus('not-started')">○ NOT STARTED</button>
+          <button id="page-status-in-progress" onclick="setPageStatus('in-progress')">◑ IN PROGRESS</button>
+          <button id="page-status-complete" onclick="setPageStatus('complete')">✓ COMPLETE</button>
+        </div>
+      </div>
+
+      <!-- Faction -->
+      <div>
+        <div class="section-heading">Faction / Color Scheme</div>
+        <div id="faction-swatches"></div>
+        <div class="color-rows">
+          <div class="color-row"><label>--bg</label>     <input type="color" id="color-bg">     <input type="text" id="hex-bg"     maxlength="7" placeholder="#000000"></div>
+          <div class="color-row"><label>--text</label>   <input type="color" id="color-text">   <input type="text" id="hex-text"   maxlength="7" placeholder="#ffffff"></div>
+          <div class="color-row"><label>--accent</label> <input type="color" id="color-accent"> <input type="text" id="hex-accent" maxlength="7" placeholder="#ffffff"></div>
+          <div class="color-row"><label>--border</label> <input type="color" id="color-border"> <input type="text" id="hex-border" maxlength="7" placeholder="#333333"></div>
+          <div class="color-row"><label>--dim</label>    <input type="color" id="color-dim">    <input type="text" id="hex-dim"    maxlength="7" placeholder="#111111"></div>
+          <div class="color-row"><label>--danger</label> <input type="color" id="color-danger"> <input type="text" id="hex-danger" maxlength="7" placeholder="#cc0000"></div>
+        </div>
+      </div>
+
+      <!-- Logo / Symbol -->
+      <div>
+        <div class="section-heading">Logo / Symbol</div>
+        <div class="logo-rows">
+
+          <div class="logo-row">
+            <div class="logo-row-label">TITLE — beside heading (~34px)</div>
+            <div class="logo-row-controls">
+              <label class="logo-upload-btn" for="logo-file-title">▲ FILE</label>
+              <input type="file" id="logo-file-title" accept=".svg,.png,.jpg,.jpeg,image/*" style="display:none" onchange="handleLogoUpload('title',this)">
+              <input type="color" id="color-logo-title">
+              <input type="text"  id="hex-logo-title" class="color-row" style="flex:1;font-family:var(--font);font-size:0.72rem;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.18rem 0.4rem;outline:none;" maxlength="7" placeholder="#accent">
+              <img id="logo-img-title" class="logo-preview-img" alt="">
+              <button class="logo-clear-btn" id="logo-clear-title" onclick="clearLogo('title')">✕ IMG</button>
+              <button class="logo-reset-btn" onclick="resetLogo('title')">↺</button>
+            </div>
+          </div>
+
+          <div class="logo-row">
+            <div class="logo-row-label">FOOTER — bottom strip (~18px)</div>
+            <div class="logo-row-controls">
+              <label class="logo-upload-btn" for="logo-file-footer">▲ FILE</label>
+              <input type="file" id="logo-file-footer" accept=".svg,.png,.jpg,.jpeg,image/*" style="display:none" onchange="handleLogoUpload('footer',this)">
+              <input type="color" id="color-logo-footer">
+              <input type="text"  id="hex-logo-footer" style="flex:1;font-family:var(--font);font-size:0.72rem;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.18rem 0.4rem;outline:none;" maxlength="7" placeholder="#accent">
+              <img id="logo-img-footer" class="logo-preview-img" alt="">
+              <button class="logo-clear-btn" id="logo-clear-footer" onclick="clearLogo('footer')">✕ IMG</button>
+              <button class="logo-reset-btn" onclick="resetLogo('footer')">↺</button>
+            </div>
+          </div>
+
+          <div class="logo-row">
+            <div class="logo-row-label">WATERMARK — background (~260px)</div>
+            <div class="logo-row-controls">
+              <label class="logo-upload-btn" for="logo-file-watermark">▲ FILE</label>
+              <input type="file" id="logo-file-watermark" accept=".svg,.png,.jpg,.jpeg,image/*" style="display:none" onchange="handleLogoUpload('watermark',this)">
+              <input type="color" id="color-logo-watermark">
+              <input type="text"  id="hex-logo-watermark" style="flex:1;font-family:var(--font);font-size:0.72rem;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.18rem 0.4rem;outline:none;" maxlength="7" placeholder="#accent">
+              <img id="logo-img-watermark" class="logo-preview-img" alt="">
+              <button class="logo-clear-btn" id="logo-clear-watermark" onclick="clearLogo('watermark')">✕ IMG</button>
+              <button class="logo-reset-btn" onclick="resetLogo('watermark')">↺</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Identity -->
+      <div>
+        <div class="section-heading">Identity</div>
+        <div class="field">
+          <label>Page Title (browser tab)</label>
+          <input type="text" id="f-page-title" placeholder="OPERATION: NAME // DATAPAD" />
+        </div>
+        <br/>
+        <div class="field">
+          <label>Classification Tag</label>
+          <input type="text" id="f-classify" placeholder="CLASSIFIED" />
+        </div>
+        <br/>
+        <div class="field">
+          <label>HoloNet Button URL</label>
+          <input type="text" id="f-holonet-url" placeholder="https://flint-inferno.github.io/cantina-obscura/holonet/holofeed-main.html" />
+        </div>
+      </div>
+
+      <!-- Mission header -->
+      <div>
+        <div class="section-heading">Mission Header</div>
+        <div class="field">
+          <label>Mission Title</label>
+          <input type="text" id="f-mission-title" placeholder="MISSION TITLE HERE" />
+        </div>
+        <br/>
+        <div class="field-row">
+          <div class="field">
+            <label>Mission Code</label>
+            <input type="text" id="f-mission-code" placeholder="(uses filename)" />
+          </div>
+          <div class="field">
+            <label>Faction</label>
+            <input type="text" id="f-mission-faction" placeholder="REBEL ALLIANCE" />
+          </div>
+        </div>
+        <br/>
+        <div class="field">
+          <label>Difficulty</label>
+          <input type="text" id="f-mission-cycle" placeholder="EASY / HARD / etc." />
+        </div>
+      </div>
+
+      <!-- Briefing -->
+      <div>
+        <div class="section-heading">Mission Briefing</div>
+        <div class="rt-wrap">
+          <div class="rt-toolbar">
+            <button class="rt-btn" onclick="briefCmd('bold')"      title="Bold"><b>B</b></button>
+            <button class="rt-btn" onclick="briefCmd('italic')"    title="Italic"><i>I</i></button>
+            <button class="rt-btn" onclick="briefCmd('underline')" title="Underline"><u>U</u></button>
+            <div class="rt-color-wrap" title="Text color">
+              <button class="rt-btn">A</button>
+              <input type="color" class="rt-color-input" onchange="briefColor(this.value)">
+            </div>
+            <button class="rt-btn" onclick="briefClearColor()" title="Clear color from selection">✕A</button>
+            <button class="rt-btn" onclick="openBriefLink()" title="Embed link">↗ LINK</button>
+            <button class="rt-btn" id="brief-list-btn" onclick="toggleBriefList()" title="Toggle bullet list">≡ LIST</button>
+          </div>
+          <div class="rt-field" id="rt-briefing" contenteditable="true" spellcheck="false"
+               oninput="markDirty();schedulePreview()"></div>
+        </div>
+      </div>
+
+      <!-- Payout -->
+      <div>
+        <div class="section-heading">Payout</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Credit Amount</label>
+            <input type="text" id="f-credits" placeholder="$000" />
+          </div>
+          <div class="field">
+            <label>Currency Unit</label>
+            <input type="text" id="f-credit-unit" placeholder="CREDITS" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Turn-in -->
+      <div>
+        <div class="section-heading">Turn-In Instructions</div>
+        <div class="field">
+          <label>One paragraph per blank line</label>
+          <textarea id="f-turnin" rows="5" placeholder="How does the player claim their payout?"></textarea>
+        </div>
+      </div>
+
+      <!-- Mission Agent -->
+      <div>
+        <div class="section-heading">Mission Agent</div>
+        <div class="field" style="margin-top:0.5rem;">
+          <label>Character name(s) — comma-separated, or "anyone"</label>
+          <div style="display:flex;gap:0.4rem;align-items:center;margin-top:0.3rem;">
+            <input type="text" id="f-agent" placeholder="Greedo, Watto" style="flex:1;" oninput="schedulePreview()">
+            <button class="btn" onclick="openAgentPicker()" title="Pick from roster" style="flex-shrink:0;padding:0.25rem 0.6rem;font-size:0.65rem;">◈ PICK</button>
+          </div>
+          <div style="font-size:0.57rem;opacity:0.35;margin-top:0.25rem;letter-spacing:0.06em;">Names matched case-insensitively to character roster. Unmatched names render as plain text.</div>
+        </div>
+      </div>
+
+    </div><!-- /#form-panel -->
+
+    <!-- ── Security panel ───────────────────────────────────── -->
+    <div id="security-panel">
+      <div class="sec-enable-row">
+        <input type="checkbox" id="sec-enabled">
+        <label for="sec-enabled">ENABLE ACCESS CODE GATE</label>
+      </div>
+      <div id="security-fields" class="sec-disabled">
+        <div>
+          <div class="section-heading">Access Codes</div>
+          <div class="field">
+            <label>One code per line — player must enter one of these</label>
+            <textarea id="sec-codes" rows="4" placeholder="REDSTAR&#10;AUREK-7&#10;ECHO-BASE"></textarea>
+          </div>
+        </div>
+        <div class="sec-case-row">
+          <input type="checkbox" id="sec-case-sensitive">
+          <label for="sec-case-sensitive">Case sensitive</label>
+        </div>
+        <div>
+          <div class="section-heading">Success Message</div>
+          <div class="field">
+            <label>Shown when the correct code is entered</label>
+            <textarea id="sec-success-msg" rows="5" placeholder="Report to Handler Vex at Bay 7. Show this screen. Payout: 500 credits."></textarea>
+          </div>
+        </div>
+      </div><!-- /#security-fields -->
+      <div class="experimental-block">
+        <div class="section-heading">⚗ Experimental — coming soon</div>
+        <div class="sec-exp-row"><input type="checkbox" disabled><label>Multiple code tiers</label></div>
+        <div class="sec-exp-row"><input type="checkbox" disabled><label>Faction-specific codes</label></div>
+        <div class="sec-exp-row"><input type="checkbox" disabled><label>Agent ID pairing</label></div>
+        <div class="sec-exp-row"><input type="checkbox" disabled><label>Countdown timer unlock</label></div>
+      </div>
+    </div><!-- /#security-panel -->
+
+    </div><!-- /#left-col -->
+
+    <!-- RIGHT: preview -->
+    <div id="preview-panel">
+      <div id="preview-label">LIVE PREVIEW</div>
+      <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+  </div><!-- /#main -->
+
+  <script>
+  // ── Faction presets ──────────────────────────────────────────
+  const FACTIONS = [
+    // Warm
+    { id: 'amber',    label: 'AMBER',    accent: '#f0c060', bg: '#0d0b07', text: '#d4a843', border: '#3a2e14', dim: '#1a1508' },
+    { id: 'orange',   label: 'ORANGE',   accent: '#ff8c00', bg: '#0f0900', text: '#e07820', border: '#3a2000', dim: '#1a0e00' },
+    { id: 'red',      label: 'RED',      accent: '#cc0000', bg: '#0f0202', text: '#ff4444', border: '#3a0a0a', dim: '#1a0505' },
+    { id: 'pink',     label: 'PINK',     accent: '#ff5fa0', bg: '#0f0208', text: '#ff8cc0', border: '#3a1028', dim: '#1a0514' },
+    { id: 'magenta',  label: 'MAGENTA',  accent: '#dd00cc', bg: '#0d000d', text: '#ee55e0', border: '#380038', dim: '#1a001a' },
+    { id: 'purple',   label: 'PURPLE',   accent: '#8844ff', bg: '#08050f', text: '#aa80ff', border: '#281848', dim: '#100828' },
+    // Cool
+    { id: 'blue',     label: 'BLUE',     accent: '#00aaff', bg: '#020a14', text: '#4db8ff', border: '#0a2a44', dim: '#0a1e2e' },
+    { id: 'cyan',     label: 'CYAN',     accent: '#00cccc', bg: '#020f0f', text: '#44dddd', border: '#0a3030', dim: '#051818' },
+    { id: 'teal',     label: 'TEAL',     accent: '#7ec8e3', bg: '#07090f', text: '#a8c0d6', border: '#1a2a3a', dim: '#0d1520' },
+    // Green
+    { id: 'green',    label: 'GREEN',    accent: '#00cc00', bg: '#050f05', text: '#33ff33', border: '#1a4a1a', dim: '#1a3a1a' },
+    { id: 'lime',     label: 'LIME',     accent: '#88ff00', bg: '#070f02', text: '#aaff44', border: '#203800', dim: '#0f1e00' },
+    // Yellow / neutral
+    { id: 'yellow',   label: 'YELLOW',   accent: '#ffee00', bg: '#0d0d02', text: '#eecc44', border: '#383600', dim: '#1a1900' },
+    { id: 'white',    label: 'WHITE',    accent: '#c0c8d0', bg: '#080808', text: '#b0b8c0', border: '#303030', dim: '#141414' },
+  ];
+
+  // ── Color var descriptors ────────────────────────────────────
+  const COLOR_VARS = [
+    { varName: '--bg',     colorId: 'color-bg',     hexId: 'hex-bg'     },
+    { varName: '--text',   colorId: 'color-text',   hexId: 'hex-text'   },
+    { varName: '--accent', colorId: 'color-accent', hexId: 'hex-accent' },
+    { varName: '--border', colorId: 'color-border', hexId: 'hex-border' },
+    { varName: '--dim',    colorId: 'color-dim',    hexId: 'hex-dim'    },
+    { varName: '--danger', colorId: 'color-danger', hexId: 'hex-danger' },
+  ];
+
+  function setColorInputs(bg, text, accent, border, dim, danger) {
+    const vals = [bg, text, accent, border, dim, danger];
+    COLOR_VARS.forEach((cv, i) => {
+      document.getElementById(cv.colorId).value = vals[i];
+      document.getElementById(cv.hexId).value   = vals[i];
+    });
+  }
+
+  function getColorValues() {
+    // Prefer the hex text input; fall back to color picker value
+    return COLOR_VARS.map(cv => {
+      const hex = document.getElementById(cv.hexId).value.trim();
+      return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : document.getElementById(cv.colorId).value;
+    });
+  }
+
+  function initColorSync() {
+    COLOR_VARS.forEach(cv => {
+      const picker = document.getElementById(cv.colorId);
+      const hex    = document.getElementById(cv.hexId);
+      picker.addEventListener('input', () => { hex.value = picker.value; });
+      hex.addEventListener('input', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; }
+      });
+    });
+  }
+
+  // ── Logo state ───────────────────────────────────────────────
+  const LOGO_SLOTS = ['title', 'footer', 'watermark'];
+  const logos = { title: null, footer: null, watermark: null }; // each: {data: 'data:...'} or null
+
+  function getLogoColor(slot) {
+    const hex = document.getElementById(`hex-logo-${slot}`).value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+    return document.getElementById(`color-logo-${slot}`).value || getColorValues()[2]; // fallback to accent
+  }
+
+  function handleLogoUpload(slot, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      logos[slot] = { data: e.target.result };
+      updateLogoPreview(slot);
+      schedulePreview();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearLogo(slot) {
+    logos[slot] = null;
+    const img = document.getElementById(`logo-img-${slot}`);
+    img.src = '';
+    img.style.display = 'none';
+    document.getElementById(`logo-clear-${slot}`).style.display = 'none';
+    document.getElementById(`logo-file-${slot}`).value = '';
+    schedulePreview();
+  }
+
+  function updateLogoPreview(slot) {
+    const img = document.getElementById(`logo-img-${slot}`);
+    img.src = logos[slot].data;
+    img.style.display = 'block';
+    document.getElementById(`logo-clear-${slot}`).style.display = '';
+  }
+
+  function setLogoColor(slot, hex) {
+    document.getElementById(`color-logo-${slot}`).value = hex;
+    document.getElementById(`hex-logo-${slot}`).value   = hex;
+  }
+
+  function resetLogo(slot) {
+    // Clear image + reset color to current accent
+    logos[slot] = null;
+    const img = document.getElementById(`logo-img-${slot}`);
+    img.src = ''; img.style.display = 'none';
+    document.getElementById(`logo-clear-${slot}`).style.display = 'none';
+    document.getElementById(`logo-file-${slot}`).value = '';
+    setLogoColor(slot, getColorValues()[2]); // reset to current accent
+    schedulePreview();
+  }
+
+  function initLogoColorSync() {
+    LOGO_SLOTS.forEach(slot => {
+      const picker = document.getElementById(`color-logo-${slot}`);
+      const hex    = document.getElementById(`hex-logo-${slot}`);
+      picker.addEventListener('input', () => { hex.value = picker.value; schedulePreview(); });
+      hex.addEventListener('input', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value;
+        schedulePreview();
+      });
+    });
+  }
+
+  let currentFaction  = FACTIONS[0];
+  let briefMode       = 'para';  // kept for turn-in; briefing now uses contenteditable
+  let pageStatus      = 'not-started'; // 'not-started' | 'in-progress' | 'complete'
+  let isDirty         = false;
+  let templateHTML    = '';
+  let fileName        = '';
+  let fileSha         = null;   // GitHub blob SHA — required for PUT updates
+  let previewDebounce = null;
+  let charRoster      = [];     // [{name, slug}] loaded from characters/index.html
+
+  const GH_OWNER  = 'Flint-Inferno';
+  const GH_REPO   = 'cantina-obscura';
+  const GH_FOLDER = 'live-page-links';
+
+  // ── Auth state ───────────────────────────────────────────────
+  let sessionPat      = null;   // decrypted PAT for collaborators (memory only)
+  let isOwner         = false;
+  let inactivityTimer = null;
+  let warningTimer    = null;
+  const INACTIVITY_MS = 30 * 60 * 1000;    // 30 min
+  const WARNING_MS    = 29.5 * 60 * 1000; // warn at 29:30
+  const CONFIG_FILE   = 'editor-config.json';
+
+  // ── Crypto helpers ────────────────────────────────────────────
+  async function _deriveKey(password, salt) {
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password),
+      'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  }
+  function b64dec(b64) { return repairMojibake(decodeURIComponent(escape(atob(b64.replace(/\n/g, ''))))); }
+
+  // Detect and reverse double-encoded UTF-8 (mojibake).
+  // Files saved via bare atob/btoa have every non-ASCII byte re-encoded as a
+  // separate Latin-1 code point (U+0080–U+00FF).  Correct Unicode characters
+  // sit above U+00FF and ASCII sits below U+0080 — both ranges are left alone.
+  // Only consecutive runs of chars in the U+0080–U+00FF band are candidates;
+  // each run is re-interpreted as raw bytes and decoded as UTF-8.  If the
+  // decode succeeds the run is replaced; if it throws (not valid UTF-8) the
+  // original chars are kept.  This handles files that contain a mix of
+  // mojibake sequences AND already-correct Unicode (e.g. ►, ✓, ✗).
+  function repairMojibake(str) {
+    const parts = [];
+    let i = 0;
+    let repaired = false;
+    while (i < str.length) {
+      const code = str.charCodeAt(i);
+      if (code >= 0x80 && code <= 0xFF) {
+        // Collect a run of Latin-1-range chars — potential mojibake bytes
+        let j = i + 1;
+        while (j < str.length && str.charCodeAt(j) >= 0x80 && str.charCodeAt(j) <= 0xFF) j++;
+        const run = str.slice(i, j);
+        const bytes = new Uint8Array(j - i);
+        for (let k = 0; k < run.length; k++) bytes[k] = run.charCodeAt(k);
+        try {
+          const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+          parts.push(decoded);
+          if (decoded !== run) repaired = true;
+        } catch (_) {
+          parts.push(run); // not valid UTF-8 as bytes — keep original
+        }
+        i = j;
+      } else {
+        // ASCII (< 0x80) or genuine Unicode (> 0xFF) — collect and pass through
+        let j = i + 1;
+        while (j < str.length) {
+          const c = str.charCodeAt(j);
+          if (c >= 0x80 && c <= 0xFF) break;
+          j++;
+        }
+        parts.push(str.slice(i, j));
+        i = j;
+      }
+    }
+    if (repaired) console.log('[mission-editor] mojibake repair applied on load');
+    return parts.join('');
+  }
+  function _hex(buf) { return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  function _unhex(h) { return new Uint8Array(h.match(/.{2}/g).map(x=>parseInt(x,16))); }
+
+  async function encryptPat(pat, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv   = crypto.getRandomValues(new Uint8Array(12));
+    const key  = await _deriveKey(password, salt);
+    const ct   = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, new TextEncoder().encode(pat));
+    return { salt: _hex(salt), iv: _hex(iv), ciphertext: btoa(String.fromCharCode(...new Uint8Array(ct))) };
+  }
+
+  async function decryptPat(cfg, password) {
+    const key = await _deriveKey(password, _unhex(cfg.salt));
+    const ct  = Uint8Array.from(atob(cfg.ciphertext), c => c.charCodeAt(0));
+    const pt  = await crypto.subtle.decrypt({name:'AES-GCM', iv: _unhex(cfg.iv)}, key, ct);
+    return new TextDecoder().decode(pt);
+  }
+
+  // ── PAT overlay (owner only) ──────────────────────────────────
+  function getGhPat() { return sessionPat || localStorage.getItem('gh_pat') || ''; }
+
+  function openPat() {
+    document.getElementById('pat-input').value = localStorage.getItem('gh_pat') || '';
+    document.getElementById('pat-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('pat-input').focus(), 50);
+  }
+
+  function closePat() {
+    document.getElementById('pat-overlay').classList.add('hidden');
+  }
+
+  function savePat() {
+    const val = document.getElementById('pat-input').value.trim();
+    if (val) localStorage.setItem('gh_pat', val);
+    closePat();
+    initEditor(); // re-check ownership with new PAT
+  }
+
+  // ── Password overlay (collaborators) ─────────────────────────
+  function showPwOverlay(msg, cls) {
+    const st = document.getElementById('pw-status');
+    st.textContent  = msg || '';
+    st.className    = cls || '';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-overlay').style.display = '';
+    setTimeout(() => document.getElementById('pw-input').focus(), 50);
+  }
+
+  async function submitPassword() {
+    const pw  = document.getElementById('pw-input').value;
+    const st  = document.getElementById('pw-status');
+    if (!pw) return;
+    st.textContent = 'Verifying...'; st.className = '';
+    try {
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${CONFIG_FILE}?t=${Date.now()}`
+      );
+      if (!res.ok) throw new Error('No collaborator password configured yet.');
+      const cfg = await res.json();
+      let pat;
+      try { pat = await decryptPat(cfg, pw); } catch(_) { throw new Error('incorrect'); }
+      if (!pat || (!pat.startsWith('ghp_') && !pat.startsWith('github_')))
+        throw new Error('incorrect');
+      sessionPat = pat;
+      document.getElementById('pw-overlay').style.display = 'none';
+      _startInactivityTracking();
+      initEditorContent();
+    } catch(e) {
+      const msg = e.message === 'incorrect' ? 'Incorrect password.' : 'Error: ' + e.message;
+      st.textContent = msg; st.className = '';
+      sessionPat = null;
+    }
+  }
+
+  // ── Inactivity tracking ───────────────────────────────────────
+  function _startInactivityTracking() {
+    const reset = () => {
+      clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
+      document.getElementById('inactivity-warning').classList.remove('visible');
+      warningTimer    = setTimeout(() => document.getElementById('inactivity-warning').classList.add('visible'), WARNING_MS);
+      inactivityTimer = setTimeout(_lockEditor, INACTIVITY_MS);
+    };
+    ['mousemove','keydown','click','touchstart','scroll'].forEach(ev =>
+      document.addEventListener(ev, reset, { passive: true })
+    );
+    reset();
+  }
+
+  function _lockEditor() {
+    sessionPat = null;
+    clearTimeout(inactivityTimer);
+    clearTimeout(warningTimer);
+    document.getElementById('inactivity-warning').classList.remove('visible');
+    showPwOverlay('Session expired — please re-enter password.');
+    setStatus('SESSION LOCKED', 'err');
+    document.getElementById('save-btn').disabled = true;
+  }
+
+  // ── Change password overlay (owner only) ─────────────────────
+  function showChangePw() {
+    document.getElementById('changepw-input').value   = '';
+    document.getElementById('changepw-confirm').value = '';
+    document.getElementById('changepw-status').textContent = '';
+    document.getElementById('changepw-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('changepw-input').focus(), 50);
+  }
+
+  function closeChangePw() {
+    document.getElementById('changepw-overlay').classList.add('hidden');
+  }
+
+  async function submitChangePw() {
+    const pw1 = document.getElementById('changepw-input').value;
+    const pw2 = document.getElementById('changepw-confirm').value;
+    const st  = document.getElementById('changepw-status');
+    if (!pw1)       { st.textContent = 'Enter a password.'; return; }
+    if (pw1 !== pw2){ st.textContent = 'Passwords do not match.'; return; }
+    const pat = localStorage.getItem('gh_pat');
+    if (!pat)       { st.textContent = 'No PAT stored — use ⚿ TOKEN first.'; return; }
+    st.textContent = 'Encrypting and saving...';
+    try {
+      const cfg    = await encryptPat(pat, pw1);
+      const cfgB64 = btoa(JSON.stringify(cfg, null, 2));
+      // Check for existing file SHA
+      let sha = null;
+      try {
+        const ex = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_FILE}`,
+          { headers: ghHeaders() });
+        if (ex.ok) sha = (await ex.json()).sha;
+      } catch(_) {}
+      const body = { message: 'Update editor-config.json (password change)', content: cfgB64 };
+      if (sha) body.sha = sha;
+      const put = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_FILE}`,
+        { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(body) }
+      );
+      if (!put.ok) throw new Error(`HTTP ${put.status}`);
+      st.textContent = 'Password saved!';
+      setTimeout(closeChangePw, 1500);
+    } catch(e) { st.textContent = 'Error: ' + e.message; }
+  }
+
+  // ── Editor init ───────────────────────────────────────────────
+  async function initEditor() {
+    const storedPat = localStorage.getItem('gh_pat');
+    if (storedPat) {
+      try {
+        const res = await fetch('https://api.github.com/user', {
+          headers: { 'Authorization': `Bearer ${storedPat}`, 'Accept': 'application/vnd.github+json',
+                     'X-GitHub-Api-Version': '2022-11-28' }
+        });
+        if (res.ok && (await res.json()).login === GH_OWNER) {
+          isOwner = true;
+          document.getElementById('pw-overlay').style.display    = 'none';
+          document.getElementById('changepw-btn').style.display  = '';
+          document.getElementById('token-btn').style.display     = '';
+          initEditorContent();
+          return;
+        }
+      } catch(_) {}
+    }
+    // Not owner — show password prompt
+    showPwOverlay();
+  }
+
+  function initEditorContent() {
+    document.getElementById('save-btn').disabled = false;
+    loadCharRoster();
+    loadFile();
+    document.getElementById('form-panel').addEventListener('input', () => { markDirty(); schedulePreview(); });
+    document.getElementById('sec-enabled').addEventListener('change', () => {
+      document.getElementById('security-fields').classList.toggle('sec-disabled',
+        !document.getElementById('sec-enabled').checked);
+      markDirty(); schedulePreview();
+    });
+    ['sec-codes', 'sec-success-msg'].forEach(id =>
+      document.getElementById(id).addEventListener('input', () => { markDirty(); schedulePreview(); })
+    );
+    document.getElementById('sec-case-sensitive').addEventListener('change', () => { markDirty(); schedulePreview(); });
+  }
+
+  // ── Init ─────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    buildSwatches();
+    initColorSync();
+    initLogoColorSync();
+    const f0 = FACTIONS[0];
+    setColorInputs(f0.bg, f0.text, f0.accent, f0.border, f0.dim, f0.accent);
+    LOGO_SLOTS.forEach(slot => setLogoColor(slot, f0.accent));
+    const params = new URLSearchParams(window.location.search);
+    fileName = params.get('file') || 'untitled.html';
+    const fnInput = document.getElementById('topbar-filename');
+    fnInput.value = fileName;
+    fnInput.addEventListener('input', () => { fileName = fnInput.value.trim() || 'untitled.html'; });
+    initEditor();
+  });
+
+  // ── Faction swatches ─────────────────────────────────────────
+  function buildSwatches() {
+    const container = document.getElementById('faction-swatches');
+    FACTIONS.forEach((f, i) => {
+      const g = document.createElement('div');
+      g.className = 'swatch-group';
+      const s = document.createElement('div');
+      s.className = 'swatch' + (i === 0 ? ' active' : '');
+      s.style.background = f.accent;
+      s.title = f.label;
+      s.onclick = () => selectFaction(f, s);
+      const lbl = document.createElement('div');
+      lbl.className = 'swatch-label';
+      lbl.textContent = f.label;
+      g.appendChild(s); g.appendChild(lbl);
+      container.appendChild(g);
+    });
+  }
+
+  function selectFaction(faction, swatchEl) {
+    currentFaction = faction;
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    swatchEl.classList.add('active');
+    setColorInputs(faction.bg, faction.text, faction.accent, faction.border, faction.dim, faction.accent);
+    schedulePreview();
+  }
+
+  // ── Brief mode ───────────────────────────────────────────────
+  // ── Rich text — briefing ─────────────────────────────────────
+  let savedBriefSel = null;
+  let briefLpTab    = 'characters';
+
+  function briefCmd(cmd) {
+    document.getElementById('rt-briefing').focus();
+    document.execCommand(cmd, false, null);
+    schedulePreview();
+  }
+  function briefColor(hex) {
+    document.getElementById('rt-briefing').focus();
+    document.execCommand('foreColor', false, hex);
+    schedulePreview();
+  }
+  function briefClearColor() {
+    const field = document.getElementById('rt-briefing');
+    field.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    field.querySelectorAll('[color], [style*="color"]').forEach(el => {
+      if (range.intersectsNode(el)) {
+        el.removeAttribute('color');
+        el.style.removeProperty('color');
+      }
+    });
+    markDirty();
+    schedulePreview();
+  }
+  function toggleBriefList() {
+    const field = document.getElementById('rt-briefing');
+    const btn   = document.getElementById('brief-list-btn');
+    field.focus();
+    document.execCommand('insertUnorderedList', false, null);
+    btn.classList.toggle('active', !!field.querySelector('ul'));
+    schedulePreview();
+  }
+  function saveBriefSel() {
+    const sel = window.getSelection();
+    savedBriefSel = sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+  }
+  function restoreBriefSel() {
+    if (!savedBriefSel) return;
+    document.getElementById('rt-briefing').focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedBriefSel);
+  }
+  function openBriefLink() {
+    saveBriefSel();
+    document.getElementById('brief-link-overlay').classList.remove('hidden');
+    setBriefLpTab('characters');
+  }
+  function closeBriefLink() {
+    document.getElementById('brief-link-overlay').classList.add('hidden');
+    restoreBriefSel();
+  }
+  async function setBriefLpTab(tab) {
+    briefLpTab = tab;
+    document.querySelectorAll('.blp-tab').forEach(b => {
+      b.classList.toggle('active',
+        (tab === 'characters' && b.textContent === 'CHARACTERS') ||
+        (tab === 'missions'   && b.textContent === 'MISSIONS')   ||
+        (tab === 'manual'     && b.textContent === 'MANUAL URL'));
+    });
+    const list   = document.getElementById('brief-link-list');
+    const manual = document.getElementById('brief-link-manual');
+    list.style.display   = tab !== 'manual' ? '' : 'none';
+    manual.style.display = tab === 'manual' ? '' : 'none';
+    if (tab === 'manual') {
+      setTimeout(() => document.getElementById('brief-link-manual-input').focus(), 50);
+      return;
+    }
+    list.innerHTML = '<div style="opacity:0.35;padding:0.5rem;font-size:0.7rem;">Loading...</div>';
+    try {
+      const folder = tab === 'characters' ? 'characters' : GH_FOLDER;
+      const res    = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${folder}`,
+        { headers: ghHeaders() }
+      );
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const files = (await res.json()).filter(f => f.type === 'file' && f.name.endsWith('.html') && f.name !== 'index.html');
+      list.innerHTML = '';
+      if (!files.length) { list.innerHTML = '<div style="opacity:0.35;padding:0.5rem;font-size:0.7rem;">None found.</div>'; return; }
+      files.forEach(f => {
+        const slug = f.name.replace(/\.html$/, '');
+        const url  = `https://flint-inferno.github.io/${GH_REPO}/${folder}/${f.name}`;
+        const el   = document.createElement('div');
+        el.className = 'blp-item';
+        el.textContent = tab === 'characters' ? slug : f.name;
+        el.onclick = () => insertBriefLink(slug, url);
+        list.appendChild(el);
+      });
+    } catch(e) {
+      list.innerHTML = `<div style="opacity:0.5;padding:0.5rem;font-size:0.7rem;">Error: ${e.message}</div>`;
+    }
+  }
+  function insertBriefLink(label, url) {
+    document.getElementById('brief-link-overlay').classList.add('hidden');
+    restoreBriefSel();
+    const sel = window.getSelection();
+    if (sel && sel.isCollapsed) {
+      // No text selected — insert label as link text
+      document.execCommand('insertHTML', false, `<a href="${url}">${label}</a>`);
+    } else {
+      document.execCommand('createLink', false, url);
+    }
+    schedulePreview();
+  }
+  function confirmBriefLink() {
+    const url = document.getElementById('brief-link-manual-input').value.trim();
+    if (!url) { closeBriefLink(); return; }
+    document.getElementById('brief-link-manual-input').value = '';
+    insertBriefLink(url, url);
+  }
+
+  // ── Live preview ─────────────────────────────────────────────
+  function openLive() {
+    if (!fileName || fileName === 'untitled.html') {
+      setStatus('NO FILE LOADED', 'err');
+      return;
+    }
+    window.open(
+      `https://flint-inferno.github.io/cantina-obscura/${GH_FOLDER}/${encodeURIComponent(fileName)}`,
+      '_blank'
+    );
+  }
+
+  // ── Unsaved-changes tracking ──────────────────────────────────
+  function markDirty() {
+    if (isDirty) return;
+    isDirty = true;
+    document.getElementById('dirty-flag').style.display = '';
+  }
+  function markClean() {
+    isDirty = false;
+    document.getElementById('dirty-flag').style.display = 'none';
+  }
+
+  // ── Page status ───────────────────────────────────────────────
+  function _applyPageStatus(s) {
+    pageStatus = s || 'not-started';
+    ['not-started','in-progress','complete'].forEach(v => {
+      document.getElementById('page-status-' + v).classList.toggle('active', v === pageStatus);
+    });
+  }
+  function setPageStatus(s) {
+    _applyPageStatus(s);
+    markDirty();
+    schedulePreview();
+  }
+
+  // ── Commit confirm ────────────────────────────────────────────
+  function saveFile() {
+    if (!templateHTML) { setStatus('NOTHING TO COMMIT', 'err'); return; }
+    document.getElementById('commit-fname').textContent = fileName;
+    document.getElementById('commit-overlay').classList.remove('hidden');
+  }
+  function cancelCommit() {
+    document.getElementById('commit-overlay').classList.add('hidden');
+  }
+  async function confirmCommit() {
+    document.getElementById('commit-overlay').classList.add('hidden');
+    await _doSaveFile();
+  }
+
+  // ── Mobile tab toggle ────────────────────────────────────────
+  function setMobileTab(tab) {
+    document.getElementById('form-panel').classList.toggle('tab-hidden', tab !== 'form');
+    document.getElementById('security-panel').classList.toggle('tab-active', tab === 'security');
+    document.getElementById('preview-panel').classList.toggle('tab-active', tab === 'preview');
+    document.getElementById('left-col').classList.toggle('col-hidden', tab === 'preview');
+    document.getElementById('tab-form').classList.toggle('active', tab === 'form');
+    document.getElementById('tab-security').classList.toggle('active', tab === 'security');
+    document.getElementById('tab-preview').classList.toggle('active', tab === 'preview');
+    if (tab === 'preview') refreshPreview();
+  }
+
+  // ── Desktop left-column tab toggle ───────────────────────────
+  function setLeftTab(tab) {
+    const showSec = tab === 'security';
+    document.getElementById('form-panel').classList.toggle('ltab-hidden', showSec);
+    document.getElementById('security-panel').classList.toggle('panel-active', showSec);
+    document.getElementById('ltab-content').classList.toggle('active', !showSec);
+    document.getElementById('ltab-security').classList.toggle('active', showSec);
+  }
+
+  // ── Security config read/write ────────────────────────────────
+  function getSecurityConfig() {
+    const enabled = document.getElementById('sec-enabled').checked;
+    const codes = (document.getElementById('sec-codes').value || '')
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    const caseSensitive = document.getElementById('sec-case-sensitive').checked;
+    const successMsg = document.getElementById('sec-success-msg').value;
+    return { enabled, codes, caseSensitive, successMsg };
+  }
+
+  // ── Browse overlay ───────────────────────────────────────────
+  let browseFiles  = [];   // [{name, size, url, title, difficulty, updatedAt}]
+  let browseSort   = 'name';
+  let browseLoaded = 0;
+
+  const DIFF_ORDER = ['EASY','MEDIUM','HARD','EXTREME','DEADLY'];
+
+  function diffRank(d) {
+    if (!d) return 999;
+    const t     = d.trim();
+    const chars = [...t]; // spread handles multi-byte unicode (★, ◆, etc.)
+    // If it's a repeated single symbol (e.g. * / ** / *** / ★★), sort by count
+    if (chars.length > 0 && chars.every(c => c === chars[0]))
+      return chars.length;
+    // Otherwise fall back to predefined text order
+    const i = DIFF_ORDER.indexOf(t.toUpperCase());
+    return i >= 0 ? i + 100 : 500;
+  }
+
+  function sortedBrowseFiles() {
+    const copy = [...browseFiles];
+    switch (browseSort) {
+      case 'title':
+        return copy.sort((a, b) => {
+          if (!a.title && !b.title) return a.name.localeCompare(b.name);
+          if (!a.title) return 1; if (!b.title) return -1;
+          return a.title.localeCompare(b.title);
+        });
+      case 'difficulty':
+        return copy.sort((a, b) => {
+          const dr = diffRank(a.difficulty) - diffRank(b.difficulty);
+          return dr !== 0 ? dr : a.name.localeCompare(b.name);
+        });
+      case 'updated':
+        return copy.sort((a, b) => {
+          if (!a.updatedAt && !b.updatedAt) return a.name.localeCompare(b.name);
+          if (!a.updatedAt) return 1; if (!b.updatedAt) return -1;
+          return b.updatedAt.localeCompare(a.updatedAt); // newest first
+        });
+      case 'status': {
+        const rank = { 'not-started': 0, 'in-progress': 1, 'complete': 2 };
+        return copy.sort((a, b) => {
+          const dr = (rank[a.status] ?? 0) - (rank[b.status] ?? 0);
+          return dr !== 0 ? dr : a.name.localeCompare(b.name);
+        });
+      }
+      case 'size':
+        return copy.sort((a, b) => b.size - a.size); // largest first
+      default: // name
+        return copy.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  }
+
+  function renderBrowseList() {
+    const list = document.getElementById('browse-list');
+    list.innerHTML = '';
+    sortedBrowseFiles().forEach(f => {
+      const item = document.createElement('div');
+      item.className = 'browse-item';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'browse-title' + (f.title ? '' : ' loading');
+      titleEl.textContent = f.title || '...';
+
+      const statusLabels = { 'not-started': '○ NOT STARTED', 'in-progress': '◑ IN PROGRESS', 'complete': '✓ COMPLETE' };
+      const badgeEl = document.createElement('span');
+      badgeEl.className = `browse-status-badge bstatus-${f.status || 'not-started'}`;
+      badgeEl.textContent = statusLabels[f.status] || '○ NOT STARTED';
+
+      const metaEl = document.createElement('div');
+      metaEl.className = 'browse-meta';
+      const parts = [];
+      if (f.difficulty) parts.push('DIFFICULTY: ' + f.difficulty);
+      if (f.updatedAt)  parts.push('UPDATED: ' + f.updatedAt.slice(0,10));
+      if (parts.length) metaEl.textContent = parts.join('  ·  ');
+
+      const fnEl = document.createElement('div');
+      fnEl.className = 'browse-fname';
+      fnEl.textContent = f.name + (f.size ? `  (${(f.size/1024).toFixed(1)} KB)` : '');
+
+      item.appendChild(badgeEl);
+      item.appendChild(titleEl);
+      item.appendChild(metaEl);
+      item.appendChild(fnEl);
+      item.onclick = () => {
+        closeBrowse();
+        fileName = f.name;
+        document.getElementById('topbar-filename').value = fileName;
+        fileSha = null;
+        loadFile();
+      };
+      list.appendChild(item);
+    });
+  }
+
+  function setBrowseSort(mode) {
+    browseSort = mode;
+    document.querySelectorAll('.sort-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent.toLowerCase().replace(' ','_') === mode ||
+        (mode === 'updated'    && b.textContent === 'LAST UPDATED') ||
+        (mode === 'name'       && b.textContent === 'NAME') ||
+        (mode === 'title'      && b.textContent === 'TITLE') ||
+        (mode === 'difficulty' && b.textContent === 'DIFFICULTY') ||
+        (mode === 'status'     && b.textContent === 'STATUS') ||
+        (mode === 'size'       && b.textContent === 'SIZE'));
+    });
+    renderBrowseList();
+  }
+
+  async function openBrowse() {
+    document.getElementById('browse-overlay').classList.remove('hidden');
+    browseFiles  = [];
+    browseLoaded = 0;
+    const status = document.getElementById('browse-status');
+    status.textContent = 'Loading...';
+    document.getElementById('browse-list').innerHTML = '';
+
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FOLDER}`,
+        { headers: ghHeaders() }
+      );
+      if (res.status === 401 || res.status === 403) { status.textContent = 'Auth error — check your token.'; return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const rawFiles = (await res.json()).filter(f => f.type === 'file' && f.name.endsWith('.html'));
+      if (!rawFiles.length) { status.textContent = 'No HTML files found.'; return; }
+
+      browseFiles = rawFiles.map(f => ({ name: f.name, size: f.size, url: f.url, title: null, difficulty: null, updatedAt: null, status: 'not-started' }));
+      renderBrowseList();
+      status.textContent = `${browseFiles.length} file(s) — loading details...`;
+
+      // Fetch content (title + difficulty) for all files in parallel
+      browseFiles.forEach(entry => {
+        fetch(entry.url, { headers: ghHeaders() })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (!data) return;
+            const html = b64dec(data.content);
+            const mm = html.match(/<[^>]*class="mission-title"[^>]*>([^<]+)/i);
+            const dm = html.match(/DIFFICULTY:\s*([^<&|]+)/i);
+            const sm = html.match(/<meta[^>]*name="mission-status"[^>]*content="([^"]+)"/i)
+                    || html.match(/<meta[^>]*content="([^"]+)"[^>]*name="mission-status"/i);
+            entry.title      = mm ? mm[1].trim() : entry.name;
+            entry.difficulty = dm ? dm[1].trim() : null;
+            entry.status     = sm ? sm[1].trim() : 'not-started';
+            browseLoaded++;
+            renderBrowseList();
+            if (browseLoaded === browseFiles.length)
+              status.textContent = `${browseFiles.length} file(s) in ${GH_FOLDER}/`;
+          })
+          .catch(() => { entry.title = entry.name; browseLoaded++; renderBrowseList(); });
+
+        // Fetch last commit date separately
+        fetch(
+          `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${GH_FOLDER}/${encodeURIComponent(entry.name)}&per_page=1`,
+          { headers: ghHeaders() }
+        )
+          .then(r => r.ok ? r.json() : null)
+          .then(commits => {
+            if (commits && commits[0]) {
+              entry.updatedAt = commits[0].commit.author.date;
+              renderBrowseList();
+            }
+          })
+          .catch(() => {});
+      });
+
+    } catch (e) {
+      status.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  function closeBrowse() {
+    document.getElementById('browse-overlay').classList.add('hidden');
+  }
+
+  // ── GitHub Contents API helpers ──────────────────────────────
+  function ghHeaders() {
+    return {
+      'Authorization': 'Bearer ' + getGhPat(),
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+  }
+
+  function ghContentsUrl(fname) {
+    return `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FOLDER}/${encodeURIComponent(fname)}`;
+  }
+
+  // ── Character roster (for agent field) ──────────────────────
+  async function loadCharRoster() {
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/characters/index.html`,
+        { headers: ghHeaders() }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      const html = b64dec(data.content);
+      const doc  = new DOMParser().parseFromString(html, 'text/html');
+      charRoster = [];
+      doc.querySelectorAll('.roster-entry').forEach(entry => {
+        const name = entry.querySelector('.entry-name')?.textContent.trim();
+        const href = entry.getAttribute('href') || '';
+        const slug = href.replace('.html','').replace(/^.*\//,'');
+        if (name && slug) charRoster.push({ name, slug });
+      });
+    } catch(_) {}
+  }
+
+  function buildAgentHTML(text) {
+    const t = (text || '').trim();
+    if (!t) return '[ AGENT NAME ]';
+    if (t.toLowerCase() === 'anyone') {
+      return `<a href="../characters/" style="color:inherit;text-decoration:underline;opacity:0.85;">ANYONE</a>`;
+    }
+    return t.split(',').map(part => {
+      const name = part.trim();
+      if (!name) return '';
+      const match = charRoster.find(c => c.name.toLowerCase() === name.toLowerCase());
+      if (match) return `<a href="../characters/${match.slug}.html" style="color:inherit;text-decoration:underline;opacity:0.85;">${name}</a>`;
+      return name;
+    }).filter(Boolean).join(', ');
+  }
+
+  function openAgentPicker() {
+    const list = document.getElementById('agent-picker-list');
+    list.innerHTML = '';
+    if (!charRoster.length) {
+      list.innerHTML = '<div style="opacity:0.4;font-size:0.72rem;padding:0.5rem 0;text-align:center;">No characters in roster yet</div>';
+    } else {
+      charRoster.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = c.name;
+        btn.style.cssText = 'width:100%;text-align:left;font-size:0.72rem;';
+        btn.onclick = () => pickAgent(c.name);
+        list.appendChild(btn);
+      });
+    }
+    document.getElementById('agent-picker-overlay').classList.remove('hidden');
+  }
+
+  function pickAgent(name) {
+    const input = document.getElementById('f-agent');
+    const current = input.value.trim();
+    if (!current) {
+      input.value = name;
+    } else {
+      const parts = current.split(',').map(p => p.trim().toLowerCase());
+      if (!parts.includes(name.toLowerCase())) {
+        input.value = current + ', ' + name;
+      }
+    }
+    closeAgentPicker();
+    schedulePreview();
+    markDirty();
+  }
+
+  function closeAgentPicker() {
+    document.getElementById('agent-picker-overlay').classList.add('hidden');
+  }
+
+  // ── Load file from GitHub ────────────────────────────────────
+  async function loadFile() {
+    setStatus('LOADING...', '');
+    fileSha = null;
+
+    // Try loading the target file from live-page-links/
+    try {
+      const res = await fetch(ghContentsUrl(fileName), { headers: ghHeaders() });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatus('AUTH ERROR — check your token', 'err');
+        openPat();
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        fileSha      = data.sha;
+        templateHTML = b64dec(data.content);
+        populateFields(templateHTML);
+        setStatus('LOADED — ' + fileName, 'ok');
+        document.getElementById('save-btn').disabled = false;
+        markClean();
+        refreshPreview();
+        return;
+      }
+
+      // 404 — new file, fall through to load template
+      if (res.status !== 404) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    } catch (e) {
+      if (!e.message.startsWith('HTTP')) {
+        setStatus('LOAD ERROR: ' + e.message, 'err');
+        document.getElementById('save-btn').disabled = false;
+        return;
+      }
+    }
+
+    // New file — load mission-template.html as the base
+    try {
+      const tplRes = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/mission-template.html`,
+        { headers: ghHeaders() }
+      );
+      if (!tplRes.ok) throw new Error(`template fetch failed: HTTP ${tplRes.status}`);
+      const tplData = await tplRes.json();
+      templateHTML = b64dec(tplData.content);
+      populateFields(templateHTML);
+      document.getElementById('f-mission-code').value   = '';
+      document.getElementById('f-holonet-url').value    = 'https://flint-inferno.github.io/cantina-obscura/holonet/holofeed-main.html';
+      setStatus('NEW FILE — using template', 'ok');
+    } catch (e) {
+      setStatus('TEMPLATE ERROR: ' + e.message, 'err');
+    }
+
+    document.getElementById('save-btn').disabled = false;
+    markClean();
+    refreshPreview();
+  }
+
+  // ── Parse template and populate fields ──────────────────────
+  function populateFields(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    // Page title
+    document.getElementById('f-page-title').value = doc.title || '';
+
+    // Classification
+    const classify = doc.querySelector('.classify-tag');
+    document.getElementById('f-classify').value = classify ? classify.textContent.trim() : 'CLASSIFIED';
+
+    // HoloNet URL
+    const holoBtn = doc.querySelector('.holonet-btn');
+    document.getElementById('f-holonet-url').value = holoBtn ? (holoBtn.getAttribute('href') || '') : '';
+
+    // Mission title
+    const mTitle = doc.querySelector('.mission-title');
+    document.getElementById('f-mission-title').value = mTitle ? mTitle.textContent.trim() : '';
+
+    // Mission ID line — parse "MISSION ID: X | ISSUED BY: Y | DIFFICULTY: Z"
+    const midEl = doc.querySelector('.mission-id');
+    if (midEl) {
+      // Get text content without the aurebesh-accent span
+      const clone = midEl.cloneNode(true);
+      clone.querySelectorAll('.aurebesh-accent').forEach(s => s.remove());
+      const parts = clone.textContent.split('|').map(s => s.trim());
+      document.getElementById('f-mission-code').value    = (parts[0] || '').replace(/^MISSION ID:\s*/i, '').trim();
+      document.getElementById('f-mission-faction').value = (parts[1] || '').replace(/^ISSUED BY:\s*/i, '').trim();
+      document.getElementById('f-mission-cycle').value   = (parts[2] || '').replace(/^DIFFICULTY:\s*/i, '').trim();
+    }
+
+    // Briefing
+    const brief = doc.querySelector('.mission-instructions');
+    if (brief) {
+      document.getElementById('rt-briefing').innerHTML = brief.innerHTML;
+    }
+
+    // Turn-in
+    const turnin = doc.querySelector('.turnin-instructions');
+    if (turnin) {
+      document.getElementById('f-turnin').value = htmlToPlainText(turnin.innerHTML);
+    }
+
+    // Credits
+    const amt  = doc.querySelector('.credit-amount');
+    const unit = doc.querySelector('.credit-unit');
+    document.getElementById('f-credits').value     = amt  ? amt.textContent.trim()  : '$000';
+    document.getElementById('f-credit-unit').value = unit ? unit.textContent.trim() : 'CREDITS';
+
+    // Agent — strip any existing links back to plain comma-separated names
+    const agentEl = doc.querySelector('.agent-name');
+    if (agentEl) {
+      const clone = agentEl.cloneNode(true);
+      clone.querySelectorAll('a').forEach(a => a.replaceWith(a.textContent));
+      const agentText = clone.textContent.trim();
+      document.getElementById('f-agent').value = (agentText === '[ AGENT NAME ]' || agentText === '') ? '' : agentText;
+    }
+
+    // Security config
+    try {
+      const secEl = doc.getElementById('mission-security');
+      const sec = secEl ? JSON.parse(secEl.textContent) : {};
+      document.getElementById('sec-enabled').checked = !!sec.enabled;
+      document.getElementById('sec-codes').value = (sec.codes || []).join('\n');
+      document.getElementById('sec-case-sensitive').checked = !!sec.caseSensitive;
+      document.getElementById('sec-success-msg').value = sec.successMsg || '';
+      document.getElementById('security-fields').classList.toggle('sec-disabled', !sec.enabled);
+    } catch(_) {}
+
+    // Page status
+    const statusMeta = doc.querySelector('meta[name="mission-status"]');
+    _applyPageStatus(statusMeta ? statusMeta.getAttribute('content') : 'not-started');
+
+    // Read logo meta tags
+    LOGO_SLOTS.forEach(slot => {
+      const meta = doc.querySelector(`meta[name="logo-${slot}"]`);
+      const data  = meta ? meta.getAttribute('content')    : '';
+      const color = meta ? meta.getAttribute('data-color') : '';
+      if (data) {
+        logos[slot] = { data };
+        updateLogoPreview(slot);
+      } else {
+        logos[slot] = null;
+        const img = document.getElementById(`logo-img-${slot}`);
+        img.src = ''; img.style.display = 'none';
+        document.getElementById(`logo-clear-${slot}`).style.display = 'none';
+      }
+      if (color && /^#[0-9a-fA-F]{6}$/.test(color)) setLogoColor(slot, color);
+    });
+
+    // Read all 6 CSS color vars from the file and populate inputs
+    const getVar = name => { const m = html.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{3,6})')); return m ? m[1] : null; };
+    const bg     = getVar('--bg');
+    const text   = getVar('--text');
+    const accent = getVar('--accent');
+    const border = getVar('--border');
+    const dim    = getVar('--dim');
+    const danger = getVar('--danger');
+    if (accent) {
+      setColorInputs(bg || '#000000', text || accent, accent, border || '#333333', dim || '#111111', danger || accent);
+      // Highlight matching preset swatch if any
+      const accentLow = accent.toLowerCase();
+      const match = FACTIONS.find(f => f.accent.toLowerCase() === accentLow);
+      const swatches = document.querySelectorAll('.swatch');
+      swatches.forEach(s => s.classList.remove('active'));
+      if (match) {
+        const idx = FACTIONS.indexOf(match);
+        if (idx >= 0) { swatches[idx].classList.add('active'); currentFaction = match; }
+      }
+    }
+  }
+
+  // Convert simple HTML to plain text for textarea
+  function htmlToPlainText(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    // Replace <br> with newlines
+    tmp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+    // Replace </p><p> with double newlines
+    tmp.querySelectorAll('p').forEach(p => {
+      p.insertAdjacentText('afterend', '\n\n');
+    });
+    tmp.querySelectorAll('li').forEach(li => {
+      li.insertAdjacentText('afterend', '\n');
+    });
+    return tmp.textContent.trim().replace(/\n{3,}/g, '\n\n');
+  }
+
+  // ── Build output HTML from fields ────────────────────────────
+  function buildHTML() {
+    let html = templateHTML;
+
+    const [bg, text, accent, border, dim, danger] = getColorValues();
+
+    // Replace CSS color vars (inside :root block)
+    html = html.replace(/(--bg:\s*)#[0-9a-fA-F]+/g,      `$1${bg}`);
+    html = html.replace(/(--text:\s*)#[0-9a-fA-F]+/g,    `$1${text}`);
+    html = html.replace(/(--accent:\s*)#[0-9a-fA-F]+/g,  `$1${accent}`);
+    html = html.replace(/(--border:\s*)#[0-9a-fA-F]+/g,  `$1${border}`);
+    html = html.replace(/(--dim:\s*)#[0-9a-fA-F]+/g,     `$1${dim}`);
+    html = html.replace(/(--danger:\s*)#[0-9a-fA-F]+/g,  `$1${danger}`);
+    // Replace LOGO_COLOR in script
+    html = html.replace(/(const LOGO_COLOR\s*=\s*)'#[0-9a-fA-F]+'/, `$1'${accent}'`);
+
+    // Parse and modify DOM
+    const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+    // Page title
+    doc.title = v('f-page-title') || 'MISSION // DATAPAD';
+
+    // Classification
+    const classify = doc.querySelector('.classify-tag');
+    if (classify) classify.textContent = v('f-classify') || 'CLASSIFIED';
+
+    // HoloNet URL
+    const holoBtn = doc.querySelector('.holonet-btn');
+    if (holoBtn) holoBtn.setAttribute('href', v('f-holonet-url') || 'https://flint-inferno.github.io/cantina-obscura/holonet/holofeed-main.html');
+
+    // Mission title
+    const mTitle = doc.querySelector('.mission-title');
+    if (mTitle) mTitle.textContent = v('f-mission-title') || 'MISSION TITLE';
+
+    // Mission ID line
+    const midEl = doc.querySelector('.mission-id');
+    if (midEl) {
+      const accent = midEl.querySelector('.aurebesh-accent');
+      const code    = v('f-mission-code')    || fileName.replace(/\.html$/i, '');
+      const faction = v('f-mission-faction') || '[FACTION]';
+      const cycle   = v('f-mission-cycle')   || '[DATE/EVENT]';
+      midEl.innerHTML =
+        `MISSION ID: ${esc(code)} &nbsp;|&nbsp; ISSUED BY: ${esc(faction)} &nbsp;|&nbsp; DIFFICULTY: ${esc(cycle)}` +
+        (accent ? `&nbsp;${accent.outerHTML}` : '');
+    }
+
+    // Briefing
+    const brief = doc.querySelector('.mission-instructions');
+    if (brief) brief.innerHTML = document.getElementById('rt-briefing').innerHTML;
+
+    // Turn-in
+    const turnin = doc.querySelector('.turnin-instructions');
+    if (turnin) turnin.innerHTML = plainTextToHTML(v('f-turnin'), 'para');
+
+    // Credits
+    const amt  = doc.querySelector('.credit-amount');
+    const unit = doc.querySelector('.credit-unit');
+    if (amt)  amt.textContent  = v('f-credits')     || '$000';
+    if (unit) unit.textContent = v('f-credit-unit') || 'CREDITS';
+
+    // Agent
+    const agentDiv = doc.querySelector('.agent-name');
+    if (agentDiv) agentDiv.innerHTML = buildAgentHTML(v('f-agent'));
+
+    // ── Security config ──────────────────────────────────────────
+    const secCfg = getSecurityConfig();
+    let secScript = doc.getElementById('mission-security');
+    if (!secScript) {
+      secScript = doc.createElement('script');
+      secScript.id = 'mission-security';
+      secScript.type = 'application/json';
+      doc.head.appendChild(secScript);
+    }
+    secScript.textContent = JSON.stringify(secCfg);
+
+    // ── Page status meta ─────────────────────────────────────────
+    let sMeta = doc.querySelector('meta[name="mission-status"]');
+    if (!sMeta) {
+      sMeta = doc.createElement('meta');
+      sMeta.setAttribute('name', 'mission-status');
+      doc.head.appendChild(sMeta);
+    }
+    sMeta.setAttribute('content', pageStatus);
+
+    // ── Logo meta tags (DOM operations on doc) ──────────────────
+    LOGO_SLOTS.forEach(slot => {
+      const logo  = logos[slot];
+      const color = getLogoColor(slot);
+      let meta = doc.querySelector(`meta[name="logo-${slot}"]`);
+      if (!meta) {
+        meta = doc.createElement('meta');
+        meta.setAttribute('name', `logo-${slot}`);
+        doc.head.appendChild(meta);
+      }
+      meta.setAttribute('content',    logo ? logo.data : '');
+      meta.setAttribute('data-color', color);
+    });
+
+    // ── Logo override script — always inject so per-slot colors work ──
+    doc.querySelectorAll('script[data-logo-override]').forEach(s => s.remove());
+    const logoMap = LOGO_SLOTS.map(slot => {
+      const logo  = logos[slot];
+      const color = getLogoColor(slot);
+      // Always carry the color; data is null when no image uploaded
+      return `'logo-${slot}':{data:${logo ? JSON.stringify(logo.data) : 'null'},color:${JSON.stringify(color)}}`;
+    }).join(',');
+    const scriptEl = doc.createElement('script');
+    scriptEl.setAttribute('data-logo-override', '1');
+    // When data is null: call original draw with per-slot color instead of LOGO_COLOR
+    // When data is set: tint image to per-slot color via source-in compositing
+    scriptEl.textContent = `(function(){var _L={${logoMap}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();`;
+    doc.body.appendChild(scriptEl);
+
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }
+
+  // Plain text → HTML paragraphs or list items
+  function plainTextToHTML(text, mode) {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return '<p>[No content]</p>';
+    if (mode === 'list') {
+      const items = trimmed.split('\n').map(l => l.trim()).filter(Boolean);
+      return '<ul>' + items.map(l => `<li>${esc(l)}</li>`).join('\n') + '</ul>';
+    }
+    // Paragraph mode — split on blank lines
+    const paras = trimmed.split(/\n{2,}/).map(p => p.trim().replace(/\n/g, ' ')).filter(Boolean);
+    return paras.map(p => `<p>${esc(p)}</p>`).join('\n');
+  }
+
+  function v(id) { return document.getElementById(id).value.trim(); }
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ── Preview ──────────────────────────────────────────────────
+  function schedulePreview() {
+    clearTimeout(previewDebounce);
+    previewDebounce = setTimeout(refreshPreview, 300);
+  }
+
+  function refreshPreview() {
+    if (!templateHTML) return;
+    const html = buildHTML();
+    const frame = document.getElementById('preview-frame');
+    frame.srcdoc = html;
+  }
+
+  // ── Save to GitHub ───────────────────────────────────────────
+  async function _doSaveFile() {
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    setStatus('COMMITTING...', '');
+    const html = buildHTML();
+
+    try {
+      // Always fetch the current SHA before committing — stored SHA can go
+      // stale if the file was changed on GitHub (e.g. by a bulk script).
+      const headRes = await fetch(ghContentsUrl(fileName), {
+        headers: ghHeaders(),
+      });
+      if (headRes.status === 401 || headRes.status === 403) {
+        setStatus('AUTH ERROR — check your token', 'err');
+        openPat();
+        btn.disabled = false;
+        return;
+      }
+      if (headRes.ok) {
+        const headData = await headRes.json();
+        fileSha = headData.sha;
+      } else if (headRes.status !== 404) {
+        // 404 = new file, that's fine; anything else is unexpected
+        const e = await headRes.json().catch(() => ({}));
+        throw new Error(e.message || `HTTP ${headRes.status}`);
+      }
+
+      const body = {
+        message: `Update ${GH_FOLDER}/${fileName} via mission editor`,
+        content: btoa(unescape(encodeURIComponent(html))),
+      };
+      if (fileSha) body.sha = fileSha;  // required for updates; omit for new files
+
+      const res = await fetch(ghContentsUrl(fileName), {
+        method:  'PUT',
+        headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatus('AUTH ERROR — check your token', 'err');
+        openPat();
+        btn.disabled = false;
+        return;
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      fileSha      = data.content.sha;   // update sha for next save
+      templateHTML = html;
+      markClean();
+      setStatus('COMMITTED — ' + fileName, 'ok');
+    } catch (e) {
+      setStatus('COMMIT ERROR: ' + e.message, 'err');
+    }
+
+    btn.disabled = false;
+  }
+
+  function setStatus(msg, cls) {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg;
+    el.className   = cls;
+  }
+
+  // ── Open local file ──────────────────────────────────────────
+  function openLocalFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = ''; // reset so the same file can be reopened
+    const reader = new FileReader();
+    reader.onload = e => {
+      templateHTML = repairMojibake(e.target.result);
+      populateFields(templateHTML);
+      fileName = file.name;
+      document.getElementById('topbar-filename').value = fileName;
+      setStatus('OPENED — ' + file.name, 'ok');
+      refreshPreview();
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Save / download local copy ───────────────────────────────
+  function saveLocal() {
+    const html = buildHTML();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  </script>
+
+</body>
+</html>
