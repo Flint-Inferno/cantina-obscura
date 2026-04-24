@@ -21,19 +21,19 @@
 
   <style>
     /* =============================================================
-       AUREBESH FONT â EMBEDDED AS BASE64
+       AUREBESH FONT — EMBEDDED AS BASE64
        ===============================================================
        HOW TO FILL THIS IN:
          1. Download a free Aurebesh .ttf font (search "Aurebesh font
-            free download" â Pixel Sagas has a good one).
+            free download" — Pixel Sagas has a good one).
          2. Go to https://transfonter.org or https://base64.guru/converter/encode/file
          3. Upload the .ttf file and convert it to base64.
          4. Replace the placeholder text below with your base64 string.
-            The string will be very long â that is normal.
+            The string will be very long — that is normal.
 
        WHY BASE64?
          The entire font is embedded inside this HTML file.
-         It works anywhere â no server needed, no external requests.
+         It works anywhere — no server needed, no external requests.
          Perfect for pages triggered by NFC tags.
        ============================================================= */
     @font-face {
@@ -44,36 +44,36 @@
     }
 
     /* =============================================================
-       COLOR SCHEME â EDIT THIS PER MISSION CARD CLASSIFICATION
+       COLOR SCHEME — EDIT THIS PER MISSION CARD CLASSIFICATION
        ---------------------------------------------------------------
        Uncomment ONE block below by removing the slashes, and comment
        out the others. Also update LOGO_COLOR in the <script> at the
        bottom of the file to match the --accent value you chose.
        ---------------------------------------------------------------
 
-       SCOUNDREL / NEUTRAL (amber-gold) â LOGO_COLOR: '#f0c060'
+       SCOUNDREL / NEUTRAL (amber-gold) — LOGO_COLOR: '#f0c060'
          --bg: #070f02; --text: #aaff44; --accent: #88ff00;
          --border: #203800; --dim: #0f1e00;
 
-       IMPERIAL (green terminal) â LOGO_COLOR: '#00cc00'
+       IMPERIAL (green terminal) — LOGO_COLOR: '#00cc00'
          --bg: #070f02; --text: #aaff44; --accent: #88ff00;
          --border: #203800; --dim: #0f1e00;
 
-       REPUBLIC / JEDI (blue holographic) â LOGO_COLOR: '#00aaff'
+       REPUBLIC / JEDI (blue holographic) — LOGO_COLOR: '#00aaff'
          --bg: #070f02; --text: #aaff44; --accent: #88ff00;
          --border: #203800; --dim: #0f1e00;
 
-       SITH / DARK SIDE (red) â LOGO_COLOR: '#cc0000'
+       SITH / DARK SIDE (red) — LOGO_COLOR: '#cc0000'
          --bg: #070f02; --text: #aaff44; --accent: #88ff00;
          --border: #203800; --dim: #0f1e00;
 
-       MANDALORIAN (steel-blue/grey) â LOGO_COLOR: '#7ec8e3'
+       MANDALORIAN (steel-blue/grey) — LOGO_COLOR: '#7ec8e3'
          --bg: #070f02; --text: #aaff44; --accent: #88ff00;
          --border: #203800; --dim: #0f1e00;
 
        ============================================================= */
 
-    /* EDIT: Paste your chosen color values here â */
+    /* EDIT: Paste your chosen color values here ↓ */
     :root {
       --bg:          #070f02;
       --text:        #aaff44;
@@ -103,7 +103,7 @@
       justify-content: center;
     }
 
-    /* ââ Outer frame âââââââââââââââââââââââââââââââââââââââââââ */
+    /* ── Outer frame ─────────────────────────────────────────── */
     .datapad {
       max-width: 1100px;
       margin: 0 auto;
@@ -114,7 +114,7 @@
       position: relative;
     }
 
-    /* ââ Watermark âââââââââââââââââââââââââââââââââââââââââââââ */
+    /* ── Watermark ───────────────────────────────────────────── */
     #logo-watermark {
       position: absolute;
       top: 50%;
@@ -126,7 +126,7 @@
       z-index: 1;
     }
 
-    /* ââ Top bar âââââââââââââââââââââââââââââââââââââââââââââââ */
+    /* ── Top bar ─────────────────────────────────────────────── */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -161,7 +161,7 @@
     /* ============================================================
        AUREBESH TOGGLE BUTTON
        Switches ALL page text between standard fonts and Aurebesh.
-       No edits needed here â JS and CSS handle the switching.
+       No edits needed here — JS and CSS handle the switching.
        You can rename the button label text in the HTML body if
        you want (look for id="aurebesh-toggle").
        ============================================================ */
@@ -217,7 +217,7 @@
       opacity: 1;
     }
 
-    /* ââ Security gate ââââââââââââââââââââââââââââââââââââââ */
+    /* ── Security gate ────────────────────────────────────── */
     .security-gate {
       margin-top: 1rem; padding: 1rem;
       border: 1px solid var(--border); background: var(--dim);
@@ -252,7 +252,7 @@
     }
     .security-success-msg { font-size: 0.85rem; color: var(--text); line-height: 1.55; white-space: pre-wrap; }
 
-    /* ââ High contrast mode ââââââââââââââââââââââââââââââââââââ */
+    /* ── High contrast mode ──────────────────────────────────── */
     body.hi-contrast {
       --text:   #aaff44;
       --bg:     #070f02;
@@ -288,9 +288,9 @@
       transition: background 0.2s, border-color 0.2s;
     }
     .holonet-btn:hover { background: var(--dim); border-color: var(--accent); }
-    .holonet-btn::before { content: "â "; font-size: 0.65rem; }
+    .holonet-btn::before { content: "◈ "; font-size: 0.65rem; }
 
-    /* ââ Mission title âââââââââââââââââââââââââââââââââââââââââ */
+    /* ── Mission title ───────────────────────────────────────── */
     .mission-title {
       font-family: var(--font-title);
       font-size: clamp(1.6rem, 6vw, 2.8rem);
@@ -302,7 +302,7 @@
       margin-bottom: 0.4rem;
     }
 
-    /* ââ Mission ID / subtitle line ââââââââââââââââââââââââââââ */
+    /* ── Mission ID / subtitle line ──────────────────────────── */
     .mission-id {
       font-size: 0.7rem;
       letter-spacing: 0.14em;
@@ -311,7 +311,7 @@
       margin-bottom: 1.5rem;
     }
 
-    /* ââ Section labels ââââââââââââââââââââââââââââââââââââââââ */
+    /* ── Section labels ──────────────────────────────────────── */
     .section-label {
       font-size: 0.6rem;
       letter-spacing: 0.18em;
@@ -321,7 +321,7 @@
       margin-bottom: 0.5rem;
     }
 
-    /* ââ Mission briefing block ââââââââââââââââââââââââââââââââ */
+    /* ── Mission briefing block ──────────────────────────────── */
     .mission-block {
       border: 1px solid var(--border);
       border-left: 3px solid var(--accent);
@@ -340,10 +340,10 @@
     .mission-instructions li { margin-bottom: 0.4rem; }
     .mission-instructions li::marker { color: var(--accent); }
 
-    /* ââ Divider âââââââââââââââââââââââââââââââââââââââââââââââ */
+    /* ── Divider ─────────────────────────────────────────────── */
     .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
-    /* ââ Wide layout grid ââââââââââââââââââââââââââââââââââââââ */
+    /* ── Wide layout grid ────────────────────────────────────── */
     .datapad-layout { display: block; }
 
     .datapad-side {
@@ -375,7 +375,7 @@
       .datapad-side { flex-direction: column; }
     }
 
-    /* ââ Turn-in instructions ââââââââââââââââââââââââââââââââââ */
+    /* ── Turn-in instructions ────────────────────────────────── */
     .agent-name {
       font-size: 0.9rem;
       color: var(--accent);
@@ -384,7 +384,7 @@
       white-space: pre-line;
     }
 
-    /* ââ Credit payout box âââââââââââââââââââââââââââââââââââââ */
+    /* ── Credit payout box ───────────────────────────────────── */
     .credit-box {
       border: 1px solid var(--border);
       border-top: 3px solid var(--accent);
@@ -419,8 +419,8 @@
       margin-top: 0.25rem;
     }
 
-    /* ââ Event logo (canvas) âââââââââââââââââââââââââââââââââââ */
-    /* The logo appears in two places at two sizes â see HTML below.
+    /* ── Event logo (canvas) ─────────────────────────────────── */
+    /* The logo appears in two places at two sizes — see HTML below.
        Change --logo-color if you swap the page color scheme.       */
     .title-row {
       display: flex;
@@ -440,7 +440,7 @@
       opacity: 0.5;
     }
 
-    /* ââ Footer strip ââââââââââââââââââââââââââââââââââââââââââ */
+    /* ── Footer strip ────────────────────────────────────────── */
     .footer-strip {
       margin-top: 1.5rem;
       padding-top: 0.75rem;
@@ -453,7 +453,7 @@
       opacity: 0.3;
     }
 
-    /* ââ Full-screen scanlines (fixed overlay) âââââââââââââââââ */
+    /* ── Full-screen scanlines (fixed overlay) ───────────────── */
     .page-scanlines {
       position: fixed;
       inset: 0;
@@ -474,7 +474,7 @@
       94.3% { opacity: 1; }
     }
 
-    /* ââ Full-screen rolling scan beam ââââââââââââââââââââââââ */
+    /* ── Full-screen rolling scan beam ──────────────────────── */
     @keyframes scanroll {
       0%   { transform: translateY(-15vh); }
       100% { transform: translateY(110vh); }
@@ -496,7 +496,7 @@
       animation: scanroll 9s linear infinite;
     }
 
-    /* ââ HUD clock (top-right, fixed) ââââââââââââââââââââââââââ */
+    /* ── HUD clock (top-right, fixed) ────────────────────────── */
     .hud-clock {
       position: fixed;
       top: 0.75rem;
@@ -510,7 +510,7 @@
       pointer-events: none;
     }
 
-    /* ââ CRT flicker âââââââââââââââââââââââââââââââââââââââââââ */
+    /* ── CRT flicker ─────────────────────────────────────────── */
     @keyframes crt-flicker {
       0%, 100%  { opacity: 1; }
       92%       { opacity: 1; }
@@ -525,18 +525,18 @@
     /* =============================================================
        AUREBESH MODE STYLES
        ===============================================================
-       .aurebesh-accent  â ALWAYS renders in Aurebesh as decorative
+       .aurebesh-accent  — ALWAYS renders in Aurebesh as decorative
                            flavor text. Wrap any text in this class
                            to permanently display it in Aurebesh.
 
-       body.aurebesh-mode â toggled by the button. Switches all
+       body.aurebesh-mode — toggled by the button. Switches all
                            named text elements to Aurebesh font.
 
        To add a new text element to the full-page toggle, add its
        CSS selector to the body.aurebesh-mode block below.
        ============================================================= */
 
-    /* Permanently Aurebesh â decorative accent text */
+    /* Permanently Aurebesh — decorative accent text */
     .aurebesh-accent {
       font-family: var(--font-aurebesh);
       letter-spacing: 0.05em;
@@ -563,37 +563,37 @@
 <meta name="mission-status" content="complete"></head>
 <body>
 
-  <!-- ââ Full-screen overlays (outside card) ââââââââââââââââââ -->
+  <!-- ── Full-screen overlays (outside card) ────────────────── -->
   <div class="page-scanlines"></div>
   <div class="page-scan-roll"></div>
 
-  <!-- ââ HUD clock â top right ââââââââââââââââââââââââââââââââ -->
+  <!-- ── HUD clock — top right ──────────────────────────────── -->
   <div class="hud-clock" id="hud-clock">00:00:00</div>
 
   <div class="datapad">
 
-    <!-- Watermark â no edits needed. Size is set in the logo script. -->
+    <!-- Watermark — no edits needed. Size is set in the logo script. -->
     <canvas id="logo-watermark"></canvas>
 
-    <!-- ââ Top bar ââââââââââââââââââââââââââââââââââââââââââââââ
+    <!-- ── Top bar ──────────────────────────────────────────────
          Left: classification tag + Aurebesh toggle button
          Right: HoloNet landing page button
 
          EDIT: Change the href on the <a> tag to your landing page.
          EDIT: Change the classify-tag text (e.g. "PRIORITY ALPHA").
          EDIT: You can rename the toggle button label if you like.
-    âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
+    ─────────────────────────────────────────────────────────── -->
     <div class="top-bar">
       <div class="top-bar-left">
         <span class="classify-tag">CLASSIFIED</span>
 
-        <!-- Aurebesh toggle â JS below handles the switching -->
+        <!-- Aurebesh toggle — JS below handles the switching -->
         <button class="aurebesh-toggle-btn" id="aurebesh-toggle" onclick="toggleAurebesh()">
-          â« AUREBESH
+          ◫ AUREBESH
         </button>
         <!-- High contrast toggle -->
         <button class="hc-toggle-btn" id="hc-toggle" onclick="toggleHiContrast()">
-          â HI-CONTRAST
+          ◐ HI-CONTRAST
         </button>
       </div>
 
@@ -602,46 +602,46 @@
       </a>
     </div>
 
-    <!-- ââ Content layout (two-column on wide screens) ââââââââââ -->
+    <!-- ── Content layout (two-column on wide screens) ────────── -->
     <div class="datapad-layout">
 
-      <!-- ââ LEFT / MAIN: title + briefing âââââââââââââââââââââââ -->
+      <!-- ── LEFT / MAIN: title + briefing ─────────────────────── -->
       <div class="datapad-main">
 
-        <!-- ââ Mission Title ââââââââââââââââââââââââââââââââââââââ
+        <!-- ── Mission Title ──────────────────────────────────────
              EDIT: Replace "MISSION TITLE HERE" with your mission name.
-        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
+        ─────────────────────────────────────────────────────────── -->
         <div class="title-row">
           <canvas id="logo-title"></canvas>
           <h1 class="mission-title">A Costly Investment</h1>
         </div>
 
-        <!-- ââ Mission ID line ââââââââââââââââââââââââââââââââââââ
+        <!-- ── Mission ID line ────────────────────────────────────
              EDIT: Replace placeholders with mission code, faction, date.
-        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
+        ─────────────────────────────────────────────────────────── -->
         <p class="mission-id">MISSION ID: 04-F4-9A-41-9E-61-80 &nbsp;|&nbsp; ISSUED BY: [FACTION] &nbsp;|&nbsp; DIFFICULTY: *&nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span></p>
 
-        <!-- ââ Mission briefing block âââââââââââââââââââââââââââââ
+        <!-- ── Mission briefing block ─────────────────────────────
              EDIT: Replace placeholder content with your mission objectives.
-        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
+        ─────────────────────────────────────────────────────────── -->
         <div class="mission-block">
           <p class="section-label">
             Mission Briefing
-            &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">â SECURE CHANNEL</span>
+            &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">◆ SECURE CHANNEL</span>
           </p>
           <div class="mission-instructions"><p data-path-to-node="10,1">Management is worried about certain... 'influences' at the gaming tables. We need someone to sit in on a hand and keep their ears open while looking like just another gambler looking for a payday.</p><p data-path-to-node="10,1"></p><ul><li><span style="font-size: 0.78rem;">Join a game of chance and put at least </span><b data-path-to-node="10,2" data-index-in-node="51" style="font-size: 0.78rem;">10 credits</b><span style="font-size: 0.78rem;"> on the line. While you play, keep a sharp eye on the dealer and your fellow players. Once the hand is over, report back to the Informant. Tell them the vibe of the table, and anything notworthy you may have seen or heard. Your 25-credit payout covers your buy-in and your silence."</span></li></ul><p></p></div>
         </div>
 
       </div><!-- /.datapad-main -->
 
-      <!-- ââ RIGHT / SIDE: payout + turn-in ââââââââââââââââââââââ -->
+      <!-- ── RIGHT / SIDE: payout + turn-in ────────────────────── -->
       <div class="datapad-side">
 
-        <!-- ââ Credit payout box ââââââââââââââââââââââââââââââââ
+        <!-- ── Credit payout box ────────────────────────────────
              EDIT: Replace "$000" with the credit value.
              EDIT: Change "CREDITS" if you use a different currency
              name (e.g. "DATARIES", "SPICE UNITS").
-        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
+        ─────────────────────────────────────────────────────────── -->
         <div class="credit-box">
           <span class="credit-label">PAYOUT</span>
           <span class="credit-amount">$25</span>
@@ -650,9 +650,9 @@
 
         <hr class="divider">
 
-        <!-- ââ Turn-in / redemption instructions ââââââââââââââââââ
+        <!-- ── Turn-in / redemption instructions ──────────────────
              EDIT: Describe how the player redeems the card.
-        âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
+        ─────────────────────────────────────────────────────────── -->
         <div class="agent-section">
           <p class="section-label">Mission Agent</p>
           <div class="agent-name">[ AGENT NAME ]</div>
@@ -677,9 +677,9 @@
 
     </div><!-- /.datapad-layout -->
 
-    <!-- ââ Footer ââââââââââââââââââââââââââââââââââââââââââââââââ
+    <!-- ── Footer ────────────────────────────────────────────────
          EDIT: Swap in your own flavor text on the left side.
-    âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
+    ─────────────────────────────────────────────────────────── -->
     <div class="footer-strip">
       <span>HOLONET SECURE CHANNEL // ENCRYPTED</span>
       <canvas id="logo-footer"></canvas>
@@ -715,8 +715,8 @@
       body.classList.toggle('aurebesh-mode');
       btn.classList.toggle('active');
       btn.textContent = body.classList.contains('aurebesh-mode')
-        ? 'â« BASIC'
-        : 'â« AUREBESH';
+        ? '◫ BASIC'
+        : '◫ AUREBESH';
     }
 
     function toggleHiContrast() {
@@ -725,7 +725,7 @@
       body.classList.toggle('hi-contrast');
       const on = body.classList.contains('hi-contrast');
       btn.classList.toggle('active', on);
-      btn.textContent = on ? 'â STANDARD' : 'â HI-CONTRAST';
+      btn.textContent = on ? '◐ STANDARD' : '◐ HI-CONTRAST';
       try { localStorage.setItem('cantina-hc', on ? '1' : '0'); } catch(_) {}
     }
 
@@ -778,10 +778,10 @@
   <!-- =============================================================
        EVENT LOGO SCRIPT
        Draws the lunar eclipse mark onto two canvas elements:
-         #logo-title  â beside the mission title (~32px tall)
-         #logo-footer â in the footer strip (~18px tall)
+         #logo-title  — beside the mission title (~32px tall)
+         #logo-footer — in the footer strip (~18px tall)
 
-       LOGO COLOR â EDIT THIS to match whichever --accent you chose
+       LOGO COLOR — EDIT THIS to match whichever --accent you chose
        above in the COLOR SCHEME section.
          Scoundrel/Neutral:  '#f0c060'
          Imperial:           '#00cc00'
@@ -792,7 +792,7 @@
   <script>
     const LOGO_COLOR = '#88ff00'; /* EDIT: match your --accent color */
 
-    /* ââ Core drawing logic (from logo-final.html) ââââââââââââ */
+    /* ── Core drawing logic (from logo-final.html) ──────────── */
     const VX = 130.56, VY = 106.56, VW = 152.44, VH = 130.87;
 
     function drawLogoAt(canvasId, heightPx, color) {
