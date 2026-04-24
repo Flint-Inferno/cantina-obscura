@@ -52,35 +52,35 @@
        ---------------------------------------------------------------
 
        SCOUNDREL / NEUTRAL (amber-gold) — LOGO_COLOR: '#f0c060'
-         --bg: #07090f; --text: #a8c0d6; --accent: #7ec8e3;
-         --border: #1a2a3a; --dim: #0d1520;
+         --bg: #020f0f; --text: #44dddd; --accent: #00cccc;
+         --border: #0a3030; --dim: #051818;
 
        IMPERIAL (green terminal) — LOGO_COLOR: '#00cc00'
-         --bg: #07090f; --text: #a8c0d6; --accent: #7ec8e3;
-         --border: #1a2a3a; --dim: #0d1520;
+         --bg: #020f0f; --text: #44dddd; --accent: #00cccc;
+         --border: #0a3030; --dim: #051818;
 
        REPUBLIC / JEDI (blue holographic) — LOGO_COLOR: '#00aaff'
-         --bg: #07090f; --text: #a8c0d6; --accent: #7ec8e3;
-         --border: #1a2a3a; --dim: #0d1520;
+         --bg: #020f0f; --text: #44dddd; --accent: #00cccc;
+         --border: #0a3030; --dim: #051818;
 
        SITH / DARK SIDE (red) — LOGO_COLOR: '#cc0000'
-         --bg: #07090f; --text: #a8c0d6; --accent: #7ec8e3;
-         --border: #1a2a3a; --dim: #0d1520;
+         --bg: #020f0f; --text: #44dddd; --accent: #00cccc;
+         --border: #0a3030; --dim: #051818;
 
        MANDALORIAN (steel-blue/grey) — LOGO_COLOR: '#7ec8e3'
-         --bg: #07090f; --text: #a8c0d6; --accent: #7ec8e3;
-         --border: #1a2a3a; --dim: #0d1520;
+         --bg: #020f0f; --text: #44dddd; --accent: #00cccc;
+         --border: #0a3030; --dim: #051818;
 
        ============================================================= */
 
     /* EDIT: Paste your chosen color values here ↓ */
     :root {
-      --bg:          #07090f;
-      --text:        #a8c0d6;
-      --accent:      #7ec8e3;
-      --border:      #1a2a3a;
-      --dim:         #0d1520;
-      --danger:      #7ec8e3;
+      --bg:          #020f0f;
+      --text:        #44dddd;
+      --accent:      #00cccc;
+      --border:      #0a3030;
+      --dim:         #051818;
+      --danger:      #00cccc;
       --font-main:   'Share Tech Mono', monospace;
       --font-title:  'Orbitron', sans-serif;
       --font-aurebesh: 'Aurebesh', sans-serif;
@@ -254,12 +254,12 @@
 
     /* ── High contrast mode ──────────────────────────────────── */
     body.hi-contrast {
-      --text:   #a8c0d6;
-      --bg:     #07090f;
-      --border: #1a2a3a;
-      --dim:    #0d1520;
-      --accent: #7ec8e3;
-      --danger: #7ec8e3;
+      --text:   #44dddd;
+      --bg:     #020f0f;
+      --border: #0a3030;
+      --dim:    #051818;
+      --accent: #00cccc;
+      --danger: #00cccc;
     }
     body.hi-contrast .mission-id    { opacity: 1; }
     body.hi-contrast .section-label { opacity: 1; }
@@ -619,7 +619,7 @@
         <!-- ── Mission ID line ────────────────────────────────────
              EDIT: Replace placeholders with mission code, faction, date.
         ─────────────────────────────────────────────────────────── -->
-        <p class="mission-id">MISSION ID: 04-A0-F9-46-9E-61-80 &nbsp;|&nbsp; ISSUED BY: [FACTION] &nbsp;|&nbsp; DIFFICULTY: **&nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span></p>
+        <p class="mission-id">MISSION ID: 04-A0-F9-46-9E-61-80 &nbsp;|&nbsp; ISSUED BY: Not Applicable &nbsp;|&nbsp; DIFFICULTY: **&nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span></p>
 
         <!-- ── Mission briefing block ─────────────────────────────
              EDIT: Replace placeholder content with your mission objectives.
@@ -790,7 +790,7 @@
          Mandalorian:        '#7ec8e3'
        ============================================================= -->
   <script>
-    const LOGO_COLOR = '#7ec8e3'; /* EDIT: match your --accent color */
+    const LOGO_COLOR = '#00cccc'; /* EDIT: match your --accent color */
 
     /* ── Core drawing logic (from logo-final.html) ──────────── */
     const VX = 130.56, VY = 106.56, VW = 152.44, VH = 130.87;
