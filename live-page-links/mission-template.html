@@ -52,35 +52,35 @@
        ---------------------------------------------------------------
 
        SCOUNDREL / NEUTRAL (amber-gold) — LOGO_COLOR: '#f0c060'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #0d0d02; --text: #eecc44; --accent: #ffee00;
+         --border: #383600; --dim: #1a1900;
 
        IMPERIAL (green terminal) — LOGO_COLOR: '#00cc00'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #0d0d02; --text: #eecc44; --accent: #ffee00;
+         --border: #383600; --dim: #1a1900;
 
        REPUBLIC / JEDI (blue holographic) — LOGO_COLOR: '#00aaff'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #0d0d02; --text: #eecc44; --accent: #ffee00;
+         --border: #383600; --dim: #1a1900;
 
        SITH / DARK SIDE (red) — LOGO_COLOR: '#cc0000'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #0d0d02; --text: #eecc44; --accent: #ffee00;
+         --border: #383600; --dim: #1a1900;
 
        MANDALORIAN (steel-blue/grey) — LOGO_COLOR: '#7ec8e3'
-         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
-         --border: #3a2e14; --dim: #1a1508;
+         --bg: #0d0d02; --text: #eecc44; --accent: #ffee00;
+         --border: #383600; --dim: #1a1900;
 
        ============================================================= */
 
     /* EDIT: Paste your chosen color values here ↓ */
     :root {
-      --bg:          #0d0b07;
-      --text:        #d4a843;
-      --accent:      #f0c060;
-      --border:      #3a2e14;
-      --dim:         #1a1508;
-      --danger:      #c0392b;
+      --bg:          #0d0d02;
+      --text:        #eecc44;
+      --accent:      #ffee00;
+      --border:      #383600;
+      --dim:         #1a1900;
+      --danger:      #ffee00;
       --font-main:   'Share Tech Mono', monospace;
       --font-title:  'Orbitron', sans-serif;
       --font-aurebesh: 'Aurebesh', sans-serif;
@@ -251,12 +251,12 @@
 
     /* ── High contrast mode ──────────────────────────────────── */
     body.hi-contrast {
-      --text:   #d4a843;
-      --bg:     #0d0b07;
-      --border: #3a2e14;
-      --dim:    #1a1508;
-      --accent: #f0c060;
-      --danger: #c0392b;
+      --text:   #eecc44;
+      --bg:     #0d0d02;
+      --border: #383600;
+      --dim:    #1a1900;
+      --accent: #ffee00;
+      --danger: #ffee00;
     }
     body.hi-contrast .mission-id    { opacity: 1; }
     body.hi-contrast .section-label { opacity: 1; }
@@ -557,7 +557,7 @@
     }
   </style>
   <script id="mission-security" type="application/json">{"enabled":false,"codes":[],"caseSensitive":false,"successMsg":""}</script>
-<meta name="mission-status" content="not-started"><meta name="logo-title" content="" data-color="#b3c2cb"><meta name="logo-footer" content="" data-color="#7ec8e3"><meta name="logo-watermark" content="" data-color="#7ec8e3"></head>
+<meta name="mission-status" content="not-started"><meta name="logo-title" content="" data-color="#ffee00"><meta name="logo-footer" content="" data-color="#ffee00"><meta name="logo-watermark" content="" data-color="#ffee00"></head>
 <body>
 
   <!-- ── Full-screen overlays (outside card) ────────────────── -->
@@ -610,7 +610,7 @@
         ─────────────────────────────────────────────────────────── -->
         <div class="title-row">
           <canvas id="logo-title"></canvas>
-          <h1 class="mission-title">NOT A CARD</h1>
+          <h1 class="mission-title">TEMPLATE ONLY</h1>
         </div>
 
         <!-- ── Mission ID line ────────────────────────────────────
@@ -796,7 +796,7 @@
          Mandalorian:        '#7ec8e3'
        ============================================================= -->
   <script>
-    const LOGO_COLOR = '#f0c060'; /* EDIT: match your --accent color */
+    const LOGO_COLOR = '#ffee00'; /* EDIT: match your --accent color */
 
     /* ── Core drawing logic (from logo-final.html) ──────────── */
     const VX = 130.56, VY = 106.56, VW = 152.44, VH = 130.87;
@@ -876,4 +876,4 @@
 
 
 
-<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#b3c2cb"},'logo-footer':{data:null,color:"#7ec8e3"},'logo-watermark':{data:null,color:"#7ec8e3"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
+<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#ffee00"},'logo-footer':{data:null,color:"#ffee00"},'logo-watermark':{data:null,color:"#ffee00"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
