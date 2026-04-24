@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- ============================================================
        PAGE TITLE (shown in browser tab)
@@ -10,15 +9,15 @@
        ============================================================ -->
   <title>MISSION // DATAPAD</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 
   <!-- ============================================================
        FONTS
        "Share Tech Mono" = the main datapad font (monospaced, techy)
        "Orbitron"        = used for the big mission title
        ============================================================ -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
 
   <style>
     /* =============================================================
@@ -57,20 +56,20 @@
          --border: #3a2e14; --dim: #1a1508;
 
        IMPERIAL (green terminal) — LOGO_COLOR: '#00cc00'
-         --bg: #050f05; --text: #33ff33; --accent: #00cc00;
-         --border: #1a4a1a; --dim: #1a3a1a;
+         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
+         --border: #3a2e14; --dim: #1a1508;
 
        REPUBLIC / JEDI (blue holographic) — LOGO_COLOR: '#00aaff'
-         --bg: #020a14; --text: #4db8ff; --accent: #00aaff;
-         --border: #0a2a44; --dim: #0a1e2e;
+         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
+         --border: #3a2e14; --dim: #1a1508;
 
        SITH / DARK SIDE (red) — LOGO_COLOR: '#cc0000'
-         --bg: #0f0202; --text: #ff4444; --accent: #cc0000;
-         --border: #3a0a0a; --dim: #1a0505;
+         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
+         --border: #3a2e14; --dim: #1a1508;
 
        MANDALORIAN (steel-blue/grey) — LOGO_COLOR: '#7ec8e3'
-         --bg: #07090f; --text: #a8c0d6; --accent: #7ec8e3;
-         --border: #1a2a3a; --dim: #0d1520;
+         --bg: #0d0b07; --text: #d4a843; --accent: #f0c060;
+         --border: #3a2e14; --dim: #1a1508;
 
        ============================================================= */
 
@@ -252,12 +251,12 @@
 
     /* ── High contrast mode ──────────────────────────────────── */
     body.hi-contrast {
-      --text:   #ffffff;
-      --bg:     #000000;
-      --border: #555555;
-      --dim:    #1a1a1a;
-      --accent: #e0e0e0;
-      --danger: #ff9999;
+      --text:   #d4a843;
+      --bg:     #0d0b07;
+      --border: #3a2e14;
+      --dim:    #1a1508;
+      --accent: #f0c060;
+      --danger: #c0392b;
     }
     body.hi-contrast .mission-id    { opacity: 1; }
     body.hi-contrast .section-label { opacity: 1; }
@@ -557,8 +556,8 @@
       letter-spacing: 0.05em;
     }
   </style>
-  <script id="mission-security" type="application/json">{"enabled":false}</script>
-</head>
+  <script id="mission-security" type="application/json">{"enabled":false,"codes":[],"caseSensitive":false,"successMsg":""}</script>
+<meta name="mission-status" content="not-started"><meta name="logo-title" content="" data-color="#b3c2cb"><meta name="logo-footer" content="" data-color="#7ec8e3"><meta name="logo-watermark" content="" data-color="#7ec8e3"></head>
 <body>
 
   <!-- ── Full-screen overlays (outside card) ────────────────── -->
@@ -611,16 +610,13 @@
         ─────────────────────────────────────────────────────────── -->
         <div class="title-row">
           <canvas id="logo-title"></canvas>
-          <h1 class="mission-title">MISSION TITLE HERE</h1>
+          <h1 class="mission-title">NOT A CARD</h1>
         </div>
 
         <!-- ── Mission ID line ────────────────────────────────────
              EDIT: Replace placeholders with mission code, faction, date.
         ─────────────────────────────────────────────────────────── -->
-        <p class="mission-id">
-          MISSION ID: MX-0000 &nbsp;|&nbsp; ISSUED BY: [FACTION] &nbsp;|&nbsp; DIFFICULTY: [EASY/MEDIUM/HARD]
-          &nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span>
-        </p>
+        <p class="mission-id">MISSION ID: MX-0000 &nbsp;|&nbsp; ISSUED BY: [FACTION] &nbsp;|&nbsp; DIFFICULTY: [EASY/MEDIUM/HARD]&nbsp;<span class="aurebesh-accent">// AUTHORIZATION CONFIRMED //</span></p>
 
         <!-- ── Mission briefing block ─────────────────────────────
              EDIT: Replace placeholder content with your mission objectives.
@@ -628,11 +624,11 @@
         <div class="mission-block">
           <p class="section-label">
             Mission Briefing
-            &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">&#x25C6; SECURE CHANNEL</span>
+            &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">◆ SECURE CHANNEL</span>
           </p>
           <div class="mission-instructions">
             <p>[ REPLACE THIS TEXT WITH MISSION OBJECTIVES ]</p>
-            <br />
+            <br>
             <p>You can use a simple paragraph, or a list like this:</p>
             <ul>
               <li>Objective one — describe the first task here</li>
@@ -658,7 +654,7 @@
           <span class="credit-unit">CREDITS</span>
         </div>
 
-        <hr class="divider" />
+        <hr class="divider">
 
         <!-- ── Turn-in / redemption instructions ──────────────────
              EDIT: Describe how the player redeems the card.
@@ -673,14 +669,13 @@
           <div class="security-gate" id="security-gate" style="display:none">
             <p class="section-label">ACCESS CODE REQUIRED</p>
             <div class="security-input-row">
-              <input type="text" id="security-code-input" placeholder="ENTER CODE"
-                     autocomplete="off" spellcheck="false" autocapitalize="characters">
-              <button onclick="submitSecurityCode()">&#9658; SUBMIT</button>
+              <input type="text" id="security-code-input" placeholder="ENTER CODE" autocomplete="off" spellcheck="false" autocapitalize="characters">
+              <button onclick="submitSecurityCode()">► SUBMIT</button>
             </div>
-            <div class="security-error" id="security-error">&#x2717; INVALID CODE</div>
+            <div class="security-error" id="security-error">✗ INVALID CODE</div>
           </div>
           <div class="security-success-reveal" id="security-success-reveal">
-            <div class="access-granted">&#x2713; ACCESS GRANTED</div>
+            <div class="access-granted">✓ ACCESS GRANTED</div>
             <div class="security-success-msg" id="security-success-msg"></div>
           </div>
 
@@ -880,4 +875,5 @@
   </script>
 
 
-</html>
+
+<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#b3c2cb"},'logo-footer':{data:null,color:"#7ec8e3"},'logo-watermark':{data:null,color:"#7ec8e3"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
