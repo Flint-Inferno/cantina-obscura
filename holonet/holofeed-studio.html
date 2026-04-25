@@ -735,7 +735,7 @@ function saveFile() {
           id:s.id, from:s.from, to:s.to,
           cp1:{x:+(s.cp1.x/CW).toFixed(4), y:+(s.cp1.y/CH).toFixed(4)},
           cp2:{x:+(s.cp2.x/CW).toFixed(4), y:+(s.cp2.y/CH).toFixed(4)},
-          type:s.type, prob:+s.prob.toFixed(2)
+          type:s.type, prob:+s.prob.toFixed(2), heatMod:s.heatMod!=null?+s.heatMod.toFixed(2):1.0
         }))
       }));
       html = html.replace(
@@ -945,7 +945,7 @@ function addShortcut(fid,tid,prob=0.3){
   const fn=nById(fid),tn=nById(tid);if(!fn||!tn)return;
   const{cp1,cp2}=defCps(fn,tn);const dx=tn.x-fn.x,dy=tn.y-fn.y,len=Math.hypot(dx,dy)||1;
   const nx=-dy/len,ny=dx/len,b=Math.min(len*0.3,60);cp1.x+=nx*b;cp1.y+=ny*b;cp2.x+=nx*b;cp2.y+=ny*b;
-  trackSegs.push({id:nextSid++,from:fid,to:tid,cp1,cp2,type:'shortcut',prob});rebuildLUTs();updateInfo();
+  trackSegs.push({id:nextSid++,from:fid,to:tid,cp1,cp2,type:'shortcut',prob,heatMod:1.0});rebuildLUTs();updateInfo();
 }
 function clearTrack(){
   if(previewActive)stopPreview();
@@ -1119,11 +1119,19 @@ function showSelPanel(){
       <div class="sb-row"><span class="sb-label">ROUTE</span><span class="sb-val">${seg.from} → ${seg.to}</span></div>
       ${sc?`<div style="margin-top:8px"><span class="sb-label" style="display:block;margin-bottom:5px">CHANCE: <span id="pv">${Math.round(seg.prob*100)}%</span></span>
         <input type="range" min="5" max="90" value="${Math.round(seg.prob*100)}" oninput="setProb(${seg.id},+this.value)">
-        <div class="hint" style="margin-top:5px">Remaining % goes to main path.</div></div>`:''}
+        <div class="hint" style="margin-top:5px">Remaining % goes to main path.</div></div>
+        <div style="margin-top:8px"><span class="sb-label" style="display:block;margin-bottom:4px">HEAT MOD: <span id="hmv" style="color:${(seg.heatMod??1.0)>1.3?'#ff6644':(seg.heatMod??1.0)<0.7?'#44aaff':'var(--glow-dim)'}">${(seg.heatMod??1.0).toFixed(1)}× <small>${(seg.heatMod??1.0)>1.3?'HOT':(seg.heatMod??1.0)<0.7?'COOL':'NEUTRAL'}</small></span></span>
+        <input type="range" min="3" max="20" value="${Math.round((seg.heatMod??1.0)*10)}" oninput="setHeatMod(${seg.id},+this.value)">
+        <div class="hint" style="margin-top:4px">1.0 = neutral. &gt;1.0 heats faster. &lt;1.0 cools slightly.</div></div>`:''}
       <button class="tb-btn danger" style="width:100%;margin-top:8px" onclick="deleteSeg(${seg.id})">✕ DELETE SEGMENT</button>`;
   }
 }
 function setProb(segId,val){const seg=sById(segId);if(!seg)return;seg.prob=val/100;const el=document.getElementById('pv');if(el)el.textContent=val+'%';redraw();}
+function setHeatMod(segId,val){const seg=sById(segId);if(!seg)return;seg.heatMod=val/10;
+  const el=document.getElementById('hmv');if(el){const v=seg.heatMod;
+    el.style.color=v>1.3?'#ff6644':v<0.7?'#44aaff':'var(--glow-dim)';
+    el.innerHTML=v.toFixed(1)+'× <small>'+(v>1.3?'HOT':v<0.7?'COOL':'NEUTRAL')+'</small>';}
+  redraw();}
 function deleteNode(id){
   if(previewActive)stopPreview();
   if(trackNodes.length<=3){setTrackStatus('Need at least 3 nodes to delete one.');return;}
