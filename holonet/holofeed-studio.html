@@ -258,6 +258,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
 
   <div id="section-nav">
     <button class="sec-tab active" onclick="showSection('news', this)">📰 HEADLINES</button>
+    <button class="sec-tab" onclick="showSection('tags', this)">⚙ OUTLETS</button>
     <button class="sec-tab" onclick="showSection('ads', this)">📢 ADS</button>
     <button class="sec-tab" onclick="showSection('racers', this)">PODRACER NAMES</button>
     <button class="sec-tab" onclick="showSection('stocks', this)">📈 STOCKS</button>
@@ -269,10 +270,18 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
   <div class="sec-pane active" id="sec-news">
     <div class="sec-header"><span class="sec-title">HOLONEWS HEADLINES</span><span class="sec-count" id="news-count"></span></div>
     <div class="hint"><strong>Click a headline to expand/edit it.</strong> Each story has a headline, a body paragraph, and a tag.<br>
-    Tag options: <strong>standard</strong> (plain badge) or <strong>breaking</strong> (red BREAKING badge).<br>
+    Tags are news outlets — define and manage them in the <strong>⚙ OUTLETS</strong> tab.<br>
     Stories cycle automatically — order here doesn't matter, the feed shuffles them.</div>
     <div class="card-list" id="news-list"></div>
     <button class="add-btn" onclick="addHeadline()">+ ADD NEW HEADLINE</button>
+  </div>
+
+  <!-- OUTLETS / TAGS -->
+  <div class="sec-pane" id="sec-tags">
+    <div class="sec-header"><span class="sec-title">NEWS OUTLETS</span><span class="sec-count" id="tags-count"></span></div>
+    <div class="hint">Define the news outlets that appear as badges on headlines. Each outlet needs a <strong>display name</strong>, a short <strong>key</strong> (used internally in the HEADLINES data), and a <strong>color</strong>.<br>The tag picker on each headline updates automatically when you add or rename an outlet.</div>
+    <div class="card-list" id="tags-list"></div>
+    <button class="add-btn" onclick="addTag()">+ ADD NEW OUTLET</button>
   </div>
 
   <!-- ADS -->
@@ -646,6 +655,7 @@ function parseHtml(html) {
   try {
     const hRaw = extractArray(html, 'HEADLINES'), aRaw = extractArray(html, 'ADS');
     const rRaw = extractArray(html, 'RACER_NAMES'), sRaw = extractArray(html, 'STOCKS');
+    const tRaw = extractArray(html, 'TAGS');
     if (!hRaw || !aRaw || !rRaw || !sRaw) {
       setGlobalStatus('ERROR: Could not parse holofeed arrays. Is this the right file?', 'err');
       toast('Parse error — wrong file?', true); return false;
@@ -653,6 +663,7 @@ function parseHtml(html) {
     data.headlines = parseObjectArray(hRaw); data.ads = parseObjectArray(aRaw);
     data.racerNames = parseStringArray(rRaw);
     data.stocks = parseObjectArray(sRaw);
+    data.tags = tRaw ? parseObjectArray(tRaw) : [{key:'standard',label:'DATANET',color:'#888888'},{key:'breaking',label:'BREAKING',color:'#cc2200'}];
     data.timing = {
       raceFlash: parseTimingValue(html, 'FLASH') || 10,
       raceCountdown: parseTimingValue(html, 'COUNTDOWN') || 20,
@@ -693,6 +704,7 @@ function replaceTimingConst(html, varName, value) {
 }
 function buildModifiedHtml() {
   let html = originalHtml;
+  html = replaceArray(html, 'TAGS', serializeArray(data.tags));
   html = replaceArray(html, 'HEADLINES', serializeArray(data.headlines));
   html = replaceArray(html, 'ADS', serializeArray(data.ads));
   html = replaceArray(html, 'RACER_NAMES', serializeStringArray(data.racerNames));
@@ -755,17 +767,38 @@ function renderHeadlines() {
     card.innerHTML = `<div class="card-top"><span class="card-num">#${i+1}</span><div class="card-fields">
       <div><span class="field-label">HEADLINE</span><input type="text" value="${esc(h.h)}" oninput="data.headlines[${i}].h=this.value"></div>
       <div><span class="field-label">BODY TEXT</span><textarea oninput="data.headlines[${i}].b=this.value">${esc(h.b)}</textarea></div>
-      <div><span class="field-label">TAG</span><select onchange="data.headlines[${i}].tag=this.value">
-        <option value="standard" ${h.tag==='standard'?'selected':''}>standard — plain DATANET badge</option>
-        <option value="breaking" ${h.tag==='breaking'?'selected':''}>breaking — red BREAKING badge</option>
+      <div><span class="field-label">OUTLET / TAG</span><select onchange="data.headlines[${i}].tag=this.value">
+        ${(data.tags||[]).map(t=>`<option value="${t.key}" ${h.tag===t.key?'selected':''}>${t.label}</option>`).join('')}
       </select></div></div><button class="card-del" onclick="removeItem('headlines',${i})">✕ DEL</button></div>`;
     list.appendChild(card);
   });
 }
 function addHeadline() {
-  data.headlines.push({h:'New headline text here', b:'Body paragraph text here.', tag:'standard'});
+  data.headlines.push({h:'New headline text here', b:'Body paragraph text here.', tag:(data.tags&&data.tags[0]?data.tags[0].key:'standard')});
   renderHeadlines(); setTimeout(() => document.getElementById('news-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
 }
+function renderTags() {
+  const list = document.getElementById('tags-list'); list.innerHTML = '';
+  document.getElementById('tags-count').textContent = (data.tags||[]).length + ' outlets';
+  (data.tags||[]).forEach((t, i) => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<div class="card-top"><span class="card-num">#${i+1}</span><div class="card-fields">
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div><span class="field-label">DISPLAY NAME</span><input type="text" value="${esc(t.label)}" style="width:180px" oninput="data.tags[${i}].label=this.value;renderHeadlines();renderTags()"></div>
+        <div><span class="field-label">KEY</span><input type="text" value="${esc(t.key)}" style="width:110px" oninput="data.tags[${i}].key=this.value;renderHeadlines()"></div>
+        <div><span class="field-label">COLOR</span><input type="color" value="${t.color}" style="width:44px;height:28px;padding:1px;cursor:pointer;border:1px solid var(--border);background:none" oninput="data.tags[${i}].color=this.value;renderTags()"></div>
+        <div style="padding-bottom:3px"><span style="border:1px solid ${t.color};color:${t.color};background:${t.color}22;font-family:monospace;font-size:9px;padding:1px 6px;border-radius:2px;letter-spacing:1px;font-weight:bold">${esc(t.label)}</span></div>
+      </div></div>
+      <button class="card-del" onclick="removeItem('tags',${i})">✕ DEL</button></div>`;
+    list.appendChild(card);
+  });
+}
+function addTag() {
+  data.tags.push({key:'new-outlet', label:'NEW OUTLET', color:'#888888'});
+  renderTags();
+  setTimeout(() => document.getElementById('tags-list').lastChild?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
 
 function renderAds() {
   const list = document.getElementById('ads-list'); list.innerHTML = '';
@@ -841,10 +874,11 @@ function renderTiming() {
 
 function removeItem(arr, i) {
   data[arr].splice(i, 1);
-  if (arr==='headlines') renderHeadlines(); else if (arr==='ads') renderAds(); else if (arr==='stocks') renderStocks();
+  if (arr==='headlines') renderHeadlines(); else if (arr==='ads') renderAds(); else if (arr==='stocks') renderStocks(); else if (arr==='tags') { renderTags(); renderHeadlines(); }
 }
 
 function showSection(name, btn) {
+  if (name==='tags') renderTags();
   document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.sec-pane').forEach(p => p.classList.remove('active'));
   if (btn) btn.classList.add('active');
