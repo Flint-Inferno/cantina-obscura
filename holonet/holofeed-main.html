@@ -1884,6 +1884,7 @@ function applyBurst(bst,h,r,events,timeNow,i){
       message:'⚡ '+r.name.toUpperCase()+' — THERMAL SURGE — HEAT SPIKE'});
   }
 }
+const _TCache={};
 function _TBuildPaths(race){
   if(_TCache[race.seed])return _TCache[race.seed];
   const track=_TDef(race),luts=_TLuts(race);
@@ -2199,7 +2200,7 @@ function renderRace(){
   const fi=Math.min(Math.floor(t/pathData.dt),pathData.paths[0].positions.length-2);
   const frac=(t%pathData.dt)/pathData.dt;
   const nowMs=Date.now();
-  function _ipos(i){const a=pathData.paths[i].positions[fi],b=pathData.paths[i].positions[fi+1]||a;const iArc=(b.laps===a.laps)?a.arc+frac*(b.arc-a.arc):a.arc;return{x:a.x+frac*(b.x-a.x),y:a.y+frac*(b.y-a.y),laps:a.laps,arc:iArc,health:a.health,state:a.state,survived:a.survived};}
+  function _ipos(i){const a=pathData.paths[i].positions[fi],b=pathData.paths[i].positions[fi+1]||a;const iArc=(b.laps===a.laps)?a.arc+frac*(b.arc-a.arc):a.arc;return{x:a.x+frac*(b.x-a.x),y:a.y+frac*(b.y-a.y),laps:a.laps,arc:iArc,heat:a.heat||0,state:a.state,survived:a.survived};}
 
   // Leaderboard needed for live rank labels — compute before dot draw
   const raceLaps=race.laps||3;
@@ -2236,7 +2237,7 @@ function renderRace(){
     if(state==='dnf')return;
     let visible=true;
     if(state==='danger'){visible=Math.sin(nowMs/167*Math.PI)>0;}
-    else if(state==='repairing'){const hz=0.5+(health/100)*3.5;visible=Math.sin(nowMs/1000*hz*2*Math.PI)>0;}
+    else if(state==='repairing'){const hz=0.5+((pos.heat||0)/100)*3.5;visible=Math.sin(nowMs/1000*hz*2*Math.PI)>0;}
     if(!visible)return;
     const px=pos.x,py=pos.y;
     const glowColor=state==='danger'?'#ff3333':state==='handicapped'?'#ffaa00':state==='repairing'?'#44ddff':r.color;
