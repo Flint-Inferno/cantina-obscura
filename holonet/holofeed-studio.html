@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HoloFeed Studio — Datanet Configuration Terminal</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Electrolize&family=Orbitron:wght@400;700;900&display=swap');
 
 :root {
   --bg: #04080a; --panel: #070e12; --panel2: #0b141a;
@@ -13,7 +13,7 @@
   --glow: #00ccff; --glow-dim: #1a6a8a;
   --amber: #f0c040; --amber-dim: #8a6a10;
   --danger: #ff4444; --success: #44ff88;
-  --mono: 'Share Tech Mono', monospace;
+  --mono: 'Electrolize', sans-serif;
   --title: 'Orbitron', sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1024,7 +1024,7 @@ function drawSeg(seg){
     ctx.strokeStyle=isSel?'#ffcc22':'#00ccff55';ctx.lineWidth=5;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);
     ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(seg.cp1.x,seg.cp1.y,seg.cp2.x,seg.cp2.y,p3.x,p3.y);
     ctx.strokeStyle=isSel?'#ffcc2288':'#00ccff33';ctx.lineWidth=2;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
-    const mid=bpt(p0,seg.cp1,seg.cp2,p3,0.5);ctx.fillStyle='#f0c040dd';ctx.font='bold 9px "Share Tech Mono"';ctx.textAlign='center';ctx.fillText(Math.round(seg.prob*100)+'%',mid.x,mid.y-8);ctx.textAlign='left';
+    const mid=bpt(p0,seg.cp1,seg.cp2,p3,0.5);ctx.fillStyle='#f0c040dd';ctx.font='bold 9px "Electrolize"';ctx.textAlign='center';ctx.fillText(Math.round(seg.prob*100)+'%',mid.x,mid.y-8);ctx.textAlign='left';
   }else{
     ctx.strokeStyle=isSel?'#2288aa':'#1a3448';ctx.lineWidth=22;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash([]);ctx.stroke();ctx.lineCap='butt';
     ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.bezierCurveTo(seg.cp1.x,seg.cp1.y,seg.cp2.x,seg.cp2.y,p3.x,p3.y);
@@ -1040,7 +1040,7 @@ function drawNode(node){
   ctx.fillStyle=isSF?'#f0c04033':(isSel?'#00ccff22':'#070e1299');ctx.fill();
   ctx.strokeStyle=isSF?'#f0c040':(isSel?'#00ccff':'#1a3448');ctx.lineWidth=isSel?2.5:1.5;ctx.stroke();
   ctx.fillStyle=isSF?'#f0c040':(isSel?'#00ccff':'#1a6a8a');
-  ctx.font='bold 8px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold 8px "Electrolize"';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(isSF?'S/F':node.id,node.x,node.y);ctx.textAlign='left';ctx.textBaseline='alphabetic';
 }
 function drawHandles(){
@@ -1194,7 +1194,7 @@ function drawRacers(){
     for(let j=1;j<r.trail.length;j++){ctx.globalAlpha=(j/r.trail.length)*0.4;ctx.beginPath();ctx.moveTo(r.trail[j-1].x,r.trail[j-1].y);ctx.lineTo(r.trail[j].x,r.trail[j].y);ctx.strokeStyle=r.color;ctx.lineWidth=3;ctx.stroke();}ctx.globalAlpha=1;
     if(!r.done){const g=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,11);g.addColorStop(0,r.color+'bb');g.addColorStop(1,r.color+'00');ctx.beginPath();ctx.arc(pos.x,pos.y,11,0,2*Math.PI);ctx.fillStyle=g;ctx.fill();}
     ctx.beginPath();ctx.arc(pos.x,pos.y,5.5,0,2*Math.PI);ctx.fillStyle=r.done?r.color+'55':r.color;ctx.fill();ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();
-    ctx.fillStyle='#000';ctx.font='bold 6px "Share Tech Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ri+1,pos.x,pos.y);ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    ctx.fillStyle='#000';ctx.font='bold 6px "Electrolize"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ri+1,pos.x,pos.y);ctx.textAlign='left';ctx.textBaseline='alphabetic';
   });
   const sorted=[...racers].sort((a,b)=>a.laps!==b.laps?b.laps-a.laps:b.arcThisLap-a.arcThisLap);
   const lb=document.getElementById('lb-list');lb.innerHTML='';
