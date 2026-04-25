@@ -233,9 +233,8 @@ body::after {
   font-family: var(--font-eng); font-weight: bold; font-size: 9px;
   padding: 1px 5px; border-radius: 2px; letter-spacing: 1px;
 }
-.news-tag.breaking { background: var(--danger); color: #fff; }
+.news-tag.outlet { border: 1px solid; }
 .news-tag.ad-tag { background: var(--amber-dim); color: var(--amber); }
-.news-tag.standard { border: 1px solid var(--glow-dim); color: var(--glow-dim); }
 .news-time { font-family: var(--font-eng); font-weight: bold; font-size: 9px; color: var(--dim-text); }
 
 .news-headline { font-size: 14px; line-height: 1.4; color: var(--glow); margin-bottom: 4px; }
@@ -893,6 +892,51 @@ function toggleGlobalTranslate() {
 // HOLONEWS DATA
 // ============================================================
 // ============================================================
+// TAG DEFINITIONS
+// ============================================================
+// Defines the news outlet badges shown on each headline.
+// key: internal id used in HEADLINES. label: badge text. color: hex.
+// Managed by the Studio's OUTLETS tab — edit there, not here.
+// ============================================================
+const TAGS = [
+  {
+    key:"imperial",
+    label:"IMPERIAL HOLONET",
+    color:"#9a1a1a"
+  },
+  {
+    key:"courier",
+    label:"CORUSCANT COURIER",
+    color:"#3a5a8a"
+  },
+  {
+    key:"rimrunner",
+    label:"RIM RUNNER RELAY",
+    color:"#b07020"
+  },
+  {
+    key:"underground",
+    label:"UNDERGROUND FREQ",
+    color:"#2a7a3a"
+  },
+  {
+    key:"hutt",
+    label:"HUTT SPACE HERALD",
+    color:"#6a2a8a"
+  },
+  {
+    key:"commerce",
+    label:"COMMERCE DISPATCH",
+    color:"#1a7070"
+  },
+  {
+    key:"odds",
+    label:"OUTER RIM ODDS",
+    color:"#7a5a10"
+  }
+];
+
+// ============================================================
 // HOLONEWS HEADLINES
 // ============================================================
 // This is the pool of 30 news stories the feed cycles through.
@@ -912,154 +956,254 @@ function toggleGlobalTranslate() {
 // ============================================================
 const HEADLINES = [
   {
-    h:"Dissolving of Senate proves beneficial",
-    b:"The transition to direct regional governorship has resulted in a 30% increase in administrative efficiency. Citizens are reporting shorter wait times for trade permits across the Core Worlds.",
-    tag:"standard"
+    h:"New Imperial Star Destroyer Fleet Commissioned at Kuat Drive Yards — Navy Welcomes Record Class",
+    b:"The Imperial Navy marked the commissioning of its largest single-season fleet expansion since the end of the Clone Wars at Kuat Drive Yards today. Fleet Admirals cited the expansion as a necessary response to increased insurgent activity across the Outer Rim. \"The Empire does not negotiate with chaos,\" a Naval spokesperson stated.",
+    tag:"imperial"
   },
   {
-    h:"\"A Graveyard of Coral and Ash\" — New Republic Survey Confirms Scarif Remains Uninhabitable",
-    b:"A somber report released by the New Republic Institute of Science has confirmed what many feared: the planet Scarif is an ecological casualty of the Galactic Civil War. The comprehensive survey, conducted by the research vessel Aurelia, reveals that the Imperial superlaser strike in 0 BBY did more than destroy the Citadel Tower; it triggered a localized atmospheric collapse.\n\nData shows that the heat from the blast flash-boiled over 20% of the planet's shallow oceans, leading to the total extinction of the world’s legendary equatorial coral reefs. Furthermore, ionizing radiation trapped beneath the former planetary shield remains at lethal levels for unshielded lifeforms. \"The biosphere didn't just break; it was sterilized,\" Chief Researcher Dr. Vaneen told HoloNews. Estimates suggest that while the planetary \"fever\" is breaking, the atmosphere will remain toxic to most sentient species for at least another fifty standard years, leaving the site of the Rebellion's first victory a permanent quarantine zone.",
-    tag:"breaking"
+    h:"Imperial Infrastructure Initiative Completes Power Grid Upgrades Across Fourteen Outer Rim Systems",
+    b:"The Imperial Infrastructure Initiative has completed power grid installations across fourteen Outer Rim systems this season, providing reliable energy to over two hundred million citizens. Project supervisors credit the Empire's centralized logistics model for the program's ahead-of-schedule completion.",
+    tag:"imperial"
   },
   {
-    h:"Scavenger Reports of \"Organized Activity\" in Jakku Boneyard",
-    b:"New Republic orbital patrols have logged an unprecedented surge in unauthorized salvage operations within the Jakku debris fields. While the system has remained a desolate \"boneyard\" since the Imperial surrender, recent long-range scans suggest that scavengers are no longer just stripping hulls for credits.",
-    tag:"breaking"
+    h:"ISB Reports Measurable Decline in Outer Rim Insurgent Activity Following Recent Operations",
+    b:"The Imperial Security Bureau has released a quarterly report citing a measurable decline in coordinated insurgent activity across the Outer Rim following a series of targeted military operations. Senior ISB officials credited improved intelligence-sharing between garrison commands. Remaining cells are described as isolated and diminishing.",
+    tag:"imperial"
   },
   {
-    h:"Blue Milk Shortage continues, impacting more than Outer Rim Worlds",
-    b:"Supply chain disruptions from the Inner Rim have led to a shortage of traditional dairy. Patrons are encouraged to try local synthetic alternatives until the lanes reopen.",
-    tag:"standard"
+    h:"Imperial Academy Graduation on Coruscant Sets Enrollment Record for Third Year Running",
+    b:"This year's Imperial Academy graduation welcomed its largest cadet class in institutional history. Over fourteen thousand officers received commissions in a ceremony presided over by senior Naval Command delegates. The Emperor's recorded address called the graduates \"the order that will hold the galaxy together for a thousand years.\"",
+    tag:"imperial"
   },
   {
-    h:"Czerka Corporation Reports Record Profits Amid Postwar Reconstruction Boom; Stocks Surge on Outer Rim Contracts",
-    b:"Czerka Corporation (CZK) announced its strongest fiscal quarter in three decades today, fueled by a massive surge in demand for heavy-lifting droids and civil infrastructure kits. As the New Republic pushes its \"Reclamation Initiative\" into the Outer Rim, Czerka has secured over thirty percent of the primary mining and refinery contracts in the Mid-Rim and beyond.\n\n\"We are committed to helping the galaxy heal,\" a Czerka spokesperson stated during a press briefing at the Coral Vanda. While the corporation’s stock has soared on the Galactic Exchange, the report has drawn fire from the Senate Ethics Committee. Critics point to Czerka’s \"Resource Acquisition\" tactics on worlds like Glee Anselm, where local labor unions have accused the company of reviving Imperial-era work-credit systems. Despite the controversy, New Republic logistics officials admit that without Czerka’s supply chain, the reconstruction of war-torn sectors could grind to a halt.",
-    tag:"standard"
+    h:"Ghorman Trade Mediation Enters Final Phase — Imperial Customs Authority Optimistic",
+    b:"Imperial spokespersons confirmed that shipping disputes on Ghorman have entered what officials are calling the final phase of formal mediation. The Bureau of Trade Compliance reports that merchant council representatives have been cooperative. Landing platform demonstrations, declared unlawful assembly last month, have reportedly decreased in frequency.",
+    tag:"imperial"
   },
   {
-    h:"\"The Great Regrowing\" — Wookiee Council Convenes on Kashyyyk to Address Post-Occupation Recovery",
-    b:"The somber melodies of the \"Song of Remembrance\" echoed through the upper canopies today as the Wookiee Liberation Council formally convened to assess the state of the planet’s recovery. Three years after the final Imperial garrisons were routed from the forest floor, delegates from over a hundred tree-cities have gathered to tackle the monumental task of rebuilding a civilization nearly shattered by decades of Imperial enslavement.\n\nAccording to the Council’s latest metrics, approximately thirty-five percent of major settlement clusters have been restored to pre-occupation standards. However, the report highlights a darker reality: thousands of Wookiees remain unaccounted for, likely scattered across the galaxy in private labor camps or deep-space mining colonies. \"The chains are broken on Kashyyyk, but our people are not yet whole,\" a council member's words were, translated through a New Republic diplomatic droid. Beyond reconstruction, the Council is petitioning the Senate for increased funding for Arboreal Healing, as vast swaths of the sacred wroshyr forests remain scarred by Imperial defoliants and heavy machinery.",
-    tag:"standard"
+    h:"Imperial Agricultural Assistance Program Delivers Grain Reserves to Six Drought-Affected Systems",
+    b:"The Imperial Agricultural Assistance Program has dispatched emergency grain reserves to six systems experiencing severe drought conditions this season. Program administrators emphasized that the Empire's centralized supply chain allows for rapid response that independent planetary governments could not achieve alone.",
+    tag:"imperial"
   },
   {
-    h:"Corellia Docking Authority Unveils \"Freedom Routes\" — Three New Outer Rim Trade Corridors Go Live",
-    b:"In a move intended to shatter the final remnants of Imperial-era trade monopolies, the Corellia Docking Authority (CDA) has officially opened three major commercial transit corridors connecting the Core Worlds to the Outer Rim. These \"Freedom Routes\"—designated the Auresh-7, Besh-2, and Cresh-Midline—are the first new hyperlanes to be formally charted and patrolled since the signing of the Galactic Concordance.\n\nThe CDA expects the new routes to reduce transit times by up to thirty percent, easing the severe supply bottlenecks that have plagued postwar reconstruction efforts. \"For twenty years, the Empire choked the life out of the Rim to maintain control,\" CDA Director Bel-Iblis told reporters at the Coronet Spaceport. \"Today, we re-open the veins of the galaxy.\" However, independent shipping guilds have expressed caution, noting that while the corridors are officially \"open,\" New Republic patrols remain spread thin, leaving many merchant vessels to provide their own security against a recent spike in pirate interdictions.",
-    tag:"standard"
+    h:"Mandalorian Transitional Authority Reports Successful Integration of Northern Clan Territories",
+    b:"The Imperial-backed Mandalorian Transitional Authority has announced the successful administrative integration of the planet's northern clan territories into the Imperial Protectorate framework. Officials report that infrastructure investment in the region will begin next season, bringing stability to one of the Outer Rim's most historically volatile worlds.",
+    tag:"imperial"
   },
   {
-    h:"Alderaanian Diaspora Network Locates Survivors on Espirion and Sullust",
-    b:"In what is being hailed as the most significant recovery of \"Lost Citizens\" since the victory at Endor, the Alderaanian Diaspora Network (ADN) has confirmed the location of two major survivor enclaves. The communities, totaling over five thousand individuals, were discovered living in deep-cover integration on the worlds of Espirion and Sullust.\n\nOn Espirion, the survivors have reportedly integrated with the local population, creating a unique cultural hybrid that ADN officials say has preserved Alderaanian art and philosophy in secret for nearly a decade. Meanwhile, the Sullust enclave was discovered in the lower geothermal warrens, where they had been sheltered by the Sullustan underground since the world's destruction. \"Every name we reclaim is a victory over the Death Star,\" said a tearful ADN coordinator. The New Republic Refugee Affairs Office has already dispatched a fleet of unarmed transports to offer relocation assistance to New Alderaan, though many survivors are reportedly torn between returning to their people and staying on the worlds that gave them sanctuary during the dark times.",
-    tag:"standard"
+    h:"Serv-O-Droid Incorporated Voluntarily Recalls Twelve Thousand DUM-Series Pit Droids — No Injuries Reported",
+    b:"Serv-O-Droid Incorporated has announced a voluntary recall of twelve thousand DUM-series pit droids following reports of erratic behavior during high-temperature operations. Company officials emphasize that no injuries have been reported and characterize the action as a precautionary measure reflecting responsible corporate practice. Replacement units are available at all licensed dealers.",
+    tag:"imperial"
   },
   {
-    h:"Kuat Drive Yards Pivots to Civilian Production — First Models Next Quarter",
-    b:"Kuat Drive Yards announced a major shift in its production lines from military vessels to civilian transports. The first consumer models are expected to reach dealerships within two standard quarters.",
-    tag:"standard"
+    h:"Senator Mon Mothma Draws Imperial Rebuke Following Pointed Senate Floor Address",
+    b:"Senator Mon Mothma of Chandrila delivered an unusually direct condemnation of Imperial military expansion in the Outer Rim during yesterday's Senate session. Imperial liaison officers formally rebuked the address as inflammatory and irresponsible. Mon Mothma's office declined to retract any portion of the speech.",
+    tag:"courier"
   },
   {
-    h:"Ryloth Defies Senate; \"Butcher of Gahenna\" Executed Before Extradition",
-    b:"A diplomatic clash has erupted between the New Republic and the Free Ryloth Movement following the summary execution of former Imperial Governor Orlo Vanis. Captured after three years in hiding, Vanis was centerpiece to a high-stakes jurisdictional standoff.\n\nDespite multiple \"Urgent Priority\" communiqués from Chancellor Mothma requesting Vanis be transferred to Chandrila for a formal war crimes tribunal, Rylothian High Command carried out a death sentence less than six hours after his capture.\n\n\"The New Republic speaks of 'restorative justice' from the safety of the Core,\" a spokesperson for the Free Ryloth militia stated. \"But Ryloth does not need a committee to identify its monsters, nor a permit to bury them.\" The incident has stalled negotiations for Ryloth to join the Republic’s \"Common Defense Pact,\" with several Senators labeling the execution a \"setback for the rule of law.\"",
-    tag:"breaking"
+    h:"Senate Appropriations Committee Approves Expanded Defense Budget for Fourth Consecutive Year",
+    b:"The Galactic Senate's Appropriations Committee has approved a sweeping military budget increase for the fourth year running, with the largest share directed toward Naval construction and Outer Rim garrison expansion. Several senators abstained rather than oppose the measure on record.",
+    tag:"courier"
   },
   {
-    h:"Archaeological Team Uncovers Pre-Republic Ruins on Nothoiin",
-    b:"A research team from the University of Coronet has uncovered the remnants of a pre-Republic settlement on Nothoiin, including structures and artifacts dating to more than four thousand years before the current era.",
-    tag:"standard"
+    h:"Senator Bail Organa of Alderaan Appointed Chair of New Outer Rim Refugee Aid Commission",
+    b:"Senator Bail Organa has been quietly appointed chair of a newly formed Senate Refugee Aid Commission tasked with addressing displacement crises across the Outer Rim. The appointment drew little attention during an otherwise contentious session dominated by military budget debates.",
+    tag:"courier"
   },
   {
-    h:"Hutt Grand Council Fractures — Multiple Clans Claim Supremacy Over Cartel Routes",
-    b:"Three of the major Hutt clan families have publicly broken with the Grand Council following the disappearance of crime lord Jabba Desilijic Tiure. Bounty hunters across the Outer Rim report a significant uptick in contract activity.",
-    tag:"breaking"
+    h:"Kuat Drive Yards Reports Record Order Backlog — Civilian Production Lines Temporarily Suspended",
+    b:"Kuat Drive Yards released its quarterly earnings confirming a record backlog driven entirely by Imperial Naval contracts. Shareholders were informed that civilian production lines had been temporarily reallocated to meet military demand. The news drove KDY stock to a six-year high, though some analysts flagged the company's growing single-customer exposure as a long-term risk.",
+    tag:"courier"
   },
   {
-    h:"New Republic Navy Decommissions Three Imperial Star Destroyers",
-    b:"The New Republic Navy announced the decommissioning of three captured Imperial-class Star Destroyers, the latest in a series of post-armistice military reductions. The vessels will be repurposed for civilian infrastructure projects.",
-    tag:"standard"
+    h:"Class Action Filed Against Arakyd Industries Over Faulty Hyperdrive Navigation Components",
+    b:"A coalition of independent freight operators has filed a class action suit against Arakyd Industries, alleging that a batch of navigation computers sold under the company's civilian product line caused catastrophic hyperdrive miscalculations. At least nine vessels are cited in the initial filing. Arakyd's legal team has moved to have the case transferred to Imperial Commercial Court.",
+    tag:"courier"
   },
   {
-    h:"Sullust Relief Efforts Enter Critical Phase — Off-World Aid Ships En Route",
-    b:"New Republic aid officials warned that relief efforts on Sullust are entering a critical phase, as local infrastructure remains severely damaged from years of Imperial extraction and wartime bombardment.",
-    tag:"standard"
+    h:"Galactic HoloFilm Board Bans New Release in Six Systems Citing Seditious Undertones",
+    b:"The Galactic HoloFilm Regulatory Board has banned the distribution of a new dramatic production in six systems, citing what officials describe as seditious undertones in its depiction of Clone Wars-era resistance movements. The director, whose name was not released, is reportedly unavailable for comment. The film had already screened in several Outer Rim systems before the ban was issued.",
+    tag:"courier"
   },
   {
-    h:"Barsha Corporation Files Outer Rim Mining Permits — Environmental Groups Object",
-    b:"Barsha Corporation has filed permits to expand mineral extraction across four Outer Rim systems, drawing sharp criticism from environmental groups who cite the devastation of Scarif as evidence of the risks posed by unchecked corporate extraction.",
-    tag:"standard"
+    h:"Droid Labor Petition Dismissed by Senate Commerce Committee Without Debate",
+    b:"A petition calling for minimum operational standards for indentured droid labor — submitted jointly by three advocacy organizations — was dismissed by the Senate Commerce Committee this week without being brought to a formal vote. A spokesperson cited existing manufacturer warranty frameworks as sufficient protection. Critics called the dismissal a failure of basic accountability.",
+    tag:"courier"
   },
   {
-    h:"Chancellor Mon Mothma Introduces Galactic Reconciliation and Reconstruction Act",
-    b:"In a lengthy Senate address, Chancellor Mon Mothma outlined a sweeping Galactic Reconciliation and Reconstruction Act that would fund relief operations across dozens of systems and create a path for former Imperial citizens to seek New Republic membership.",
-    tag:"standard"
+    h:"Ghorman Protesters Maintain Landing Platform Blockade for Third Consecutive Week",
+    b:"Demonstrators on Ghorman have held a continuous blockade of the capital's primary landing platform for twenty-one standard days, preventing Imperial customs inspectors from accessing docked freighters. Local merchants say the standoff has already cost them the equivalent of two full trading seasons. Imperial response has so far been limited to formal charges and verbal warnings.",
+    tag:"rimrunner"
   },
   {
-    h:"Bounty Hunters Guild Seeks Official Recognition Under New Republic Law",
-    b:"The Bounty Hunters Guild has formally petitioned the New Republic for legal recognition as a licensed professional body. The petition has drawn mixed reactions from senators.",
-    tag:"standard"
+    h:"Fourteen Workers Dead After Mine Collapse on Cynda — Operator Disputes Safety Violations",
+    b:"A cave-in at an ore extraction facility on Cynda has killed at least fourteen workers, with rescue operations still ongoing. The facility's operator, a subsidiary of Morlani Mining Consolidated, has disputed allegations of safety protocol violations, calling the collapse a geological anomaly. The Imperial Labor Compliance Office has announced an investigation — the third such announcement at the same facility in four years.",
+    tag:"rimrunner"
   },
   {
-    h:"Toydaria Votes to Join New Republic as Associate Member State",
-    b:"Toydaria's parliament voted to formally join the New Republic as an associate member, granting the kingdom access to trade agreements and defense guarantees without full Senate representation.",
-    tag:"standard"
+    h:"Groundwater Contamination Confirmed Near Czerka Processing Plant on Ibaar",
+    b:"Local health officials on Ibaar have confirmed elevated toxin levels in groundwater sources near a Czerka Corporation processing plant. Several hundred residents in surrounding settlements have been advised not to use local water supplies. Czerka has stated that its operations comply with all Imperial environmental standards and that further comment would be inappropriate while an internal review is underway.",
+    tag:"rimrunner"
   },
   {
-    h:"Separatist droid factory Identified on Mustafar — Diplomatic Envoy Dispatched",
-    b:"New Republic long-range scanners have detected a massive power spike emanating from a supposedly decommissioned Separatist foundry deep within Mustafar’s volcanic wastes. Intelligence officials believe the facility’s central computer remained in a \"low-power standby\" mode for nearly three decades, recently triggered into a production cycle by a localized seismic event.\n\nRather than a military strike, Chancellor Mon Mothma has authorized a diplomatic mission led by representatives from Enark and Antar 4—worlds with historic ties to the Confederacy of Independent Systems. The move is seen as a test of the New Republic’s commitment to reconciliation. \"We are not at war with the past,\" a Senate aide commented. \"If these droids can be repurposed for reconstruction rather than conquest, it would be a victory for the entire galaxy.\"",
-    tag:"standard"
+    h:"Dust Blight Sweeps Through Shaum Hii Grain Belt — Second Consecutive Failed Harvest",
+    b:"Agricultural authorities on Shaum Hii have confirmed that dust blight has swept through the planet's primary grain-producing regions for the second consecutive season, wiping out an estimated sixty percent of expected yields. Local relief organizations report that Imperial assistance has not been requested by the planetary governor's office, which has declined to comment.",
+    tag:"rimrunner"
   },
   {
-    h:"Kashyyyk Rebuilding Effort: 40% of Wookiee Settlements Restored",
-    b:"New Republic reconstruction authorities announced that roughly forty percent of Kashyyyk's Wookiee settlements have been fully restored since the end of Imperial occupation.",
-    tag:"standard"
+    h:"HoloNet Correspondent Missing After Filing Dispatches From Jedha — Network Seeks Answers",
+    b:"A freelance correspondent filing for the Rim Runner Relay has been unreachable for eleven days following a series of reports from Jedha City describing an intensifying Imperial presence near the Temple district. Attempts to locate the correspondent through local sources have been unsuccessful. Imperial garrison offices on Jedha have not responded to formal media inquiries.",
+    tag:"rimrunner"
   },
   {
-    h:"Pyke Syndicate Seizes Outer Rim Relay Stations — Shipping Fees Spark Outrage",
-    b:"The Pyke Syndicate has reportedly seized three major hyperspace relay stations, enabling it to levy tolls on shipping in the region. New Republic logistics officials have lodged a formal protest.",
-    tag:"breaking"
+    h:"Acid Storm Season Forces Evacuation of Three Settlements on Ventooine",
+    b:"A severe acid storm season on Ventooine has forced the evacuation of three settlements in the planet's equatorial band, displacing an estimated twelve thousand residents. Imperial administrative offices have confirmed receipt of an emergency assistance request but have not confirmed a response timeline or resource commitment.",
+    tag:"rimrunner"
   },
   {
-    h:"Coruscant Reconstruction Commission Releases 10-Year Restoration Plan",
-    b:"The Coruscant Reconstruction Commission released its first official 10-year plan, calling for restoration of the city-world's lower levels and new transit infrastructure to replace systems neglected under Imperial rule.",
-    tag:"standard"
+    h:"Outer Rim Shipping Guild Reports Third Quarter of Rising Freight Costs — Blames Customs Delays",
+    b:"The Outer Rim Shipping Guild has released a report attributing a sustained rise in freight costs to Imperial customs processing delays at major transit hubs. Average clearance times have reportedly doubled over the past year. Guild representatives have filed formal complaints with three separate Imperial administrative offices without receiving a substantive response.",
+    tag:"rimrunner"
   },
   {
-    h:"New Republic Scientists: Scarif Will Remain Uninhabitable for a Generation",
-    b:"A new scientific assessment confirms that radiation levels across Scarif's surface remain lethal for unshielded humans and will likely continue for several decades. All marine ecosystems in the planet's reef system were destroyed. The report calls for a permanent quarantine zone.",
-    tag:"breaking"
+    h:"Serv-O-Droid Recall Leaves Podracing Teams Scrambling for Replacement Pit Crews",
+    b:"The sudden recall of twelve thousand DUM-series pit droids has sent shockwaves through the professional podracing community ahead of the Malastare season opener, with several racing teams reporting that their entire automated pit crews are now grounded. Serv-O-Droid has offered replacement units, but lead times are estimated at six to eight weeks.",
+    tag:"rimrunner"
   },
   {
-    h:"Force-Sensitive Sightings Reported Across Multiple Systems — New Republic Silent",
-    b:"Multiple credible sightings of Force-sensitive individuals have been reported across several systems, prompting speculation about a possible new Jedi order. New Republic officials have declined to comment.",
-    tag:"standard"
+    h:"Podracing Circuit Expands to Malastare After Ando Prime Venue Ban Lifted",
+    b:"The Outer Rim Podracing Circuit has confirmed Malastare's Gran-run Grand Circuit as the newest addition to the official racing calendar. The move is expected to draw strong attendance from Gran communities across the sector and has been welcomed by circuit sponsors, pit crew shortage notwithstanding.",
+    tag:"rimrunner"
   },
   {
-    h:"Hosnian Prime to Host New Republic Senate Sessions During Capital Construction",
-    b:"The Senate Logistics Committee voted to temporarily relocate to Hosnian Prime while permanent facilities on Chandrila are completed, for an estimated two to three standard years.",
-    tag:"standard"
+    h:"The Ghorman Question: How Long Before the Empire Stops Pretending It's a Trade Dispute?",
+    b:"What is happening on Ghorman is not a trade dispute. It is a siege. Eighty-seven days of customs blockade have driven local merchants to ruin, and every Senate appeal has been tabled before testimony could begin. The Empire is not negotiating. It is waiting. The question is what it is waiting for.",
+    tag:"underground"
   },
   {
-    h:"New Republic Food Relief Fleet Departs Mon Cala for Outer Rim Territories",
-    b:"Twelve New Republic freighters carrying food, medical supplies, and construction equipment departed from Mon Cala today, bound for formerly Imperial-occupied territories in the Outer Rim.",
-    tag:"standard"
+    h:"Former Detainees Are Talking About an Imperial Labor Prison in the Outer Rim — The Empire Says It Doesn't Exist",
+    b:"We have spoken with eleven individuals who describe being held at an undisclosed Imperial labor installation somewhere in the Outer Rim. Their accounts are consistent: indefinite detention without trial, forced manufacturing shifts under threat of collective punishment, no legal representation, no family contact. The Empire has not acknowledged the facility. That silence is, itself, an answer.",
+    tag:"underground"
   },
   {
-    h:"Sources Report Organized Imperial Faction Active in Outer Rim — Details Scarce",
-    b:"Multiple intelligence reports describe continued activity by an organized Imperial faction in uncharted Outer Rim territories. The group is rumored to be led by a former Imperial Moff.",
-    tag:"standard"
+    h:"Mon Mothma's Senate Address — The Full Transcript the Imperial Holonet Didn't Broadcast",
+    b:"Senator Mon Mothma named Ghorman, Ryloth, and Ferrix by name. She described a military budget expanding faster than any peacetime rationale could justify. She called the Senate's silence complicity. None of that reached the sanctioned Holonet broadcast. We are publishing the full transcript.",
+    tag:"underground"
   },
   {
-    h:"Nar Shaddaa Tourism Surges to 10-Year High as Galaxy Reopens Post-War",
-    b:"Tourism to Nar Shaddaa has increased markedly since the war's end, with entertainment district operators reporting visitor numbers at a ten-year high.",
-    tag:"standard"
+    h:"What Is the Empire Mining on Jedha — And What Requires Kyber at Industrial Scale?",
+    b:"The official description is infrastructure and resource development. But kyber crystal extraction at the volume now documented on Jedha has no civilian application on record. Temple orders have been displaced. The city is under military lockdown. Whatever the purpose, it requires kyber in quantities no public project has ever called for. No one in the Senate is asking the obvious follow-up question.",
+    tag:"underground"
   },
   {
-    h:"Teräs Käsi Open Championship Returns to Malastare After Decade Suspension",
-    b:"The Malastare Teräs Käsi Open Championship returns after a ten-year suspension under Imperial rule, with registrations now open to competitors from across the galaxy.",
-    tag:"standard"
+    h:"ISB Informant Networks Expanding Across the Mid-Rim — Neighbors Reporting Neighbors for Credits",
+    b:"Sources across six Mid-Rim systems describe being approached by Imperial Security Bureau representatives and asked to report on suspicious behaviors among neighbors, coworkers, and family. Financial incentives are being offered. Civil advocates warn of a deliberate effort to fracture community trust at the most local level possible.",
+    tag:"underground"
   },
   {
-    h:"Mandalorian Factions Issue Unprecedented Joint Statement on Future of the Way",
-    b:"Three prominent Mandalorian factions released a joint statement today addressing their cultural traditions, the status of Mandalore, and intentions regarding New Republic engagement.",
-    tag:"standard"
+    h:"Fourteen Dead on Cynda. The Operator Calls It Geology. We Talked to the Survivors.",
+    b:"The official account of the Cynda mine collapse is a geological anomaly. The workers who survived describe something else: emergency shutoff overrides disabled to meet extraction quotas, pressure gauges flagged and ignored, and a shift foreman who left the site twenty minutes before the collapse. We spoke to four survivors. None of them believe it was an anomaly.",
+    tag:"underground"
+  },
+  {
+    h:"The Mandalorian Resistance Has Not Collapsed — It Has Gone Quiet. There Is a Difference.",
+    b:"Imperial press releases describe the Mandalorian resistance as neutralized. Our sources describe a network of covert cells, hidden weapons caches, and an intact chain of command operating beneath the surface of the Imperial Protectorate. Going quiet is not the same as surrendering. Ask anyone who grew up in the Outer Rim.",
+    tag:"underground"
+  },
+  {
+    h:"A Journalist Went to Jedha and Stopped Filing. Here Is the Last Dispatch She Sent.",
+    b:"Eleven days ago, a freelance correspondent stopped responding after filing reports from Jedha City. Her last dispatch described a checkpoint established within sight of the Temple steps, kyber dust drifting from industrial extraction equipment, and stormtroopers turning pilgrims away at the city gate. We are publishing it in full. We are still trying to find her.",
+    tag:"underground"
+  },
+  {
+    h:"Arakyd's Recall Is Bigger Than the Company Is Saying — Here Is What We Know",
+    b:"Arakyd Industries is calling it a voluntary recall affecting nine vessels. Our sources within the independent freight community put the number closer to forty, with at least two incidents resulting in deaths recorded as pilot error in official reports. The company has moved to transfer the class action to Imperial Commercial Court, where outcomes for corporate defendants are historically favorable.",
+    tag:"underground"
+  },
+  {
+    h:"Jabba Consolidates Spice Routes Following Kessel Disruption — Three Syndicates Absorbed",
+    b:"Jabba Desilijic Tiure has moved swiftly to absorb spice distribution networks left vacant by recent disruptions in Kessel's supply chain. Associates report that three mid-tier syndicates have been folded into Jabba's operation under terms described only as non-negotiable. No formal resistance was mounted by any of the three.",
+    tag:"hutt"
+  },
+  {
+    h:"Bounty Rates Hit Decade High — Guild Reports Unprecedented Active Contract Volume",
+    b:"The Bounty Hunters Guild has confirmed that active contract volume has reached its highest point in over a decade, driven by corporate clients and criminal organizations operating in an increasingly unstable environment. Senior hunters report turning down work due to backlog. Guild leadership attributes the surge to rising Outer Rim instability and expanding corporate asset disputes.",
+    tag:"hutt"
+  },
+  {
+    h:"Nar Shaddaa Summit Draws Faction Leaders — Crimson Dawn Presence Rumored",
+    b:"A closed-door summit on Nar Shaddaa drew representatives from at least six major criminal organizations this week. The agenda was not disclosed. Multiple attendees were observed bearing Crimson Dawn insignia, fueling speculation about the syndicate's re-emergence under new and as yet unidentified leadership.",
+    tag:"hutt"
+  },
+  {
+    h:"Sabacc World Championship Returns to Numidian Prime — Registration Now Open",
+    b:"The Sabacc World Championship has confirmed Numidian Prime as this cycle's host following a successful security review. Registration for open qualifier rounds is live. Last cycle's controversial disqualification of the Corellian champion for irregular card handling remains under formal appeal and is expected to shadow the proceedings.",
+    tag:"hutt"
+  },
+  {
+    h:"Black Sun Moves Into Mandalorian Arms Trade as Imperial Crackdown Creates Market Vacuum",
+    b:"Criminal intelligence sources indicate that Black Sun has begun brokering Mandalorian-manufactured weapons across the Outer Rim, filling a gap created by the Imperial crackdown on independent Mandalorian smiths. Prices for genuine Mandalorian iron have reached an all-time high on the black market.",
+    tag:"hutt"
+  },
+  {
+    h:"Pyke Syndicate Restructuring After Kessel Losses — New Leadership Unconfirmed",
+    b:"Sources within the spice trade report that the Pyke Syndicate, significantly weakened following recent setbacks on Kessel, has begun restructuring under what appears to be new internal leadership. The identity of the new figures remains unconfirmed. Rival organizations are watching carefully.",
+    tag:"hutt"
+  },
+  {
+    h:"Nar Shaddaa Gladiatorial Circuit Wraps Most Profitable Season on Record",
+    b:"The Nar Shaddaa Gladiatorial Circuit has closed its most profitable season on record, with live attendance up forty percent and betting volume surging across licensed and unlicensed outlets alike. Promoters have announced an expanded slate for next season, including a rumored cross-species invitational bracket.",
+    tag:"hutt"
+  },
+  {
+    h:"Kuat Drive Yards Stock Surges on Naval Contracts — Analysts Flag Single-Customer Risk",
+    b:"Kuat Drive Yards shares reached a six-year high following confirmation of extended Imperial naval contracts. Market analysts note the company's civilian production lines have been almost entirely suspended, creating significant long-term diversification risk. \"KDY is now functionally a single-customer operation,\" one analyst wrote. \"What the Empire wants, KDY builds.\"",
+    tag:"commerce"
+  },
+  {
+    h:"Bespin Mining Guild Posts Record Tibanna Quarter — Primary Buyers Undisclosed",
+    b:"The Bespin Mining Guild has reported its strongest quarterly output in a decade, with tibanna gas demand outpacing all projected models. Guild Administrator Calrissian declined to name the primary purchasers, citing confidentiality agreements. Independent analysts note the order scale exceeds any commercial application currently on record.",
+    tag:"commerce"
+  },
+  {
+    h:"Outer Rim Coaxium Embargo Drives Hyperfuel Costs Up Across Three Sectors",
+    b:"An Imperial embargo on independently licensed coaxium suppliers across the Outer Rim has sent hyperfuel costs surging in three sectors. Independent freight operators report margins eliminated overnight. Imperial-licensed suppliers have raised prices to meet unprecedented demand.",
+    tag:"commerce"
+  },
+  {
+    h:"Corellian Engineering Unveils New Mid-Range Freighter — Pre-Orders Already Substantial",
+    b:"Corellian Engineering Corporation has unveiled a new mid-range freighter design aimed at independent operators. Pre-orders have generated a backlog of over two thousand units. Demand appears driven in part by operators seeking vessels outside Imperial commercial registration frameworks.",
+    tag:"commerce"
+  },
+  {
+    h:"Banking Guild Successor Firms Report Third Quarter of Declining Outer Rim Lending",
+    b:"Financial institutions operating under the post-Clone Wars Banking Guild restructure have reported a third consecutive quarter of declining loan issuance to Outer Rim clients. Risk officers cite political instability and Imperial customs interference as primary factors. Small business advocates describe the lending drought as a slow financial siege.",
+    tag:"commerce"
+  },
+  {
+    h:"Boonta Circuit Champion Stripped of Title After Illegal Engine Modification Discovered",
+    b:"The Outer Rim Podracing Commission has stripped Dax Okunn of his Boonta Circuit championship following discovery of an illegal repulsor bypass concealed within his engine assembly. Okunn denies knowledge of the modification and is pointing blame at his pit crew. The runner-up, a Toong racer from Troiken, is expected to be awarded the title pending formal review.",
+    tag:"odds"
+  },
+  {
+    h:"Dug Prodigy Shatters Malastare Qualifying Record — Circuit Scouts Take Notice",
+    b:"A seventeen-year-old Dug racer from Pixelito shattered the Malastare qualifying lap record by nearly three seconds during open trials this week, drawing immediate attention from major racing sponsors. Circuit officials were in attendance. When asked about comparisons to Sebulba, the young racer said only: \"I plan to be faster.\"",
+    tag:"odds"
+  },
+  {
+    h:"Outer Rim Lottery — Cycle 847 Results: No Grand Prize Winner, Jackpot Rolls to 140 Million",
+    b:"The Outer Rim Lottery Commission confirms no ticket matched all seven numbers in Cycle 847, rolling the grand prize to an estimated 140 million credits. Winning numbers: 7, 14, 23, 31, 44, 52, and 9. Tickets for Cycle 848 are available at licensed vendors across forty-two participating systems. Odds of winning remain 1 in 87 million.",
+    tag:"odds"
+  },
+  {
+    h:"Sabacc Hall of Fame Inducts Three — Legendary Corellian 'Ghost Hand' Among Honorees",
+    b:"The Sabacc Players Federation inducted three new members into its Hall of Fame this cycle, including the celebrated Corellian player known only as Ghost Hand, whose sixteen-year undefeated run at the Cloud City tables ended in disputed circumstances. Two sitting Hall members walked out of the ceremony in protest. The Federation has declined to comment on the walkout.",
+    tag:"odds"
+  },
+  {
+    h:"This Cycle's Odds Board: What the Outer Rim Is Betting On",
+    b:"Current lines at licensed Outer Rim odds houses: Malastare Grand Circuit — Dug prodigy leads at 2:1. Numidian Prime Sabacc qualifier — open field, no favorite. Nar Shaddaa gladiatorial semifinals — the Wookiee challenger at 3:2. Outer Rim Lottery Cycle 848 — odds of winning: 1 in 87 million, as always. Bet responsibly. Or don't. We're a wire service, not your mother.",
+    tag:"odds"
   }
 ];
 
@@ -1223,10 +1367,12 @@ function renderNews() {
     const div = document.createElement('div');
     div.className = 'news-item'+(isAd?' ad':'')+(isTranslated?' translated':'')+(isExpanded?' expanded':'');
     div.dataset.key = key;
-    const tagClass = isAd?'ad-tag':(data.tag==='breaking'?'breaking':'standard');
-    const tagText = isAd?'SPONSORED':(data.tag==='breaking'?'BREAKING':'DATANET');
+    const tagDef = !isAd && TAGS.find(t=>t.key===data.tag);
+    const tagStyle = tagDef?' style="border-color:'+tagDef.color+';color:'+tagDef.color+';background:'+tagDef.color+'22"':'';
+    const tagClass = isAd?'ad-tag':'outlet';
+    const tagText = isAd?'SPONSORED':(tagDef?tagDef.label:(data.tag||'').toUpperCase());
     div.innerHTML =
-      '<div class="news-meta"><span class="news-tag '+tagClass+'">'+tagText+'</span><span class="news-time">'+timeAgo(item.t,now)+'</span></div>'+
+      '<div class="news-meta"><span class="news-tag '+tagClass+'"'+tagStyle+'>'+tagText+'</span><span class="news-time">'+timeAgo(item.t,now)+'</span></div>'+
       '<div class="news-headline alien-text">'+data.h+'</div>'+
       '<div class="news-body alien-text">'+data.b+'</div>';
     div.addEventListener('click', function() {
