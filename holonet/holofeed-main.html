@@ -2172,21 +2172,25 @@ const _racerIdxToRow=new Array(9).fill(0);
 function _showRacerMsg(racerIdx,ev){
   const inner=_racerMsgInners[racerIdx];
   if(!inner)return;
-  clearTimeout(_racerMsgTimers[racerIdx]);
+  clearTimeout(_racerMsgTimers[racerIdx]);_racerMsgTimers[racerIdx]=null;
   const isKill=ev.type==='dnf_killed';
-  const isCrit=ev.type==='critical'||ev.type==='warning';
+  const isDnf=isKill||ev.type==='dnf_survived';
+  const isCrit=ev.type==='critical'||ev.type==='warning'||ev.type==='repair';
   let msg=ev.message;
   if(ev.racerName){msg=msg.replace(ev.racerName+' \u2014 ','').replace(ev.racerName,'');}
   msg=msg.replace(/^[\u26a0\u26a1\uD83D\uDCA5\u2020\s]+/,'').trim();
   inner.textContent=msg;
-  inner.style.color=isKill?'#ff5555':isCrit?'var(--amber)':'var(--glow-dim)';
-  // start ticker from right edge of container
+  const color=isKill?'#ff5555':isCrit?'var(--amber)':'var(--glow-dim)';
+  inner.style.color=color;
+  if(isDnf){_racerDnfMsg[racerIdx]={text:msg,color};}
   const container=inner.parentElement;
   const containerW=container?container.offsetWidth||100:100;
   _racerTickerX[racerIdx]=containerW+8;
   inner.style.transform='translateX('+(containerW+8)+'px)';
-  const dur=isKill?9000:6000;
-  _racerMsgTimers[racerIdx]=setTimeout(()=>{inner.textContent='';inner.style.transform='';},dur);
+  // expiry timestamp: render loop only clears AFTER scroll-through past this time
+  // DNF messages set expiry=0 (no expiry — the persist system loops the DNF reason forever)
+  if(isDnf){_racerMsgExpiry[racerIdx]=0;}
+  else{_racerMsgExpiry[racerIdx]=Date.now()+(isCrit?6000:4000);}
 }
 
 function _queueEvent(ev){
