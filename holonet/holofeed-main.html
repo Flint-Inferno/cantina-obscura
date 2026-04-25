@@ -1455,9 +1455,22 @@ const TRACK_CX = 260, TRACK_CY = 115, TRACK_RX = 190, TRACK_RY = 85;
 const BS_MIN = (2*Math.PI)/75, BS_MAX = (2*Math.PI)/45;
 
 // ============================================================
-// HEALTH SYSTEM CONSTANTS
+// HEAT SYSTEM CONSTANTS
 // ============================================================
-const HEALTH_BASE_DRAIN = 0.8;
+const HEAT_EQUILIBRIUM = 0.78;
+const HEAT_RATE_UP     = 1.6;
+const HEAT_RATE_DOWN   = 0.9;
+const PIT_COOL_RATE    = 18;
+const HEAT_SPIKE_MIN   = 22;
+const HEAT_SPIKE_MAX   = 38;
+
+const STRATEGIES = [
+  {id:'knife',  name:'KNIFE EDGE',    heatTarget:0.87, coolSpeed:0.75, pitWillingness:0.15, burstWeight:2.0,  shortcutAggression:0.5},
+  {id:'steady', name:'STEADY HAND',   heatTarget:0.58, coolSpeed:0.75, pitWillingness:0.45, burstWeight:0.6,  shortcutAggression:1.5},
+  {id:'burst',  name:'BURST & COAST', heatTarget:0.74, coolSpeed:0.50, pitWillingness:0.25, burstWeight:1.5,  shortcutAggression:0.8},
+  {id:'pit',    name:'PIT RUNNER',    heatTarget:0.93, coolSpeed:0.75, pitWillingness:0.90, burstWeight:1.0,  shortcutAggression:0.6},
+  {id:'gambler',name:'GAMBLER',       heatTarget:1.00, coolSpeed:1.00, pitWillingness:0.00, burstWeight:2.5,  shortcutAggression:0.0},
+];
 
 const INCIDENT_MESSAGES = [
   "THRUSTER COUPLING FAILING",
