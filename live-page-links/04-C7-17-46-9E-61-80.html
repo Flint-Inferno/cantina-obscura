@@ -217,7 +217,42 @@
       opacity: 1;
     }
 
-    /* High contrast mode */
+        /* Security gate */
+    .security-gate {
+      margin-top: 1rem; padding: 1rem;
+      border: 1px solid var(--border); background: var(--dim);
+    }
+    .security-gate .section-label { margin-bottom: 0.5rem; }
+    .security-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .security-input-row input {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); padding: 0.4rem 0.6rem; font-family: inherit;
+      font-size: 0.85rem; letter-spacing: 0.08em; outline: none;
+    }
+    .security-input-row input:focus { border-color: var(--accent); }
+    .security-input-row button {
+      background: none; border: 1px solid var(--accent); color: var(--accent);
+        padding: 0.4rem 0.8rem; font-family: inherit; font-size: 0.75rem;
+      letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+    }
+    .security-input-row button:hover { background: var(--dim); }
+    .security-error {
+      margin-top: 0.45rem; font-size: 0.7rem; color: var(--danger);
+      letter-spacing: 0.08em; display: none;
+    }
+    .security-error.visible { display: block; }
+    .security-success-reveal {
+      margin-top: 1rem; padding: 1rem;
+      border: 1px solid var(--accent); background: var(--dim); display: none;
+    }
+    .security-success-reveal.visible { display: block; }
+    .access-granted {
+      font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent);
+      margin-bottom: 0.6rem; opacity: 0.85;
+    }
+    .security-success-msg { font-size: 0.85rem; color: var(--text); line-height: 1.55; white-space: pre-wrap; }
+
+/* High contrast mode */
     body.hi-contrast {
       --text:   #aa80ff;
       --bg:     #08050f;
@@ -637,12 +672,12 @@ There is no <b><u>death</u></b>, there is the <b><u>Force</u></b>.</div><div sty
             <p class="section-label">ACCESS CODE REQUIRED</p>
             <div class="security-input-row">
               <input type="text" id="security-code-input" placeholder="ENTER CODE" autocomplete="off" spellcheck="false" autocapitalize="characters">
- <button onclick="submitSecurityCode()"> SUBMIT</button>
+ <button onclick="submitSecurityCode()">▶ SUBMIT</button>
             </div>
- <div class="security-error" id="security-error"> INVALID CODE</div>
+ <div class="security-error" id="security-error">✗ INVALID CODE</div>
           </div>
           <div class="security-success-reveal" id="security-success-reveal">
- <div class="access-granted"> ACCESS GRANTED</div>
+ <div class="access-granted">✓ ACCESS GRANTED</div>
             <div class="security-success-msg" id="security-success-msg"></div>
           </div>
 
