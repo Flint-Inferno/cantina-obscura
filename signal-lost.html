@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Signal Lost — Cantina Obscura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Electrolize&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0d0000;
@@ -18,7 +21,7 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Courier New', Courier, monospace;
+      font-family: 'Electrolize', sans-serif;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -140,6 +143,27 @@
       50%      { opacity: 0; }
     }
 
+    .return-link {
+      margin-top: 1.4rem;
+    }
+    .return-link a {
+      display: inline-block;
+      padding: 0.45rem 1.2rem;
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .return-link a:hover {
+      opacity: 1;
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
     .status-bar {
       margin-top: 1.6rem;
       border: 1px solid var(--border);
@@ -176,6 +200,9 @@
     </div>
     <div class="status-bar">
       STATUS: <span>LINK SEVERED</span> &nbsp;|&nbsp; AUTH: <span>EXPIRED</span>
+    </div>
+    <div class="return-link">
+      <a href="holonet/holofeed-main.html">◈ RETURN TO HOLONET FEED</a>
     </div>
   </div>
 
