@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MISSION REGISTRY // CANTINA OBSCURA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:     #060608;
+      --panel:  #0d0d12;
+      --border: #1e2030;
+      --accent: #f0c060;
+      --text:   #a0a8c0;
+      --dim:    #3a3d50;
+      --green:  #00cc88;
+      --red:    #cc3333;
+      --amber:  #e07840;
+      --font:   'Share Tech Mono', monospace;
+      --hd:     'Orbitron', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.8rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent, transparent 3px,
+        rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── Top bar ─────────────────────────── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 0.45rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .logo {
+      font-family: var(--hd);
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    #status {
+      flex: 1;
+      font-size: 0.68rem;
+      letter-spacing: 0.07em;
+      color: var(--text);
+      opacity: 0.5;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #status.ok   { color: var(--green);  opacity: 1; }
+    #status.err  { color: var(--red);    opacity: 1; }
+    #status.warn { color: var(--amber);  opacity: 1; }
+
+    /* ── Main ────────────────────────────── */
+    #main {
+      flex: 1;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    /* ── Mode toggle ─────────────────────── */
+    #mode-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .mode-btn {
+      flex: 1;
+      font-family: var(--font);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      padding: 0.42rem 1rem;
+      background: transparent;
+      color: var(--dim);
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-btn + .mode-btn { border-left: 1px solid var(--border); }
+    .mode-btn.active { background: rgba(240,192,96,0.08); color: var(--accent); }
+    .mode-btn:not(.active):hover { color: var(--text); }
+
+    /* ── Search input ────────────────────── */
+    #search-input {
+      width: 100%;
+      font-family: var(--font);
+      font-size: 1.05rem;
+      letter-spacing: 0.1em;
+      padding: 0.6rem 0.85rem;
+      background: var(--panel);
+      color: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      outline: none;
+      caret-color: var(--accent);
+      transition: border-color 0.15s;
+    }
+    #search-input:focus { border-color: rgba(240,192,96,0.5); }
+    #search-input::placeholder { color: var(--dim); letter-spacing: 0.06em; font-size: 0.85rem; }
+
+    /* ── Loading bar ─────────────────────── */
+    #loading-bar {
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: sweep 1.2s linear infinite;
+      display: none;
+      border-radius: 1px;
+    }
+    #loading-bar.active { display: block; }
+    @keyframes sweep {
+      0%   { background-position: -100% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ── Record count ────────────────────── */
+    #record-count {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--dim);
+    }
+
+    /* ── Results list ────────────────────── */
+    #results {
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.55rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-row:hover { background: rgba(240,192,96,0.06); }
+    .result-row.hidden { display: none; }
+
+    .result-title {
+      flex: 1;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .result-title.pending { color: var(--dim); }
+
+    .result-diff {
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      padding: 0.1rem 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text);
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 4rem;
+      text-align: center;
+      visibility: hidden;
+    }
+    .result-diff.loaded { visibility: visible; }
+
+    .result-serial {
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Empty state ─────────────────────── */
+    #empty {
+      display: none;
+      padding: 2.5rem;
+      text-align: center;
+      color: var(--dim);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    /* ── Mobile ──────────────────────────── */
+    @media (max-width: 480px) {
+      .result-diff { display: none; }
+      .result-serial { font-size: 0.56rem; letter-spacing: 0; }
+      #search-input { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="logo">◈ CANTINA OBSCURA // MISSION REGISTRY</span>
+  <span id="status">INITIALIZING...</span>
+</div>
+
+<div id="main">
+
+  <div id="mode-toggle">
+    <button class="mode-btn active" id="btn-serial" onclick="setMode('serial')">SERIAL LOOKUP</button>
+    <button class="mode-btn"        id="btn-title"  onclick="setMode('title')">TITLE SEARCH</button>
+  </div>
+
+  <input id="search-input"
+         type="text"
+         inputmode="text"
+         autocomplete="off"
+         autocorrect="off"
+         spellcheck="false"
+         placeholder="04-__-__-__-__-__-__"
+  />
+
+  <div id="loading-bar"></div>
+
+  <div id="record-count">— RECORDS</div>
+
+  <div id="results"></div>
+  <div id="empty">NO MATCHING RECORDS</div>
+
+</div>
+
+<script>
+/* ── Config ───────────────────────────────────────────────── */
+
+const REPO      = 'Flint-Inferno/cantina-obscura';
+const FOLDER    = 'live-page-links';
+const API_URL   = `https://api.github.com/repos/${REPO}/contents/${FOLDER}?per_page=100`;
+const PAGES_URL = `https://flint-inferno.github.io/cantina-obscura/${FOLDER}/`;
+const CACHE_KEY = 'co-registry-meta-v1';
+
+/* ── State ────────────────────────────────────────────────── */
+
+let mode        = 'serial';
+let allCards    = [];   // { name, serial, title, diff }
+let metaLoaded  = false;
+let metaLoading = false;
+let rawHex      = '';   // stripped hex digits for serial mode
+
+/* ── Utilities ────────────────────────────────────────────── */
+
+function setStatus(msg, cls = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+function formatSerial(hex) {
+  let s = '';
+  for (let i = 0; i < hex.length; i++) {
+    if (i > 0 && i % 2 === 0) s += '-';
+    s += hex[i];
+  }
+  return s;
+}
+
+function serialFromName(name) {
+  return name.replace(/\.html$/i, '');
+}
+
+/* ── Bootstrap: fetch file list ───────────────────────────── */
+
+async function loadFileList() {
+  setStatus('FETCHING REGISTRY...');
+  try {
+    const res  = await fetch(API_URL);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+
+    allCards = data
+      .filter(f => f.name.endsWith('.html'))
+      .map(f => ({
+        name:   f.name,
+        serial: serialFromName(f.name),
+        title:  null,
+        diff:   null,
+      }));
+
+    allCards.sort((a, b) => a.serial.localeCompare(b.serial));
+    hydrateFromCache();
+    renderList();
+    filterList();
+    setStatus(allCards.length + ' RECORDS LOADED', 'ok');
+  } catch (e) {
+    setStatus('REGISTRY UNAVAILABLE — CHECK CONNECTION', 'err');
+  }
+}
+
+/* ── Session cache ────────────────────────────────────────── */
+
+function hydrateFromCache() {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return;
+    const cache = JSON.parse(raw);
+    let hits = 0;
+    for (const c of allCards) {
+      if (cache[c.name]) {
+        c.title = cache[c.name].title;
+        c.diff  = cache[c.name].diff;
+        hits++;
+      }
+    }
+    if (hits === allCards.length) metaLoaded = true;
+  } catch (e) { /* ignore */ }
+}
+
+function saveCache() {
+  try {
+    const cache = {};
+    for (const c of allCards) cache[c.name] = { title: c.title, diff: c.diff };
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  } catch (e) { /* ignore */ }
+}
+
+/* ── Lazy metadata fetch ──────────────────────────────────── */
+
+async function loadMeta() {
+  if (metaLoading || metaLoaded) return;
+  metaLoading = true;
+  document.getElementById('loading-bar').classList.add('active');
+  setStatus('LOADING METADATA...', 'warn');
+
+  const pending = allCards.filter(c => c.title === null);
+  let done = 0;
+
+  await Promise.all(pending.map(async (card) => {
+    try {
+      const res  = await fetch(PAGES_URL + card.name);
+      const html = await res.text();
+      const doc  = new DOMParser().parseFromString(html, 'text/html');
+      card.title = (doc.querySelector('h1.mission-title')?.textContent || '').trim()
+                || (doc.querySelector('.mission-title')?.textContent   || '').trim()
+                || card.serial;
+      card.diff  = (doc.querySelector('.classify-tag')?.textContent    || '').trim();
+    } catch (e) {
+      card.title = card.serial;
+      card.diff  = '';
+    }
+    done++;
+    updateRow(card);
+    if (done % 8 === 0) filterList();
+  }));
+
+  saveCache();
+  metaLoaded  = true;
+  metaLoading = false;
+  document.getElementById('loading-bar').classList.remove('active');
+  setStatus(allCards.length + ' RECORDS LOADED', 'ok');
+
+  if (mode === 'title') sortByTitle();
+  renderList();
+  filterList();
+}
+
+/* ── Render helpers ───────────────────────────────────────── */
+
+function renderList() {
+  const container = document.getElementById('results');
+  const existing  = {};
+  container.querySelectorAll('.result-row').forEach(el => {
+    existing[el.dataset.name] = el;
+  });
+
+  const seen = new Set();
+  for (const card of allCards) {
+    seen.add(card.name);
+    let row = existing[card.name];
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'result-row';
+      row.dataset.name = card.name;
+      row.innerHTML =
+        `<span class="result-title pending"></span>` +
+        `<span class="result-diff"></span>` +
+        `<span class="result-serial"></span>`;
+      row.addEventListener('click', () => navigate(card));
+      container.appendChild(row);
+    }
+    updateRow(card, row);
+  }
+
+  // Remove stale rows
+  for (const name in existing) {
+    if (!seen.has(name)) existing[name].remove();
+  }
+
+  updateCount();
+}
+
+function updateRow(card, row) {
+  row = row || document.querySelector(`[data-name="${CSS.escape(card.name)}"]`);
+  if (!row) return;
+  const hasTitle = card.title !== null;
+  const titleEl  = row.querySelector('.result-title');
+  const diffEl   = row.querySelector('.result-diff');
+  const serialEl = row.querySelector('.result-serial');
+  titleEl.textContent = hasTitle ? card.title : card.serial;
+  titleEl.classList.toggle('pending', !hasTitle);
+  diffEl.textContent  = card.diff || '';
+  diffEl.classList.toggle('loaded', hasTitle && !!card.diff);
+  serialEl.textContent = card.serial;
+}
+
+/* ── Filtering ────────────────────────────────────────────── */
+
+function filterList() {
+  const rows = document.getElementById('results').querySelectorAll('.result-row');
+  let visible = 0;
+  let singleMatch = null;
+
+  rows.forEach(row => {
+    const card = allCards.find(c => c.name === row.dataset.name);
+    const show = card ? matchCard(card) : false;
+    row.classList.toggle('hidden', !show);
+    if (show) {
+      visible++;
+      singleMatch = card;
+    }
+  });
+
+  updateCount(visible);
+
+  // Auto-navigate when full serial entered and exactly one match
+  if (mode === 'serial' && rawHex.length === 14 && visible === 1 && singleMatch) {
+    navigate(singleMatch);
+  }
+}
+
+function matchCard(card) {
+  if (mode === 'serial') {
+    if (rawHex.length === 0) return true;
+    // Match against the hex content of the serial (strip dashes for comparison)
+    const cardHex = card.serial.replace(/-/g, '').toUpperCase();
+    return cardHex.startsWith(rawHex.toUpperCase());
+  } else {
+    const q = document.getElementById('search-input').value.trim().toLowerCase();
+    if (q.length === 0) return true;
+    const title  = (card.title  || card.serial).toLowerCase();
+    const diff   = (card.diff   || '').toLowerCase();
+    const serial = card.serial.toLowerCase();
+    return title.includes(q) || diff.includes(q) || serial.includes(q);
+  }
+}
+
+function updateCount(visible) {
+  if (visible === undefined) {
+    visible = document.getElementById('results')
+      .querySelectorAll('.result-row:not(.hidden)').length;
+  }
+  document.getElementById('record-count').textContent =
+    visible + (visible === 1 ? ' RECORD' : ' RECORDS');
+  document.getElementById('empty').style.display =
+    (allCards.length > 0 && visible === 0) ? 'block' : 'none';
+  document.getElementById('results').style.display =
+    (visible === 0) ? 'none' : '';
+}
+
+/* ── Sort helpers ─────────────────────────────────────────── */
+
+function sortBySerial() {
+  allCards.sort((a, b) => a.serial.localeCompare(b.serial));
+  const container = document.getElementById('results');
+  allCards.forEach(c => {
+    const row = container.querySelector(`[data-name="${CSS.escape(c.name)}"]`);
+    if (row) container.appendChild(row);
+  });
+}
+
+function sortByTitle() {
+  allCards.sort((a, b) => {
+    const ta = (a.title || a.serial).toLowerCase();
+    const tb = (b.title || b.serial).toLowerCase();
+    return ta.localeCompare(tb);
+  });
+  const container = document.getElementById('results');
+  allCards.forEach(c => {
+    const row = container.querySelector(`[data-name="${CSS.escape(c.name)}"]`);
+    if (row) container.appendChild(row);
+  });
+}
+
+/* ── Navigation ───────────────────────────────────────────── */
+
+function navigate(card) {
+  window.location.href = PAGES_URL + card.name;
+}
+
+/* ── Mode switching ───────────────────────────────────────── */
+
+function setMode(m) {
+  if (mode === m) return;
+  mode = m;
+  rawHex = '';
+  const input = document.getElementById('search-input');
+  input.value = '';
+  input.placeholder = m === 'serial'
+    ? '04-__-__-__-__-__-__'
+    : 'SEARCH MISSION TITLE...';
+  document.getElementById('btn-serial').classList.toggle('active', m === 'serial');
+  document.getElementById('btn-title').classList.toggle('active', m === 'title');
+
+  if (m === 'serial') {
+    sortBySerial();
+  } else {
+    sortByTitle();
+    loadMeta();
+  }
+
+  filterList();
+  input.focus();
+}
+
+/* ── Serial input handler ─────────────────────────────────── */
+
+const searchInput = document.getElementById('search-input');
+
+searchInput.addEventListener('keydown', e => {
+  if (mode !== 'serial') return;
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    rawHex = rawHex.slice(0, -1);
+    searchInput.value = formatSerial(rawHex);
+    filterList();
+  } else if (e.key === 'Delete' || e.key === 'Escape') {
+    e.preventDefault();
+    rawHex = '';
+    searchInput.value = '';
+    filterList();
+  }
+});
+
+searchInput.addEventListener('input', e => {
+  if (mode !== 'serial') {
+    filterList();
+    return;
+  }
+  const hex = searchInput.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+  rawHex = hex.slice(0, 14);
+  searchInput.value = formatSerial(rawHex);
+  filterList();
+});
+
+/* ── Boot ─────────────────────────────────────────────────── */
+
+loadFileList();
+</script>
+</body>
+</html>
