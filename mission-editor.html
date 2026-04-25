@@ -1105,14 +1105,6 @@
         </div>
       </div>
 
-      <!-- Turn-in -->
-      <div>
-        <div class="section-heading">Turn-In Instructions</div>
-        <div class="field">
-          <label>One paragraph per blank line</label>
-          <textarea id="f-turnin" rows="5" placeholder="How does the player claim their payout?"></textarea>
-        </div>
-      </div>
 
       <!-- Mission Agent -->
       <div>
@@ -1301,7 +1293,6 @@
   }
 
   let currentFaction  = FACTIONS[0];
-  let briefMode       = 'para';  // kept for turn-in; briefing now uses contenteditable
   let pageStatus      = 'not-started'; // 'not-started' | 'in-progress' | 'complete'
   let isDirty         = false;
   let templateHTML    = '';
@@ -2165,11 +2156,6 @@
       document.getElementById('rt-briefing').innerHTML = brief.innerHTML;
     }
 
-    // Turn-in
-    const turnin = doc.querySelector('.turnin-instructions');
-    if (turnin) {
-      document.getElementById('f-turnin').value = htmlToPlainText(turnin.innerHTML);
-    }
 
     // Credits
     const amt  = doc.querySelector('.credit-amount');
@@ -2241,21 +2227,6 @@
   }
 
   // Convert simple HTML to plain text for textarea
-  function htmlToPlainText(html) {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    // Replace <br> with newlines
-    tmp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
-    // Replace </p><p> with double newlines
-    tmp.querySelectorAll('p').forEach(p => {
-      p.insertAdjacentText('afterend', '\n\n');
-    });
-    tmp.querySelectorAll('li').forEach(li => {
-      li.insertAdjacentText('afterend', '\n');
-    });
-    return tmp.textContent.trim().replace(/\n{3,}/g, '\n\n');
-  }
-
   // ── Build output HTML from fields ────────────────────────────
   function buildHTML() {
     let html = templateHTML;
@@ -2306,9 +2277,6 @@
     const brief = doc.querySelector('.mission-instructions');
     if (brief) brief.innerHTML = document.getElementById('rt-briefing').innerHTML;
 
-    // Turn-in
-    const turnin = doc.querySelector('.turnin-instructions');
-    if (turnin) turnin.innerHTML = plainTextToHTML(v('f-turnin'), 'para');
 
     // Credits
     const amt  = doc.querySelector('.credit-amount');
@@ -2373,19 +2341,7 @@
   }
 
   // Plain text → HTML paragraphs or list items
-  function plainTextToHTML(text, mode) {
-    const trimmed = (text || '').trim();
-    if (!trimmed) return '<p>[No content]</p>';
-    if (mode === 'list') {
-      const items = trimmed.split('\n').map(l => l.trim()).filter(Boolean);
-      return '<ul>' + items.map(l => `<li>${esc(l)}</li>`).join('\n') + '</ul>';
-    }
-    // Paragraph mode — split on blank lines
-    const paras = trimmed.split(/\n{2,}/).map(p => p.trim().replace(/\n/g, ' ')).filter(Boolean);
-    return paras.map(p => `<p>${esc(p)}</p>`).join('\n');
-  }
-
-  function v(id) { return document.getElementById(id).value.trim(); }
+    function v(id) { return document.getElementById(id).value.trim(); }
   function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   // ── Preview ──────────────────────────────────────────────────
