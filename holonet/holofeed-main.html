@@ -1524,12 +1524,42 @@ const RACER_NAMES = [
   "Pappas Joolo",
   "Teedo",
   "Fea \"Blue Harvest\" Ter",
-  "NU-11"
+  "NU-11",
+  "Voss Maltar",
+  "Kael Durr",
+  "Satta Fenn",
+  "Juno Wrex",
+  "Thessa Kol",
+  "Berik Nast",
+  "Lysa Corr",
+  "Draven Kess",
+  "Mira Thrax",
+  "Priya Denn",
+  "R7-NX",
+  "K4-BO",
+  "EX-47",
+  "8T-88",
+  "VX-9",
+  "D4-RK",
+  "M0-TX",
+  "CR-33",
+  "Xhuurek",
+  "Graaxxis",
+  "Vhotzaal",
+  "Phlynx",
+  "Thrjokk",
+  "Nzari Vel",
+  "Vassk",
+  "\"Iron Lung\" Pell",
+  "\"Skip\" Torvald",
+  "\"Burnout\" Mace",
+  "Three-Eyes",
+  "Old Scratch"
 ];
-// The 6 dot colors assigned to racers in order (one per racer slot).
+// The 9 dot colors assigned to racers in order (one per racer slot).
 // These are hex color codes. Change them to any valid CSS color.
-// There must be exactly 6 entries — one for each racer position.
-const RACER_COLORS = ['#ff4444','#44aaff','#44ff88','#ffcc22','#ff88ff','#ff8833'];
+// There must be exactly 9 entries — one for each racer position.
+const RACER_COLORS = ['#ff4444','#44aaff','#44ff88','#ffcc22','#ff88ff','#ff8833','#cccccc','#555555','#aa44ff'];
 
 </script>
 <script type="application/json" id="holofeed-tracks">
@@ -1569,38 +1599,69 @@ function _TPosAt(lut,arc){
   for(let i=1;i<lut.pts.length;i++){if(lut.pts[i].len>=c){const a=lut.pts[i-1],b=lut.pts[i],f=(b.len-a.len)>0?(c-a.len)/(b.len-a.len):0;return{x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};}}
   const l=lut.pts[lut.pts.length-1];return{x:l.x,y:l.y};
 }
-function _TChoose(rng,outs,forceShortcut){
+function _TChoose(rng,outs,currentHeat,strategy){
   if(outs.length===1)return outs[0];
   const scs=outs.filter(s=>s.type==='shortcut'),mns=outs.filter(s=>s.type==='main');
-  if(forceShortcut&&scs.length>0)return scs[Math.floor(rng()*scs.length)];
-  const scP=scs.reduce((a,s)=>a+s.prob,0),mP=Math.max(0,1-scP)/Math.max(1,mns.length);
-  const es=[...scs.map(s=>({seg:s,p:s.prob})),...mns.map(s=>({seg:s,p:mP}))];
-  const rv=rng();let cum=0;for(const e of es){cum+=e.p;if(rv<cum)return e.seg;}return outs[0];
+  if(!scs.length)return mns[Math.floor(rng()*mns.length)]||outs[0];
+  const heatRatio=(currentHeat||0)/100;
+  const aggression=strategy?strategy.shortcutAggression:1.0;
+  const isGambler=strategy&&strategy.id==='gambler';
+  const entries=[
+    ...scs.map(s=>{
+      const mod=s.heatMod??1.0;
+      const penalty=isGambler?0:Math.max(0,(mod-1.0)*heatRatio*aggression);
+      return{seg:s,p:Math.max(0.02,s.prob-penalty)};
+    }),
+    ...mns.map(s=>{
+      const scTotal=scs.reduce((a,sc)=>{
+        const mod=sc.heatMod??1.0;
+        const penalty=isGambler?0:Math.max(0,(mod-1.0)*heatRatio*aggression);
+        return a+Math.max(0.02,sc.prob-penalty);
+      },0);
+      return{seg:s,p:Math.max(0,(1-scTotal)/Math.max(1,mns.length))};
+    })
+  ];
+  const rv=rng();let cum=0;
+  for(const e of entries){cum+=e.p;if(rv<cum)return e.seg;}
+  return outs[0];
 }
-function _TStep(st,r,dt,tRace,track,luts,spdMul,forceShortcut){
+function _TStep(st,r,dt,tRace,track,luts,spdMul,currentHeat,strategy){
   if(st.done)return;
   spdMul=spdMul||1;
-  const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period))*spdMul;
+  const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*tRace/r.period+(r._phaseOffset||0)))*spdMul;
   let adv=Math.max(spd,5)*dt,g=0;
   while(adv>0.001&&g++<30){
     const seg=track.segments.find(s=>s.id===st.segId),lut=luts[st.segId];
     if(!seg||!lut||lut.totalLen===0){st.done=true;return;}
     const rem=lut.totalLen-st.arcPos;
-    if(adv>=rem){adv-=rem;if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=(track.laps||3)){st.done=true;return;}}const outs=track.segments.filter(s=>s.from===seg.to);if(!outs.length){st.done=true;return;}const nx=_TChoose(st.rng,outs,forceShortcut);st.segId=nx.id;st.arcPos=0;}
-    else{st.arcPos+=adv;st.arcThisLap+=adv;adv=0;}
+    if(adv>=rem){
+      adv-=rem;
+      if(seg.to===0){st.laps++;st.arcThisLap=0;if(st.laps>=(track.laps||3)){st.done=true;return;}}
+      const outs=track.segments.filter(s=>s.from===seg.to);
+      if(!outs.length){st.done=true;return;}
+      const nx=_TChoose(st.rng,outs,currentHeat,strategy);
+      st.segId=nx.id;st.arcPos=0;
+    } else{st.arcPos+=adv;st.arcThisLap+=adv;adv=0;}
   }
 }
 
 function makeRacers(seed,trackIdx,namePool){
   trackIdx=trackIdx??0;
   const rng=mulberry32(seed);
-  const pool=(namePool&&namePool.length>=6)?namePool:RACER_NAMES;
-  const names=pickN(pool,6,rng);
+  const pool=(namePool&&namePool.length>=9)?namePool:RACER_NAMES;
+  const names=pickN(pool,9,rng);
   const track=TRACK_ROTATION[trackIdx]||TRACK_ROTATION[0];
   const trackLen=_TMainLen_ALL[trackIdx]??_TMainLen_ALL[0];
   const smin=track.slowLap?trackLen/track.slowLap:(_TSpdMin_ALL[trackIdx]??_TSpdMin_ALL[0]);
   const smax=track.fastLap?trackLen/track.fastLap:(_TSpdMax_ALL[trackIdx]??_TSpdMax_ALL[0]);
-  return names.map((name,i)=>({name,color:RACER_COLORS[i],baseSpeed:smin+rng()*(smax-smin),amplitude:0.008+rng()*0.018,period:8+rng()*16,_seed:seed,_idx:i}));
+  return names.map((name,i)=>{
+    const strategyIdx=Math.floor(rng()*STRATEGIES.length);
+    const phaseOffset=rng()*Math.PI*2;
+    return{name,color:RACER_COLORS[i],baseSpeed:smin+rng()*(smax-smin),
+           amplitude:0.008+rng()*0.018,period:8+rng()*16,
+           _seed:seed,_idx:i,_phaseOffset:phaseOffset,
+           strategyIdx,strategy:STRATEGIES[strategyIdx]};
+  });
 }
 
 
@@ -1608,32 +1669,36 @@ function fastSimulateRaceHealth(racers,trackIdx,bursts){
   const track=TRACK_ROTATION[trackIdx]||TRACK_ROTATION[0];
   const laps=track.laps||3,riskFactor=track.riskFactor||1.0;
   const avgLapTime=((track.fastLap||45)+(track.slowLap||75))/2;
-  const trackLen=_TMainLen_ALL[trackIdx]||_TMainLen_ALL[0];
-  const maxSpd=trackLen/(track.fastLap||45);
   const deaths=[];
   racers.forEach((r,i)=>{
     const hrng=mulberry32(r._seed*99991+i*17+3);
-    const drainVariance=0.7+hrng()*0.8;
-    const speedRatio=Math.min(1,Math.max(0,r.baseSpeed/maxSpd));
-    const drain=HEALTH_BASE_DRAIN*riskFactor*(0.5+0.5*speedRatio)*drainVariance;
+    const s=r.strategy||STRATEGIES[Math.floor(hrng()*STRATEGIES.length)];
+    const drainVariance=0.8+hrng()*0.4;
+    const avgSpeedRatio=s.id==='gambler'?1.0:s.id==='knife'?0.92:s.id==='pit'?0.95:s.id==='burst'?0.82:0.80;
+    const effectiveDiff=avgSpeedRatio-HEAT_EQUILIBRIUM;
+    const heatPerSec=effectiveDiff>0
+      ?HEAT_RATE_UP*effectiveDiff*riskFactor*drainVariance
+      :HEAT_RATE_DOWN*effectiveDiff*drainVariance;
     const myBursts=(bursts||[]).filter(b=>b.racerIdx===i).sort((a,b)=>a.time-b.time);
-    let burstPtr=0;
-    let health=100,raceTime=0,isDnf=false;
+    let burstPtr=0,heat=0,raceTime=0,isDnf=false,handicapped=false;
     for(let lap=0;lap<laps&&!isDnf;lap++){
       const lapEnd=raceTime+avgLapTime;
       while(burstPtr<myBursts.length&&myBursts[burstPtr].time<=lapEnd){
-        health=myBursts[burstPtr].targetHealth;burstPtr++;
-        if(health<=0){isDnf=true;const survived=hrng()<0.75;deaths.push({name:r.name,survived,timeInRace:raceTime});break;}
+        const bst=myBursts[burstPtr++];
+        if(bst.knockout){isDnf=true;deaths.push({name:r.name,survived:hrng()<0.75,timeInRace:raceTime});break;}
+        else if(bst.handicap){handicapped=true;}
+        else{heat=Math.min(100,heat+(bst.heatSpike||25));}
+        if(heat>=100&&!isDnf){isDnf=true;deaths.push({name:r.name,survived:hrng()<0.75,timeInRace:raceTime});break;}
       }
       if(isDnf)break;
-      health=Math.max(0,health-drain*avgLapTime);
+      const lapHeat=handicapped
+        ?HEAT_RATE_UP*(1.0-HEAT_EQUILIBRIUM)*riskFactor*drainVariance*avgLapTime
+        :heatPerSec*avgLapTime;
+      heat=Math.max(0,Math.min(100,heat+lapHeat));
       raceTime=lapEnd;
-      if(health<=0){isDnf=true;const survived=hrng()<0.75;deaths.push({name:r.name,survived,timeInRace:raceTime});break;}
-      const repChance=Math.min(0.9,(100-health)/100);
-      if(hrng()<repChance){
-        const repT=3+hrng()*4;raceTime+=repT;
-        const minH=Math.min(65,health+20);health=minH+hrng()*(100-minH);
-      }
+      if(heat>=100){isDnf=true;deaths.push({name:r.name,survived:hrng()<0.75,timeInRace:raceTime});break;}
+      const willPit=handicapped?hrng()<0.85:hrng()<(s.pitWillingness*(heat/100)*1.5);
+      if(willPit){raceTime+=heat/PIT_COOL_RATE;heat=0;handicapped=false;}
     }
   });
   return deaths;
@@ -1653,17 +1718,17 @@ function buildDeathLedger(nowSeconds){
       const trackIdx=trackCounter%TRACK_ROTATION.length;trackCounter++;
       const tMs=t*1000;
       let pool=RACER_NAMES.filter(n=>!ledger[n]||tMs-ledger[n].diedAt>=86400000);
-      if(pool.length<6){
+      if(pool.length<9){
         const dead=Object.entries(ledger)
           .filter(([n])=>pool.indexOf(n)<0&&ledger[n]&&tMs-ledger[n].diedAt<86400000)
           .sort((a,b)=>a[1].diedAt-b[1].diedAt);
-        for(const[name]of dead){if(pool.length>=6)break;pool.push(name);}
+        for(const[name]of dead){if(pool.length>=9)break;pool.push(name);}
       }
       const racers=makeRacers(seed,trackIdx,pool);
       const track=TRACK_ROTATION[trackIdx]||TRACK_ROTATION[0];
       const avgLap=((track.fastLap||45)+(track.slowLap||75))/2;
       const estDur=(track.laps||3)*avgLap+10;
-      const ledgerBursts=generateBursts(seed,trackIdx,racers.length,estDur);
+      const ledgerBursts=generateBursts(seed,trackIdx,racers,estDur);
       const deaths=fastSimulateRaceHealth(racers,trackIdx,ledgerBursts);
       deaths.forEach(d=>{if(!d.survived)ledger[d.name]={diedAt:(t+d.timeInRace)*1000};});
       t+=estDur+FLASH+COUNTDOWN+PRERACE;seed++;
@@ -1673,19 +1738,32 @@ function buildDeathLedger(nowSeconds){
   return{deadNames,ledger};
 }
 
-function generateBursts(seed,trackIdx,racerCount,duration){
+function generateBursts(seed,trackIdx,racers,duration){
   const track=TRACK_ROTATION[trackIdx]||TRACK_ROTATION[0];
   const burstMax=track.burstMax||0;
   if(!burstMax)return[];
   const rng=mulberry32(seed*7919+trackIdx*131);
   const count=Math.floor(rng()*(burstMax+1));
   const bursts=[];
+  const isArr=Array.isArray(racers);
+  const racerCount=isArr?racers.length:racers;
   for(let b=0;b<count;b++){
-    const racerIdx=Math.floor(rng()*racerCount);
+    let racerIdx;
+    if(isArr){
+      const weights=racers.map(r=>r.strategy?r.strategy.burstWeight:1.0);
+      const total=weights.reduce((a,w)=>a+w,0);
+      const rv=rng()*total;let cum=0;racerIdx=0;
+      for(let j=0;j<weights.length;j++){cum+=weights[j];if(rv<cum){racerIdx=j;break;}}
+    } else {
+      racerIdx=Math.floor(rng()*racerCount);
+    }
     const time=5+rng()*(Math.max(10,duration-10));
-    const knockout=rng()<0.4;
-    const targetHealth=knockout?0:5+Math.floor(rng()*15);
-    bursts.push({racerIdx,time,knockout,targetHealth});
+    const r2=rng();
+    let knockout=false,handicap=false,heatSpike=0;
+    if(r2<0.35){knockout=true;}
+    else if(r2<0.70){handicap=true;}
+    else{heatSpike=HEAT_SPIKE_MIN+Math.floor(rng()*(HEAT_SPIKE_MAX-HEAT_SPIKE_MIN));}
+    bursts.push({racerIdx,time,knockout,handicap,heatSpike});
   }
   bursts.sort((a,b)=>a.time-b.time);
   return bursts;
@@ -1700,15 +1778,15 @@ function buildRaceChain(hourSeed,hourStart){
     const trackIdx=trackCounter%TRACK_ROTATION.length;trackCounter++;
     const tMs=t*1000;
     let pool=RACER_NAMES.filter(n=>!runLedger[n]||tMs-runLedger[n].diedAt>=86400000);
-    if(pool.length<6){
+    if(pool.length<9){
       const dead=Object.entries(runLedger)
         .filter(([n])=>pool.indexOf(n)<0&&runLedger[n]&&tMs-runLedger[n].diedAt<86400000)
         .sort((a,b)=>a[1].diedAt-b[1].diedAt);
-      for(const[name]of dead){if(pool.length>=6)break;pool.push(name);}
+      for(const[name]of dead){if(pool.length>=9)break;pool.push(name);}
     }
     const racers=makeRacers(seed,trackIdx,pool);
     const{duration,winner,finishTimes}=computeRaceDuration(racers,trackIdx);
-    const bursts=generateBursts(seed,trackIdx,racers.length,duration);
+    const bursts=generateBursts(seed,trackIdx,racers,duration);
     const deaths=fastSimulateRaceHealth(racers,trackIdx,bursts);
     deaths.forEach(d=>{if(!d.survived)runLedger[d.name]={diedAt:(t+d.timeInRace)*1000};});
     const laps=(TRACK_ROTATION[trackIdx]||{}).laps||3;
@@ -1767,7 +1845,180 @@ function getRaceState(nowF) {
   return {phase:'countdown', tInRace:0, race:raceChain[0], cdLeft:raceChain[0].startT-now};
 }
 
-const _TCache={};
+function getHeatSpdMul(h){
+  if(h.repairing)return 0.12;
+  if(h.handicapped)return 0.75;
+  const s=h.strategy;
+  if(!s||s.id==='gambler')return 1.0;
+  const heatRatio=h.heat/100;
+  if(heatRatio>=s.heatTarget)return s.coolSpeed;
+  const zone=s.heatTarget-0.15;
+  if(heatRatio>zone){const t=(heatRatio-zone)/0.15;return 1.0-t*(1.0-s.coolSpeed);}
+  return 1.0;
+}
+function applyBurst(bst,h,r,events,timeNow,i){
+  if(bst.knockout){
+    h.heat=100;
+    events.push({time:timeNow,racerIdx:i,type:'critical',
+      message:'💥 '+r.name.toUpperCase()+' — CATASTROPHIC IMPACT'});
+  } else if(bst.handicap){
+    h.handicapped=true;
+    events.push({time:timeNow,racerIdx:i,type:'warning',
+      message:'⚡ '+r.name.toUpperCase()+' — ENGINE DAMAGE — SPEED LIMITED'});
+  } else {
+    h.heat=Math.min(99,h.heat+(bst.heatSpike||25));
+    events.push({time:timeNow,racerIdx:i,type:'warning',
+      message:'⚡ '+r.name.toUpperCase()+' — THERMAL SURGE — HEAT SPIKE'});
+  }
+}
+function _TBuildPaths(race){
+  if(_TCache[race.seed])return _TCache[race.seed];
+  const track=_TDef(race),luts=_TLuts(race);
+  const riskFactor=track.riskFactor||1.0;
+  const trackLen=_TMainLen_ALL[race.trackIdx??0]||_TMainLen_ALL[0];
+  const maxSpd=trackLen/(track.fastLap||45);
+  const dt=0.05,startSeg=track.segments.find(s=>s.from===0&&s.type==='main')||track.segments[0];
+  const maxT=race.duration+15,frames=Math.ceil(maxT/dt)+1;
+  const BRAKE_DUR=2.5;
+  const events=[];
+
+  const hs=race.racers.map((r,i)=>{
+    const hrng=mulberry32(r._seed*99991+i*17+3);
+    const drainVariance=0.8+hrng()*0.4;
+    const phaseOffset=r._phaseOffset||(hrng()*Math.PI*2);
+    return{heat:0,drainVariance,hrng,phaseOffset,strategy:r.strategy||STRATEGIES[0],
+           repairing:false,handicapped:false,pitTriggered:false,
+           dnf:false,survived:null,warned:false,distAtDNF:null};
+  });
+
+  const paths=race.racers.map((r,i)=>{
+    const st={segId:startSeg.id,arcPos:0,laps:0,arcThisLap:0,rng:mulberry32(r._seed*10+i*919+3),done:false};
+    const h=hs[i];
+    const myBursts=race.bursts?race.bursts.filter(b=>b.racerIdx===i):[];
+    let burstPtr=0;
+    const positions=[];
+    const lapEndTimes=[];
+    let bFinT=null;
+
+    for(let fi=0;fi<frames;fi++){
+      const timeNow=fi*dt;
+      // Position always from track — no teleport
+      const posNode=_TPosAt(luts[st.segId]||{pts:[],totalLen:0},st.arcPos);
+      const posX=posNode.x,posY=posNode.y;
+
+      let hstate='normal';
+      if(h.dnf)hstate='dnf';
+      else if(h.repairing)hstate='repairing';
+      else if(h.handicapped)hstate='handicapped';
+      else if(h.heat>80)hstate='danger';
+
+      positions.push({x:posX,y:posY,laps:st.laps,arc:st.arcThisLap,
+                      heat:h.heat,state:hstate,survived:h.survived,
+                      handicapped:h.handicapped,strategyId:h.strategy?h.strategy.id:''});
+
+      if(h.dnf)continue;
+
+      // BURST EVENTS — before movement (fixes same-frame finish bug)
+      while(burstPtr<myBursts.length&&myBursts[burstPtr].time<=timeNow){
+        const bst=myBursts[burstPtr++];
+        if(!h.dnf&&!st.done){applyBurst(bst,h,r,events,timeNow,i);}
+      }
+      if(h.dnf)continue;
+
+      // Pit stop cooling (racer still moves slowly — handled by spdMul)
+      if(h.repairing){
+        h.heat=Math.max(0,h.heat-PIT_COOL_RATE*dt);
+        if(h.heat<=8){h.repairing=false;if(h.handicapped)h.handicapped=false;}
+      }
+
+      if(!st.done){
+        const spdMul=getHeatSpdMul(h);
+        const prevLaps=st.laps;
+        _TStep(st,r,dt,timeNow,track,luts,spdMul,h.heat,h.strategy);
+        if(st.done&&bFinT===null)bFinT=timeNow;
+
+        if(st.laps>prevLaps){
+          lapEndTimes.push(timeNow);
+          h.pitTriggered=false;
+          if(!st.done&&!h.repairing){
+            const heatRatio=h.heat/100;
+            const willPit=h.handicapped
+              ?h.hrng()<0.85
+              :h.hrng()<(h.strategy.pitWillingness*heatRatio*1.5);
+            if(willPit){
+              h.repairing=true;
+              events.push({time:timeNow,racerIdx:i,type:'repair',
+                message:r.name.toUpperCase()+' — PULLING INTO PIT LANE'});
+            }
+          }
+        }
+
+        // Heat delta (skip while in pit — already handled above)
+        if(!h.repairing){
+          const spd=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*timeNow/r.period+h.phaseOffset))*spdMul;
+          const speedRatio=Math.min(1,Math.max(0,spd/maxSpd));
+          // Handicapped: heat builds at full rate despite reduced speed
+          const effectiveRatio=h.handicapped?1.0:speedRatio;
+          const currentSeg=track.segments.find(s=>s.id===st.segId);
+          const segHeatMod=(currentSeg&&currentSeg.heatMod!=null)?currentSeg.heatMod:1.0;
+          const diff=effectiveRatio-HEAT_EQUILIBRIUM;
+          if(diff>0){
+            h.heat+=HEAT_RATE_UP*diff*riskFactor*segHeatMod*h.drainVariance*dt;
+          } else {
+            h.heat+=HEAT_RATE_DOWN*diff*h.drainVariance*dt;
+          }
+          h.heat=Math.max(0,Math.min(100,h.heat));
+        }
+
+        // Heat warning (first time over 80)
+        if(!h.warned&&h.heat>80){
+          h.warned=true;
+          const msg=INCIDENT_MESSAGES[Math.floor(h.hrng()*INCIDENT_MESSAGES.length)];
+          events.push({time:timeNow,racerIdx:i,type:'warning',
+            message:'⚠ '+r.name.toUpperCase()+' — '+msg});
+        }
+
+        // Overheat = DNF (with !st.done guard — fixes finish-line bug)
+        if(h.heat>=100&&!h.dnf&&!st.done){
+          h.dnf=true;h.survived=h.hrng()<0.75;st.done=true;
+          h.distAtDNF=st.laps*trackLen+st.arcThisLap;
+          const pool=h.survived?SURVIVE_MESSAGES:DEATH_MESSAGES;
+          const pmsg=pool[Math.floor(h.hrng()*pool.length)];
+          events.push({time:timeNow,racerIdx:i,
+            type:h.survived?'dnf_survived':'dnf_killed',
+            message:(h.survived?'⚡ ':'† ')+r.name.toUpperCase()+' — '+pmsg});
+        }
+      } else if(bFinT!==null){
+        const ot=timeNow-bFinT;
+        if(ot<BRAKE_DUR){
+          const scale=1-(ot/BRAKE_DUR)*(ot/BRAKE_DUR);
+          const brkAdv=r.baseSpeed*(1+r.amplitude*Math.sin(2*Math.PI*bFinT/r.period+h.phaseOffset))*scale*dt;
+          if(brkAdv>0.001){
+            let adv2=brkAdv,g2=0;
+            while(adv2>0.001&&g2++<5){
+              const lut2=luts[st.segId]||{pts:[],totalLen:0};
+              if(!lut2.totalLen)break;
+              const rem2=lut2.totalLen-st.arcPos;
+              if(adv2>=rem2){
+                adv2-=rem2;
+                const seg2=track.segments.find(s=>s.id===st.segId);
+                const outs2=seg2?track.segments.filter(s=>s.from===seg2.to&&s.type==='main'):[];
+                if(!outs2.length){st.arcPos=lut2.totalLen;break;}
+                st.segId=outs2[0].id;st.arcPos=0;
+              } else{st.arcPos+=adv2;adv2=0;}
+            }
+          }
+        }
+      }
+    }
+    return{positions,lapEndTimes,finalStatus:h.dnf?(h.survived?'dnf_survived':'dnf_killed'):'finished',distAtDNF:h.distAtDNF};
+  });
+
+  events.sort((a,b)=>a.time-b.time);
+  const keys=Object.keys(_TCache);if(keys.length>30)delete _TCache[keys[0]];
+  _TCache[race.seed]={paths,dt,events};
+  return _TCache[race.seed];
+};
 function _TBuildPaths(race){
   if(_TCache[race.seed])return _TCache[race.seed];
   const track=_TDef(race),luts=_TLuts(race);
@@ -1951,19 +2202,19 @@ function getLeaderboard(race,tInRace){
     const lapEnd=completedLaps>0?lapEnds[completedLaps-1]:null;
     const lapStart=completedLaps>1?lapEnds[completedLaps-2]:0;
     const lastLapTime=lapEnd!=null?lapEnd-lapStart:null;
+    const distAtDNF=data.paths[i].distAtDNF;
     return{idx:i,name:r.name,color:r.color,laps:pos.laps,
-           totalDist:dnf?-1:pos.laps*mainLen+pos.arc,
+           totalDist:dnf?(distAtDNF??0):pos.laps*mainLen+pos.arc,
            finishTime:finished?(race.finishTimes?.[i]??600):null,
-           finished,lastLapTime,dnf,survived:pos.survived,state:pos.state,health:pos.health,ignoring:pos.ignoring};
+           finished,lastLapTime,dnf,survived:pos.survived,state:pos.state,
+           heat:pos.heat||0,handicapped:pos.handicapped,
+           strategyId:pos.strategyId||r.strategy?.id||''};
   }).sort((a,b)=>{
-    // Finished racers lock in order by finish time — nothing can displace them
     if(a.finished&&b.finished)return a.finishTime-b.finishTime;
     if(a.finished)return -1;
     if(b.finished)return 1;
-    // DNF racers always last
     if(a.dnf&&!b.dnf)return 1;
     if(!a.dnf&&b.dnf)return -1;
-    // Still racing: sort by current distance
     return b.totalDist-a.totalDist;
   });
 }
@@ -2141,7 +2392,7 @@ function renderRace(){
     else if(state==='repairing'){const hz=0.5+(health/100)*3.5;visible=Math.sin(nowMs/1000*hz*2*Math.PI)>0;}
     if(!visible)return;
     const px=pos.x,py=pos.y;
-    const glowColor=state==='danger'?'#ff3333':state==='limping'?'#ffaa00':state==='repairing'?'#44ddff':r.color;
+    const glowColor=state==='danger'?'#ff3333':state==='handicapped'?'#ffaa00':state==='repairing'?'#44ddff':r.color;
     ctx.beginPath();ctx.arc(px,py,10,0,2*Math.PI);ctx.fillStyle=glowColor+'55';ctx.fill();
     ctx.beginPath();ctx.arc(px,py,5.5,0,2*Math.PI);ctx.fillStyle=r.color;ctx.fill();
     ctx.strokeStyle='#fff3';ctx.lineWidth=0.8;ctx.stroke();
@@ -2200,7 +2451,7 @@ function renderRace(){
     statusEl.textContent=nextName?'— NEXT: '+nextName+' — IN '+cdLeft+'s —':'— NEW RACE STARTING IN '+cdLeft+'s —';
     statusEl.style.color='var(--amber)';
   } else if(phase==='flash'){
-    const actualWinner=lb.find(e=>e.finished)||lb[0];
+    const actualWinner=lb.find(e=>e.finished)||(lb.find(e=>!e.dnf))||{name:'NO FINISHER',color:'#888888'};
     statusEl.textContent='⬡ '+actualWinner.name.toUpperCase()+' WINS! ⬡';
     statusEl.style.color=actualWinner.color;
   } else {
@@ -2213,7 +2464,7 @@ function renderRace(){
     const nowMs=Date.now();
     const dtTicker=Math.min(0.1,_lastTickerMs?((nowMs-_lastTickerMs)/1000):0);
     _lastTickerMs=nowMs;
-    const actualWinnerName=(phase==='flash')?(lb.find(e=>e.finished)||lb[0]).name:'';
+    const actualWinnerName=(phase==='flash')?(lb.find(e=>e.finished)||lb.find(e=>!e.dnf)||lb[0]).name:'';
     lb.forEach((entry,pos)=>{
       const row=_racerRows[entry.idx];if(!row)return;
       _racerIdxToRow[entry.idx]=pos;
@@ -2221,13 +2472,13 @@ function renderRace(){
       const isWinner=phase==='flash'&&entry.name===actualWinnerName;
       row.className='lb-row'+(isWinner?' winner-flash':'');
       const lapsText=entry.dnf?'DNF':entry.laps+'/'+raceLaps;
-      const hp=entry.dnf?0:Math.round(entry.health||100);
-      const hText=hp+'%';
-      const hColor=hp<=0?'#555555':hp<15?'#ff3333':hp<30?'#ff6600':hp<50?'#ffaa00':hp<70?'#ffcc44':'var(--glow-dim)';
+      const hp=Math.round(entry.heat||0);
+      const hText=hp+'°';
+      const hColor=entry.dnf?'#555555':hp>=90?'#ff3333':hp>=70?'#ff6600':hp>=50?'#ffaa00':hp>=30?'#ffcc44':'var(--glow-dim)';
       const ltText=entry.lastLapTime!=null?entry.lastLapTime.toFixed(1)+'s':'—';
       const spans=row.children;
       spans[0].textContent=pos+1;
-      spans[1].textContent=entry.name;spans[1].style.color=entry.dnf?(entry.survived?'#666666':'#444444'):entry.color;
+      spans[1].textContent=entry.name;spans[1].style.color=entry.dnf?(entry.survived?'#666666':'#444444'):entry.handicapped?'#ffaa00':entry.color;
       if(typeof globalTranslated!=='undefined'&&!globalTranslated&&!entry.dnf)spans[1].style.fontFamily='var(--font-alien)';
       else spans[1].style.fontFamily='';
       // spans[3-5] are health, laptime, laps
@@ -2264,12 +2515,12 @@ function raceLoop() {
   }
   raceRafId = requestAnimationFrame(raceLoop);
 }
-const ROW_HEIGHT=24;
+const ROW_HEIGHT=21;
 (function(){
   const lbEl=document.getElementById('lb-rows');
   lbEl.style.position='relative';
-  lbEl.style.height=(6*ROW_HEIGHT)+'px';
-  for(let i=0;i<6;i++){
+  lbEl.style.height=(9*ROW_HEIGHT)+'px';
+  for(let i=0;i<9;i++){
     const row=document.createElement('div');
     row.className='lb-row';
     row.style.top=(i*ROW_HEIGHT)+'px';
