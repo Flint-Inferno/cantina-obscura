@@ -295,6 +295,7 @@ body::after {
 #leaderboard { padding: 8px 14px; }
 .lb-title { font-family: var(--font-eng); font-weight: bold; font-size: 9px; color: var(--glow-dim); letter-spacing: 3px; margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 .lb-row { display: grid; grid-template-columns: 20px 110px 1fr 44px 60px 52px; gap: 4px; align-items: center; padding: 3px 0; border-bottom: 1px solid rgba(26,44,20,0.5); font-size: 13px; position: absolute; width: 100%; box-sizing: border-box; transition: top 0.2s ease; }
+.lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .lb-health { font-family: var(--font-eng); font-weight: bold; font-size: 10px; text-align: right; }
 .lb-laptime { font-family: var(--font-eng); font-weight: bold; font-size: 10px; color: var(--glow-dim); text-align: right; }
 .lb-msg { font-family: var(--font-eng); font-size: 9px; white-space: nowrap; overflow: hidden; letter-spacing: 0.5px; padding: 0 4px; }
@@ -592,6 +593,7 @@ body::after {
   #race-canvas-wrap { padding: 4px; }
 
   .lb-row { grid-template-columns: 18px 88px 1fr 38px 54px 44px; font-size: 11px; }
+  .lb-name { max-width: 88px; }
 
   .bracket-grid { min-width: 480px; }
 
@@ -1490,6 +1492,15 @@ const SURVIVE_MESSAGES = [
   "SURVIVAL POD DEPLOYED — PILOT ACCOUNTED FOR"
 ];
 
+const RETIRE_MESSAGES = [
+  "TOO DAMAGED TO CONTINUE — WITHDREW FROM RACE",
+  "PILOT CALLED IT — RETIRED WITH CRITICAL DAMAGE",
+  "STRUCTURAL INTEGRITY LOST — SAFE RETIREMENT",
+  "DAMAGE TOO SEVERE — RACE ABANDONED",
+  "ENGINE FAILURE — RACER PULLED FROM COMPETITION",
+  "CRITICAL SYSTEMS OFFLINE — RETIREMENT CONFIRMED"
+];
+
 // ============================================================
 // PODRACER NAME POOL
 // ============================================================
@@ -1865,17 +1876,24 @@ function _TBuildPaths(race){
         }
         if(!h.limpTriggered&&h.health<h.limpThreshold){
           h.limpTriggered=true;
-          const isFinalLap=st.laps>=(track.laps||3)-1;
-          const baseIgnore=isFinalLap?0.8:0.3;
-          const ignoreChance=Math.min(0.95,baseIgnore+(h.riskTolerance-0.5)*0.3);
-          if(h.hrng()<ignoreChance){
-            h.ignoring=true;
-            events.push({time:timeNow,racerIdx:i,type:'critical',
-              message:'⚠ '+r.name.toUpperCase()+' — IGNORING DAMAGE — PUSHING TO FINISH'});
+          if(h.riskTolerance<0.35){
+            // Cautious: too risky — immediate retirement
+            h.dnf=true;h.survived=true;h.retired=true;st.done=true;
+            const rmsg=RETIRE_MESSAGES[Math.floor(h.hrng()*RETIRE_MESSAGES.length)];
+            events.push({time:timeNow,racerIdx:i,type:'dnf_survived',
+              message:'⚡ '+r.name.toUpperCase()+' — '+rmsg});
+          } else if(h.riskTolerance<0.70){
+            // Moderate: forced emergency repair immediately
+            h.repairing=true;h.repairElapsed=0;
+            h.repairDuration=3+h.hrng()*4;h.repairStartH=h.health;
+            const minH=Math.min(65,h.health+20);h.repairTargetH=minH+h.hrng()*(100-minH);
+            events.push({time:timeNow,racerIdx:i,type:'repair',
+              message:r.name.toUpperCase()+' — EMERGENCY PIT STOP — CRITICAL DAMAGE'});
           } else {
-            h.ignoring=false;h.limping=true;
+            // Aggressive: limp at 30% speed, refuse repairs
+            h.limping=true;
             events.push({time:timeNow,racerIdx:i,type:'critical',
-              message:'⚠ '+r.name.toUpperCase()+' — REDUCING SPEED — LIMPING TO REPAIR'});
+              message:'⚠ '+r.name.toUpperCase()+' — LIMPING TO FINISH — REFUSING REPAIRS'});
           }
         }
         if(h.health<=0&&!h.dnf){
@@ -2083,7 +2101,7 @@ function renderRace(){
   const fi=Math.min(Math.floor(t/pathData.dt),pathData.paths[0].positions.length-2);
   const frac=(t%pathData.dt)/pathData.dt;
   const nowMs=Date.now();
-  function _ipos(i){const a=pathData.paths[i].positions[fi],b=pathData.paths[i].positions[fi+1]||a;return{x:a.x+frac*(b.x-a.x),y:a.y+frac*(b.y-a.y),laps:a.laps,arc:a.arc,health:a.health,state:a.state,survived:a.survived};}
+  function _ipos(i){const a=pathData.paths[i].positions[fi],b=pathData.paths[i].positions[fi+1]||a;const iArc=(b.laps===a.laps)?a.arc+frac*(b.arc-a.arc):a.arc;return{x:a.x+frac*(b.x-a.x),y:a.y+frac*(b.y-a.y),laps:a.laps,arc:iArc,health:a.health,state:a.state,survived:a.survived};}
 
   // Leaderboard needed for live rank labels — compute before dot draw
   const raceLaps=race.laps||3;
