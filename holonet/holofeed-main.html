@@ -296,6 +296,7 @@ body::after {
 .lb-title { font-family: var(--font-eng); font-weight: bold; font-size: 9px; color: var(--glow-dim); letter-spacing: 3px; margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 .lb-row { display: grid; grid-template-columns: 20px 110px 1fr 44px 60px 52px; gap: 4px; align-items: center; padding: 3px 0; border-bottom: 1px solid rgba(26,44,20,0.5); font-size: 13px; position: absolute; width: 100%; box-sizing: border-box; transition: top 0.2s ease; }
 .lb-name { overflow: hidden; white-space: nowrap; min-width: 0; display: block; }
+.lb-name-inner { display: inline-block; white-space: nowrap; will-change: transform; }
 .lb-health { font-family: var(--font-eng); font-weight: bold; font-size: 10px; text-align: right; }
 .lb-laptime { font-family: var(--font-eng); font-weight: bold; font-size: 10px; color: var(--glow-dim); text-align: right; }
 .lb-msg { font-family: var(--font-eng); font-size: 9px; white-space: nowrap; overflow: hidden; letter-spacing: 0.5px; padding: 0 4px; }
@@ -2389,7 +2390,7 @@ function renderRace(){
       const ltText=entry.lastLapTime!=null?entry.lastLapTime.toFixed(1)+'s':'—';
       const spans=row.children;
       spans[0].textContent=pos+1;
-      spans[1].textContent=entry.name;spans[1].style.color=entry.dnf?(entry.survived?'#666666':'#444444'):entry.handicapped?'#ffaa00':entry.color;
+      spans[1].firstChild.textContent=entry.name;spans[1].style.color=entry.dnf?(entry.survived?'#666666':'#444444'):entry.handicapped?'#ffaa00':entry.color;
       if(typeof globalTranslated!=='undefined'&&!globalTranslated&&!entry.dnf)spans[1].style.fontFamily='var(--font-alien)';
       else spans[1].style.fontFamily='';
       // spans[3-5] are health, laptime, laps
@@ -2403,26 +2404,36 @@ function renderRace(){
       else if(entry.state==='danger'){persist={text:'⚠ HEAT CRITICAL',color:'#ff3333'};}
       _racerPersistMsg[entry.idx]=persist;
 
-      // Name scroll: detect overflow, scroll long names with pause-cycle
+      // Name scroll: marquee — full exit left, wrap to right, pause at start
       const nameSpan=spans[1];
-      if(nameSpan){
-        const overflow=nameSpan.scrollWidth-nameSpan.offsetWidth;
-        if(overflow<=1){
-          if(_racerNameX[entry.idx]!==0){_racerNameX[entry.idx]=0;nameSpan.style.transform='';}
+      const nameInner=nameSpan&&nameSpan.firstChild;
+      if(nameInner){
+        const innerW=nameInner.scrollWidth;
+        const containerW=nameSpan.offsetWidth;
+        if(innerW<=containerW){
+          if(_racerNameX[entry.idx]!==0){_racerNameX[entry.idx]=0;nameInner.style.transform='';}
           _racerNameNextScroll[entry.idx]=0;
         } else {
           const tNow=Date.now();
           const next=_racerNameNextScroll[entry.idx];
           if(next===0){
-            // first detection - pause briefly before starting
+            // first detection - pause at start before scrolling
+            _racerNameX[entry.idx]=0;
             _racerNameNextScroll[entry.idx]=tNow+1800;
           } else if(tNow>=next){
-            _racerNameX[entry.idx]-=22*dtTicker;
-            if(_racerNameX[entry.idx]<=-overflow-6){
-              _racerNameX[entry.idx]=0;
+            const prevX=_racerNameX[entry.idx];
+            let newX=prevX-22*dtTicker;
+            // Fully exited left → wrap to off-screen right
+            if(newX<=-innerW){
+              newX=containerW;
+            }
+            // Returning from right, arrived at start → pause and clamp
+            if(prevX>0&&newX<=0){
+              newX=0;
               _racerNameNextScroll[entry.idx]=tNow+2000;
             }
-            nameSpan.style.transform='translateX('+_racerNameX[entry.idx]+'px)';
+            _racerNameX[entry.idx]=newX;
+            nameInner.style.transform='translateX('+newX+'px)';
           }
           // else: paused, do nothing
         }
@@ -2502,7 +2513,7 @@ const ROW_HEIGHT=21;
     const row=document.createElement('div');
     row.className='lb-row';
     row.style.top=(i*ROW_HEIGHT)+'px';
-    row.innerHTML='<span class="lb-pos"></span><span class="lb-name"></span><span class="lb-msg"><span class="lb-msg-inner"></span></span><span class="lb-health"></span><span class="lb-laptime"></span><span class="lb-laps"></span>';
+    row.innerHTML='<span class="lb-pos"></span><span class="lb-name"><span class="lb-name-inner"></span></span><span class="lb-msg"><span class="lb-msg-inner"></span></span><span class="lb-health"></span><span class="lb-laptime"></span><span class="lb-laps"></span>';
     lbEl.appendChild(row);
     _racerRows.push(row);
     _racerMsgInners.push(row.querySelector('.lb-msg-inner'));
@@ -2529,7 +2540,7 @@ setInterval(() => {
     _racerMsgInners.forEach((inner,i)=>{if(inner){inner.textContent='';inner.style.transform='';}_racerTickerX[i]=9999;});
     _racerMsgExpiry.fill(0);_racerPersistMsg.fill(null);_racerDnfMsg.fill(null);
     _racerNameX.fill(0);_racerNameNextScroll.fill(0);
-    _racerRows.forEach(row=>{const ns=row&&row.querySelector('.lb-name');if(ns)ns.style.transform='';});
+    _racerRows.forEach(row=>{const ns=row&&row.querySelector('.lb-name-inner');if(ns)ns.style.transform='';});
   }
 }, 2000);
 
