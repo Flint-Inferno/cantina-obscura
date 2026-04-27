@@ -644,7 +644,7 @@
       letter-spacing: 0.05em;
     }
   </style>
-<meta name="logo-title" content="" data-color="#ff8c00"><meta name="logo-footer" content="" data-color="#ff8c00"><meta name="logo-watermark" content="" data-color="#ff8c00">  <script id="mission-security" type="application/json">{"enabled":false,"answers":[],"lockoutEnabled":true,"attemptThreshold":5,"lockoutMinutes":10}</script>
+<meta name="logo-title" content="" data-color="#ff8c00"><meta name="logo-footer" content="" data-color="#ff8c00"><meta name="logo-watermark" content="" data-color="#ff8c00">  <script id="mission-security" type="application/json">{"enabled":true,"answers":[{"code":"KYBER","reveal":"that is correct!"}],"lockoutEnabled":true,"attemptThreshold":5,"lockoutMinutes":10}</script>
 <meta name="mission-status" content="complete"></head>
 <body>
 
@@ -763,7 +763,7 @@
       <canvas id="logo-footer"></canvas>
     </div>
 
-  </div>
+  
 
   <!-- =============================================================
        HUD CLOCK SCRIPT
@@ -1035,7 +1035,7 @@
 
 
 
-<script data-signal-watchdog="1">(function(){var m=window.matchMedia("(hover: none) and (pointer: coarse)").matches;if(!m)return;var h=null;document.addEventListener("visibilitychange",function(){if(document.hidden){h=Date.now();}else{if(h!==null&&Date.now()-h>=30000){window.location.replace("https://flint-inferno.github.io/cantina-obscura/signal-lost.html");}h=null;}});})();</script><script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#ff8c00"},'logo-footer':{data:null,color:"#ff8c00"},'logo-watermark':{data:null,color:"#ff8c00"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script>  <div id="security-overlay" class="security-overlay" aria-hidden="true">
+<script data-signal-watchdog="1">(function(){var m=window.matchMedia("(hover: none) and (pointer: coarse)").matches;if(!m)return;var h=null;document.addEventListener("visibilitychange",function(){if(document.hidden){h=Date.now();}else{if(h!==null&&Date.now()-h>=30000){window.location.replace("https://flint-inferno.github.io/cantina-obscura/signal-lost.html");}h=null;}});})();</script>  <div id="security-overlay" class="security-overlay" aria-hidden="true">
     <div id="security-modal" class="security-modal" role="dialog" aria-modal="true" aria-label="Enter access code">
       <div class="security-modal-title">⚿ ENTER ACCESS CODE</div>
       <input id="security-modal-input" class="security-modal-input" type="text" maxlength="20" placeholder="••••••" autocomplete="off" spellcheck="false" autocapitalize="characters">
@@ -1046,4 +1046,4 @@
       <div class="security-modal-error" id="security-modal-error">✗ INVALID CODE</div>
     </div>
   </div>
-</body></html>
+<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#ff8c00"},'logo-footer':{data:null,color:"#ff8c00"},'logo-watermark':{data:null,color:"#ff8c00"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
