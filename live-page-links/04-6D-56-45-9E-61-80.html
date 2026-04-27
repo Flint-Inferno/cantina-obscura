@@ -818,7 +818,7 @@
       } catch(_) {}
     })();
       // ── Access code gate (modal + lockout) ───────────────────
-      (function initSecurity() {
+      function initSecurity() {
         var cfgEl = document.getElementById('mission-security');
         if (!cfgEl) return;
         var cfg;
@@ -938,7 +938,12 @@
         if (s0.unlocked) { showUnlocked(s0.unlockedMessage || ''); return; }
         var rem = lockoutRemaining();
         if (rem) showLockedOut(rem);
-      })();
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSecurity);
+      } else {
+        initSecurity();
+      }
   </script>
   <!-- =============================================================
        EVENT LOGO SCRIPT
