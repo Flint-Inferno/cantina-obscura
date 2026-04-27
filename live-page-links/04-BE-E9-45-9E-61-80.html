@@ -217,40 +217,125 @@
       opacity: 1;
     }
 
-        /* Security gate */
-    .security-gate {
-      margin-top: 1rem; padding: 1rem;
-      border: 1px solid var(--border); background: var(--dim);
+        /* ── Security gate (modal-style) ─────────────────────── */
+    .secure-btn {
+      display: none;
+      float: right;
+      margin: 0.2em 0 0.4em 0.8em;
+      background: linear-gradient(180deg, rgba(255,215,0,0.08), rgba(255,215,0,0.02));
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      padding: 0.55rem 0.8rem;
+      border-radius: 2px;
+      cursor: pointer;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 0 12px rgba(255,215,0,0.12) inset;
+      transition: background 0.18s, box-shadow 0.18s;
     }
-    .security-gate .section-label { margin-bottom: 0.5rem; }
-    .security-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-    .security-input-row input {
-      flex: 1; background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); padding: 0.4rem 0.6rem; font-family: inherit;
-      font-size: 0.85rem; letter-spacing: 0.08em; outline: none;
+    .secure-btn.visible { display: inline-flex; }
+    .secure-btn:hover { background: rgba(255,215,0,0.15); box-shadow: 0 0 18px rgba(255,215,0,0.3) inset; }
+    .secure-btn-icon { font-size: 0.95rem; }
+    .secure-btn-stack { display: flex; flex-direction: column; line-height: 1.05; align-items: flex-start; }
+    .secure-btn-stack small { font-size: 0.55rem; opacity: 0.6; letter-spacing: 0.15em; }
+    .secure-btn.unlocked {
+      border-color: #5fb88a; color: #5fb88a;
+      box-shadow: 0 0 12px rgba(95,184,138,0.18) inset;
+      cursor: default; pointer-events: none;
+      background: rgba(95,184,138,0.05);
     }
-    .security-input-row input:focus { border-color: var(--accent); }
-    .security-input-row button {
-      background: none; border: 1px solid var(--accent); color: var(--accent);
-        padding: 0.4rem 0.8rem; font-family: inherit; font-size: 0.75rem;
-      letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+    .secure-btn.locked-out {
+      border-color: var(--danger); color: var(--danger);
+      cursor: not-allowed; pointer-events: none;
+      background: rgba(204,0,0,0.06);
     }
-    .security-input-row button:hover { background: var(--dim); }
-    .security-error {
-      margin-top: 0.45rem; font-size: 0.7rem; color: var(--danger);
-      letter-spacing: 0.08em; display: none;
+    .security-overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,1,2,0.78);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 100; opacity: 0;
+      transition: opacity 0.22s;
     }
-    .security-error.visible { display: block; }
-    .security-success-reveal {
-      margin-top: 1rem; padding: 1rem;
-      border: 1px solid var(--accent); background: var(--dim); display: none;
+    .security-overlay.active { display: flex; opacity: 1; }
+    .security-modal {
+      background: var(--bg);
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      padding: 1.6rem 1.8rem 1.4rem;
+      width: 340px; max-width: calc(100vw - 2rem);
+      box-shadow: 0 0 40px rgba(255,215,0,0.18);
+      transform: translateY(-30px) scale(0.96);
+      opacity: 0;
+      transition: transform 0.28s ease-out, opacity 0.22s;
     }
-    .security-success-reveal.visible { display: block; }
-    .access-granted {
-      font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent);
-      margin-bottom: 0.6rem; opacity: 0.85;
+    .security-overlay.active .security-modal { transform: translateY(0) scale(1); opacity: 1; }
+    .security-modal.dropping {
+      transform: translateY(60vh) scale(0.92) !important;
+      opacity: 0 !important;
+      transition: transform 0.55s cubic-bezier(0.5,0,0.75,0), opacity 0.4s !important;
     }
-    .security-success-msg { font-size: 0.85rem; color: var(--text); line-height: 1.55; white-space: pre-wrap; }
+    .security-modal-title {
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.78rem; letter-spacing: 0.22em;
+      color: var(--accent); margin: 0 0 1.1rem; text-align: center;
+    }
+    .security-modal-input {
+      width: 100%; box-sizing: border-box;
+      background: var(--dim); border: 1px solid var(--border);
+      color: var(--accent);
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 1.3rem; letter-spacing: 0.4em; text-align: center;
+      padding: 0.7rem 0.5rem; outline: none; border-radius: 2px;
+      text-transform: uppercase;
+    }
+    .security-modal-input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(255,215,0,0.2); }
+    .security-modal-input.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 12px rgba(204,0,0,0.4);
+      animation: secshake 0.35s;
+    }
+    @keyframes secshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    .security-modal-row { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
+    .security-modal-btn {
+      flex: 1;
+      background: transparent; border: 1px solid var(--accent); color: var(--accent);
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.74rem; letter-spacing: 0.18em;
+      padding: 0.55rem; cursor: pointer; border-radius: 2px;
+      transition: background 0.15s;
+    }
+    .security-modal-btn:hover { background: rgba(255,215,0,0.12); }
+    .security-modal-btn.cancel { border-color: var(--border); color: var(--text); opacity: 0.7; }
+    .security-modal-error {
+      font-size: 0.7rem; color: var(--danger); text-align: center;
+      margin-top: 0.5rem; letter-spacing: 0.12em; height: 0.9rem;
+      opacity: 0; transition: opacity 0.18s;
+    }
+    .security-modal-error.visible { opacity: 1; }
+    .security-reveal {
+      margin-top: 1rem;
+      border: 1px solid #5fb88a; border-radius: 2px;
+      padding: 0.85rem 1rem;
+      background: rgba(95,184,138,0.06);
+      box-shadow: 0 0 18px rgba(95,184,138,0.15) inset;
+      display: none;
+      transform: translateY(-12px); opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.2,0.7,0.3,1.0), opacity 0.3s;
+    }
+    .security-reveal.shown { display: block; transform: translateY(0); opacity: 1; }
+    .security-reveal-ok {
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.66rem; letter-spacing: 0.22em;
+      color: #5fb88a; margin-bottom: 0.4rem;
+    }
+    .security-reveal-msg {
+      font-size: 0.86rem; line-height: 1.55;
+      color: #d8efde; white-space: pre-wrap;
+    }
 
 /* High contrast mode */
     body.hi-contrast {
