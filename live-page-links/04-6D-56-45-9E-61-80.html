@@ -643,7 +643,7 @@
       letter-spacing: 0.05em;
     }
   </style>
-<meta name="logo-title" content="" data-color="#ff8c00"><meta name="logo-footer" content="" data-color="#ff8c00"><meta name="logo-watermark" content="" data-color="#ff8c00">  <script id="mission-security" type="application/json">{"enabled":true,"answers":[{"code":"KYBER","reveal":"that is correct!"}],"lockoutEnabled":true,"attemptThreshold":5,"lockoutMinutes":10}</script>
+<meta name="logo-title" content="" data-color="#ff8c00"><meta name="logo-footer" content="" data-color="#ff8c00"><meta name="logo-watermark" content="" data-color="#ff8c00">  <script id="mission-security" type="application/json">{"enabled":true,"answers":[{"code":"KYBER","reveal":"that is correct!"}],"lockoutEnabled":true,"attemptThreshold":5,"lockoutMinutes":10,"unlockMinutes":10}</script>
 <meta name="mission-status" content="complete"></head>
 <body>
 
@@ -836,7 +836,7 @@
         var idMatch = (document.querySelector('.mission-id') || {textContent:''}).textContent.match(/MISSION\s*ID:\s*([^\s|]+)/i);
         var missionId = idMatch ? idMatch[1] : (location.pathname.split('/').pop() || 'unknown');
         var KEY = 'cantina-gate-' + missionId;
-        var UNLOCK_TTL_MS = 10 * 60 * 1000;
+        var UNLOCK_TTL_MS = (typeof cfg.unlockMinutes === 'number' && cfg.unlockMinutes > 0) ? cfg.unlockMinutes * 60000 : 0;
 
         function getState() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(_) { return {}; } }
         function setState(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(_){} }
