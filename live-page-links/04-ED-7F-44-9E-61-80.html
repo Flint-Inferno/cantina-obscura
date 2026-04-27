@@ -222,8 +222,9 @@
       display: none;
       float: right;
       margin: 0.2em 0 0.4em 0.8em;
-      background: linear-gradient(180deg, rgba(255,215,0,0.08), rgba(255,215,0,0.02));
-      border: 1px solid var(--accent);
+      background: var(--dim);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
       color: var(--accent);
       font-family: var(--font-title, 'Orbitron', sans-serif);
       font-size: 0.7rem;
@@ -233,24 +234,22 @@
       cursor: pointer;
       align-items: center;
       gap: 0.45rem;
-      box-shadow: 0 0 12px rgba(255,215,0,0.12) inset;
-      transition: background 0.18s, box-shadow 0.18s;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
     }
     .secure-btn.visible { display: inline-flex; }
-    .secure-btn:hover { background: rgba(255,215,0,0.15); box-shadow: 0 0 18px rgba(255,215,0,0.3) inset; }
+    .secure-btn:hover { background: rgba(255,255,255,0.03); }
     .secure-btn-icon { font-size: 0.95rem; }
     .secure-btn-stack { display: flex; flex-direction: column; line-height: 1.05; align-items: flex-start; }
     .secure-btn-stack small { font-size: 0.55rem; opacity: 0.6; letter-spacing: 0.15em; }
     .secure-btn.unlocked {
-      border-color: #5fb88a; color: #5fb88a;
-      box-shadow: 0 0 12px rgba(95,184,138,0.18) inset;
+      border-color: #5fb88a; border-left-color: #5fb88a; color: #5fb88a;
       cursor: default; pointer-events: none;
-      background: rgba(95,184,138,0.05);
+      background: var(--dim);
     }
     .secure-btn.locked-out {
-      border-color: var(--danger); color: var(--danger);
+      border-color: var(--danger); border-left-color: var(--danger); color: var(--danger);
       cursor: not-allowed; pointer-events: none;
-      background: rgba(204,0,0,0.06);
+      background: var(--dim);
     }
     .security-overlay {
       position: fixed; inset: 0;
@@ -267,7 +266,7 @@
       border-radius: 3px;
       padding: 1.6rem 1.8rem 1.4rem;
       width: 340px; max-width: calc(100vw - 2rem);
-      box-shadow: 0 0 40px rgba(255,215,0,0.18);
+      box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 18%, transparent);
       transform: translateY(-30px) scale(0.96);
       opacity: 0;
       transition: transform 0.28s ease-out, opacity 0.22s;
@@ -292,7 +291,7 @@
       padding: 0.7rem 0.5rem; outline: none; border-radius: 2px;
       text-transform: uppercase;
     }
-    .security-modal-input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(255,215,0,0.2); }
+    .security-modal-input:focus { border-color: var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 20%, transparent); }
     .security-modal-input.error {
       border-color: var(--danger);
       box-shadow: 0 0 12px rgba(204,0,0,0.4);
@@ -308,7 +307,7 @@
       padding: 0.55rem; cursor: pointer; border-radius: 2px;
       transition: background 0.15s;
     }
-    .security-modal-btn:hover { background: rgba(255,215,0,0.12); }
+    .security-modal-btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
     .security-modal-btn.cancel { border-color: var(--border); color: var(--text); opacity: 0.7; }
     .security-modal-error {
       font-size: 0.7rem; color: var(--danger); text-align: center;
@@ -644,7 +643,7 @@
       letter-spacing: 0.05em;
     }
   </style>
-<meta name="logo-title" content="" data-color="#f0c060"><meta name="logo-footer" content="" data-color="#f0c060"><meta name="logo-watermark" content="" data-color="#f0c060">  <script id="mission-security" type="application/json">{"enabled":false,"answers":[],"lockoutEnabled":true,"attemptThreshold":5,"lockoutMinutes":10}</script>
+<meta name="logo-title" content="" data-color="#f0c060"><meta name="logo-footer" content="" data-color="#f0c060"><meta name="logo-watermark" content="" data-color="#f0c060">  <script id="mission-security" type="application/json">{"enabled":false,"answers":[],"lockoutEnabled":true,"attemptThreshold":5,"lockoutMinutes":10,"unlockMinutes":0}</script>
 </head>
 <body>
 
@@ -722,7 +721,7 @@
         </div>
 
         <div id="security-reveal" class="security-reveal">
-          <div class="security-reveal-ok">✓ ACCESS GRANTED</div>
+          <div class="security-reveal-ok">ACCESS GRANTED</div>
           <div class="security-reveal-msg" id="security-reveal-msg"></div>
         </div>
       </div><!-- /.datapad-main -->
@@ -820,7 +819,7 @@
       } catch(_) {}
     })();
       // ── Access code gate (modal + lockout) ───────────────────
-      (function initSecurity() {
+      function initSecurity() {
         var cfgEl = document.getElementById('mission-security');
         if (!cfgEl) return;
         var cfg;
@@ -839,6 +838,7 @@
         var idMatch = (document.querySelector('.mission-id') || {textContent:''}).textContent.match(/MISSION\s*ID:\s*([^\s|]+)/i);
         var missionId = idMatch ? idMatch[1] : (location.pathname.split('/').pop() || 'unknown');
         var KEY = 'cantina-gate-' + missionId;
+        var UNLOCK_TTL_MS = (typeof cfg.unlockMinutes === 'number' && cfg.unlockMinutes > 0) ? cfg.unlockMinutes * 60000 : 0;
 
         function getState() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(_) { return {}; } }
         function setState(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(_){} }
@@ -859,8 +859,8 @@
 
         function showUnlocked(message) {
           btn.classList.add('unlocked');
-          btn.querySelector('.secure-btn-icon').textContent = '✓';
-          btn.querySelector('.secure-btn-stack').innerHTML = 'UNLOCKED<small>✓ ACCESS</small>';
+          btn.querySelector('.secure-btn-icon').textContent = '';
+          btn.querySelector('.secure-btn-stack').innerHTML = 'UNLOCKED<small>ACCESS</small>';
           if (revealMsg) revealMsg.textContent = message || '';
           if (revealEl) {
             revealEl.style.display = 'block';
@@ -872,7 +872,7 @@
         }
 
         function persistUnlock(message) {
-          var s = getState(); s.unlocked = true; s.unlockedMessage = message; s.wrong = 0; setState(s);
+          var s = getState(); s.unlocked = true; s.unlockedMessage = message; s.unlockedAt = Date.now(); s.wrong = 0; setState(s);
           showUnlocked(message);
         }
 
@@ -898,7 +898,9 @@
           var match = null;
           for (var i = 0; i < cfg.answers.length; i++) {
             var a = cfg.answers[i];
-            if (a && a.code && a.code.toLowerCase() === v.toLowerCase()) { match = a; break; }
+            if (!a || !a.code) continue;
+            var codes = String(a.code).split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean);
+            if (codes.indexOf(v.toLowerCase()) !== -1) { match = a; break; }
           }
           if (match) {
             modal.classList.add('dropping');
@@ -937,10 +939,22 @@
         });
 
         var s0 = getState();
-        if (s0.unlocked) { showUnlocked(s0.unlockedMessage || ''); return; }
+        if (s0.unlocked) {
+          var expired = UNLOCK_TTL_MS > 0 && (!s0.unlockedAt || (Date.now() - s0.unlockedAt) > UNLOCK_TTL_MS);
+          if (expired) {
+            delete s0.unlocked; delete s0.unlockedMessage; delete s0.unlockedAt; setState(s0);
+          } else {
+            showUnlocked(s0.unlockedMessage || ''); return;
+          }
+        }
         var rem = lockoutRemaining();
         if (rem) showLockedOut(rem);
-      })();
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSecurity);
+      } else {
+        initSecurity();
+      }
   </script>
   <!-- =============================================================
        EVENT LOGO SCRIPT
