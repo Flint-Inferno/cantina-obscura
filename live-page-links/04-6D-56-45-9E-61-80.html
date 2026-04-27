@@ -936,7 +936,8 @@
 
         var s0 = getState();
         if (s0.unlocked) {
-          if (UNLOCK_TTL_MS > 0 && s0.unlockedAt && (Date.now() - s0.unlockedAt) > UNLOCK_TTL_MS) {
+          var expired = UNLOCK_TTL_MS > 0 && (!s0.unlockedAt || (Date.now() - s0.unlockedAt) > UNLOCK_TTL_MS);
+          if (expired) {
             delete s0.unlocked; delete s0.unlockedMessage; delete s0.unlockedAt; setState(s0);
           } else {
             showUnlocked(s0.unlockedMessage || ''); return;
