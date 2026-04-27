@@ -836,6 +836,7 @@
         var idMatch = (document.querySelector('.mission-id') || {textContent:''}).textContent.match(/MISSION\s*ID:\s*([^\s|]+)/i);
         var missionId = idMatch ? idMatch[1] : (location.pathname.split('/').pop() || 'unknown');
         var KEY = 'cantina-gate-' + missionId;
+        var UNLOCK_TTL_MS = 10 * 60 * 1000;
 
         function getState() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(_) { return {}; } }
         function setState(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(_){} }
@@ -869,7 +870,7 @@
         }
 
         function persistUnlock(message) {
-          var s = getState(); s.unlocked = true; s.unlockedMessage = message; s.wrong = 0; setState(s);
+          var s = getState(); s.unlocked = true; s.unlockedMessage = message; s.unlockedAt = Date.now(); s.wrong = 0; setState(s);
           showUnlocked(message);
         }
 
@@ -934,7 +935,13 @@
         });
 
         var s0 = getState();
-        if (s0.unlocked) { showUnlocked(s0.unlockedMessage || ''); return; }
+        if (s0.unlocked) {
+          if (UNLOCK_TTL_MS > 0 && s0.unlockedAt && (Date.now() - s0.unlockedAt) > UNLOCK_TTL_MS) {
+            delete s0.unlocked; delete s0.unlockedMessage; delete s0.unlockedAt; setState(s0);
+          } else {
+            showUnlocked(s0.unlockedMessage || ''); return;
+          }
+        }
         var rem = lockoutRemaining();
         if (rem) showLockedOut(rem);
       }
