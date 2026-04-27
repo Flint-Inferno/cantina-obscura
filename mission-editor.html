@@ -1170,7 +1170,7 @@
 
         <div>
           <div class="section-heading">Access codes &amp; reveals</div>
-          <div style="font-size:0.74rem;opacity:0.6;margin-bottom:0.6rem;">Each row is a valid code with its own reveal message. Multiple rows = branching answers (e.g. "pick one of two names"). Once a guest unlocks with one code, they're locked into that branch — they can&apos;t try the others. Codes are case-insensitive.</div>
+          <div style="font-size:0.74rem;opacity:0.6;margin-bottom:0.6rem;">Each row is a valid code with its own reveal message. Multiple rows = branching answers (e.g. "pick one of two names"). Once a guest unlocks with one code, they're locked into that branch — they can&apos;t try the others. Codes are case-insensitive. Comma-separate within one row to share a reveal between several codes (e.g. KYBER, CRYSTAL).</div>
           <div id="sec-answers-list"></div>
           <button type="button" id="sec-add-answer" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:0.74rem;letter-spacing:0.15em;padding:0.45rem 0.9rem;border-radius:2px;cursor:pointer;margin-top:0.4rem;">+ ADD ANSWER</button>
         </div>
@@ -1876,8 +1876,8 @@
     row.style.cssText = 'border:1px solid var(--border);padding:0.6rem 0.7rem;margin-bottom:0.5rem;border-radius:2px;background:rgba(255,255,255,0.015);position:relative;';
     row.innerHTML = `
       <div class="field" style="margin-bottom:0.5rem;">
-        <label>Code (case-insensitive)</label>
-        <input type="text" class="sec-answer-code" value="${(code||'').replace(/"/g,'&quot;')}" placeholder="KYBER" style="width:100%;background:var(--bg);color:var(--accent);border:1px solid var(--border);border-radius:2px;padding:0.45rem 0.6rem;font-family:var(--font);font-size:0.95rem;letter-spacing:0.2em;text-transform:uppercase;">
+        <label>Code (case-insensitive — comma-separate for multiple)</label>
+        <input type="text" class="sec-answer-code" value="${(code||'').replace(/"/g,'&quot;')}" placeholder="KYBER, CRYSTAL" style="width:100%;background:var(--bg);color:var(--accent);border:1px solid var(--border);border-radius:2px;padding:0.45rem 0.6rem;font-family:var(--font);font-size:0.95rem;letter-spacing:0.2em;text-transform:uppercase;">
       </div>
       <div class="field" style="margin-bottom:0.3rem;">
         <label>Reveal message (shown after correct entry)</label>
