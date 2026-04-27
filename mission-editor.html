@@ -1160,6 +1160,15 @@
         </div>
 
         <div>
+          <div class="section-heading">Unlock duration</div>
+          <div class="field" style="margin-top:0.4rem;">
+            <label>Minutes the unlock lasts (0 = permanent)</label>
+            <input type="number" id="sec-unlock-minutes" value="0" min="0" max="1440" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.4rem 0.6rem;font-family:inherit;">
+          </div>
+          <div style="font-size:0.7rem;opacity:0.55;margin-top:0.4rem;font-style:italic;">After this many minutes, the card will ask for the code again. Useful for testing or resetting between sessions. 0 leaves the unlock permanent on that device.</div>
+        </div>
+
+        <div>
           <div class="section-heading">Access codes &amp; reveals</div>
           <div style="font-size:0.74rem;opacity:0.6;margin-bottom:0.6rem;">Each row is a valid code with its own reveal message. Multiple rows = branching answers (e.g. "pick one of two names"). Once a guest unlocks with one code, they're locked into that branch — they can&apos;t try the others. Codes are case-insensitive.</div>
           <div id="sec-answers-list"></div>
@@ -1856,7 +1865,8 @@
     const lockoutEnabled = document.getElementById('sec-lockout-enabled').checked;
     const attemptThreshold = Math.max(1, parseInt(document.getElementById('sec-attempt-threshold').value, 10) || 5);
     const lockoutMinutes = Math.max(1, parseInt(document.getElementById('sec-lockout-minutes').value, 10) || 10);
-    return { enabled, answers, lockoutEnabled, attemptThreshold, lockoutMinutes };
+    const unlockMinutes = Math.max(0, parseInt(document.getElementById('sec-unlock-minutes').value, 10) || 0);
+    return { enabled, answers, lockoutEnabled, attemptThreshold, lockoutMinutes, unlockMinutes };
   }
 
   // ── Answer row builder ──────────────────────────────────────
@@ -2281,6 +2291,7 @@
       document.getElementById('sec-lockout-enabled').checked = sec.lockoutEnabled !== false;
       document.getElementById('sec-attempt-threshold').value = sec.attemptThreshold || 5;
       document.getElementById('sec-lockout-minutes').value = sec.lockoutMinutes || 10;
+      document.getElementById('sec-unlock-minutes').value = (sec.unlockMinutes != null) ? sec.unlockMinutes : 0;
       clearAnswerRows();
       const answers = Array.isArray(sec.answers) ? sec.answers : [];
       if (answers.length === 0) {
