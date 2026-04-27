@@ -896,7 +896,9 @@
           var match = null;
           for (var i = 0; i < cfg.answers.length; i++) {
             var a = cfg.answers[i];
-            if (a && a.code && a.code.toLowerCase() === v.toLowerCase()) { match = a; break; }
+            if (!a || !a.code) continue;
+            var codes = String(a.code).split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean);
+            if (codes.indexOf(v.toLowerCase()) !== -1) { match = a; break; }
           }
           if (match) {
             modal.classList.add('dropping');
