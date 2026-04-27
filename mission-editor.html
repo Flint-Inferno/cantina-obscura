@@ -1139,32 +1139,34 @@
         <label for="sec-enabled">ENABLE ACCESS CODE GATE</label>
       </div>
       <div id="security-fields" class="sec-disabled">
+
         <div>
-          <div class="section-heading">Access Codes</div>
-          <div class="field">
-            <label>One code per line — player must enter one of these</label>
-            <textarea id="sec-codes" rows="4" placeholder="REDSTAR&#10;AUREK-7&#10;ECHO-BASE"></textarea>
+          <div class="section-heading">Lockout protection</div>
+          <div class="sec-case-row">
+            <input type="checkbox" id="sec-lockout-enabled" checked>
+            <label for="sec-lockout-enabled">Lock device after too many wrong attempts</label>
           </div>
+          <div class="field" style="display:flex;gap:0.7rem;margin-top:0.6rem;align-items:flex-end;">
+            <div style="flex:1;">
+              <label>Wrong attempts before lockout</label>
+              <input type="number" id="sec-attempt-threshold" value="5" min="1" max="20" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.4rem 0.6rem;font-family:inherit;">
+            </div>
+            <div style="flex:1;">
+              <label>Lockout duration (minutes)</label>
+              <input type="number" id="sec-lockout-minutes" value="10" min="1" max="1440" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.4rem 0.6rem;font-family:inherit;">
+            </div>
+          </div>
+          <div style="font-size:0.7rem;opacity:0.55;margin-top:0.4rem;font-style:italic;">Per-device lockout (localStorage). Same browser only — incognito/clearing storage bypasses it.</div>
         </div>
-        <div class="sec-case-row">
-          <input type="checkbox" id="sec-case-sensitive">
-          <label for="sec-case-sensitive">Case sensitive</label>
-        </div>
+
         <div>
-          <div class="section-heading">Success Message</div>
-          <div class="field">
-            <label>Shown when the correct code is entered</label>
-            <textarea id="sec-success-msg" rows="5" placeholder="Report to Handler Vex at Bay 7. Show this screen. Payout: 500 credits."></textarea>
-          </div>
+          <div class="section-heading">Access codes &amp; reveals</div>
+          <div style="font-size:0.74rem;opacity:0.6;margin-bottom:0.6rem;">Each row is a valid code with its own reveal message. Multiple rows = branching answers (e.g. "pick one of two names"). Once a guest unlocks with one code, they're locked into that branch — they can&apos;t try the others. Codes are case-insensitive.</div>
+          <div id="sec-answers-list"></div>
+          <button type="button" id="sec-add-answer" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:0.74rem;letter-spacing:0.15em;padding:0.45rem 0.9rem;border-radius:2px;cursor:pointer;margin-top:0.4rem;">+ ADD ANSWER</button>
         </div>
+
       </div><!-- /#security-fields -->
-      <div class="experimental-block">
-        <div class="section-heading">⚗ Experimental — coming soon</div>
-        <div class="sec-exp-row"><input type="checkbox" disabled><label>Multiple code tiers</label></div>
-        <div class="sec-exp-row"><input type="checkbox" disabled><label>Faction-specific codes</label></div>
-        <div class="sec-exp-row"><input type="checkbox" disabled><label>Agent ID pairing</label></div>
-        <div class="sec-exp-row"><input type="checkbox" disabled><label>Countdown timer unlock</label></div>
-      </div>
     </div><!-- /#security-panel -->
 
     </div><!-- /#left-col -->
@@ -1574,10 +1576,14 @@
         !document.getElementById('sec-enabled').checked);
       markDirty(); schedulePreview();
     });
-    ['sec-codes', 'sec-success-msg'].forEach(id =>
+    ['sec-attempt-threshold', 'sec-lockout-minutes'].forEach(id =>
       document.getElementById(id).addEventListener('input', () => { markDirty(); schedulePreview(); })
     );
-    document.getElementById('sec-case-sensitive').addEventListener('change', () => { markDirty(); schedulePreview(); });
+    document.getElementById('sec-lockout-enabled').addEventListener('change', () => { markDirty(); schedulePreview(); });
+    document.getElementById('sec-add-answer').addEventListener('click', () => {
+      addAnswerRow('', '');
+      markDirty(); schedulePreview();
+    });
   }
 
   // ── Init ─────────────────────────────────────────────────────
@@ -1841,12 +1847,53 @@
   // ── Security config read/write ────────────────────────────────
   function getSecurityConfig() {
     const enabled = document.getElementById('sec-enabled').checked;
-    const codes = (document.getElementById('sec-codes').value || '')
-      .split('\n').map(s => s.trim()).filter(Boolean);
-    const caseSensitive = document.getElementById('sec-case-sensitive').checked;
-    const successMsg = document.getElementById('sec-success-msg').value;
-    return { enabled, codes, caseSensitive, successMsg };
+    const answers = [];
+    document.querySelectorAll('#sec-answers-list .sec-answer-row').forEach(row => {
+      const code = (row.querySelector('.sec-answer-code').value || '').trim();
+      const reveal = (row.querySelector('.sec-answer-reveal').value || '').trim();
+      if (code) answers.push({ code, reveal });
+    });
+    const lockoutEnabled = document.getElementById('sec-lockout-enabled').checked;
+    const attemptThreshold = Math.max(1, parseInt(document.getElementById('sec-attempt-threshold').value, 10) || 5);
+    const lockoutMinutes = Math.max(1, parseInt(document.getElementById('sec-lockout-minutes').value, 10) || 10);
+    return { enabled, answers, lockoutEnabled, attemptThreshold, lockoutMinutes };
   }
+
+  // ── Answer row builder ──────────────────────────────────────
+  function buildAnswerRow(code, reveal) {
+    const row = document.createElement('div');
+    row.className = 'sec-answer-row';
+    row.style.cssText = 'border:1px solid var(--border);padding:0.6rem 0.7rem;margin-bottom:0.5rem;border-radius:2px;background:rgba(255,255,255,0.015);position:relative;';
+    row.innerHTML = `
+      <div class="field" style="margin-bottom:0.5rem;">
+        <label>Code (case-insensitive)</label>
+        <input type="text" class="sec-answer-code" value="${(code||'').replace(/"/g,'&quot;')}" placeholder="KYBER" style="width:100%;background:var(--bg);color:var(--accent);border:1px solid var(--border);border-radius:2px;padding:0.45rem 0.6rem;font-family:var(--font);font-size:0.95rem;letter-spacing:0.2em;text-transform:uppercase;">
+      </div>
+      <div class="field" style="margin-bottom:0.3rem;">
+        <label>Reveal message (shown after correct entry)</label>
+        <textarea class="sec-answer-reveal" rows="3" placeholder="The pilot carries spice in the false floor — only the canisters with the red seal." style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;padding:0.45rem 0.6rem;font-family:inherit;font-size:0.82rem;line-height:1.4;resize:vertical;"></textarea>
+      </div>
+      <button type="button" class="sec-answer-remove" style="background:transparent;border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:0.65rem;letter-spacing:0.15em;padding:0.28rem 0.55rem;border-radius:2px;cursor:pointer;opacity:0.7;">✕ REMOVE</button>
+    `;
+    row.querySelector('.sec-answer-reveal').value = reveal || '';
+    row.querySelector('.sec-answer-code').addEventListener('input', () => { markDirty(); schedulePreview(); });
+    row.querySelector('.sec-answer-reveal').addEventListener('input', () => { markDirty(); schedulePreview(); });
+    row.querySelector('.sec-answer-remove').addEventListener('click', () => {
+      row.remove();
+      markDirty(); schedulePreview();
+    });
+    return row;
+  }
+
+  function addAnswerRow(code, reveal) {
+    const list = document.getElementById('sec-answers-list');
+    list.appendChild(buildAnswerRow(code, reveal));
+  }
+
+  function clearAnswerRows() {
+    document.getElementById('sec-answers-list').innerHTML = '';
+  }
+
 
   // ── Browse overlay ───────────────────────────────────────────
   let browseFiles  = [];   // [{name, size, url, title, difficulty, updatedAt}]
@@ -2231,9 +2278,16 @@
       const secEl = doc.getElementById('mission-security');
       const sec = secEl ? JSON.parse(secEl.textContent) : {};
       document.getElementById('sec-enabled').checked = !!sec.enabled;
-      document.getElementById('sec-codes').value = (sec.codes || []).join('\n');
-      document.getElementById('sec-case-sensitive').checked = !!sec.caseSensitive;
-      document.getElementById('sec-success-msg').value = sec.successMsg || '';
+      document.getElementById('sec-lockout-enabled').checked = sec.lockoutEnabled !== false;
+      document.getElementById('sec-attempt-threshold').value = sec.attemptThreshold || 5;
+      document.getElementById('sec-lockout-minutes').value = sec.lockoutMinutes || 10;
+      clearAnswerRows();
+      const answers = Array.isArray(sec.answers) ? sec.answers : [];
+      if (answers.length === 0) {
+        addAnswerRow('', '');
+      } else {
+        answers.forEach(a => addAnswerRow(a.code || '', a.reveal || ''));
+      }
       document.getElementById('security-fields').classList.toggle('sec-disabled', !sec.enabled);
     } catch(_) {}
 
