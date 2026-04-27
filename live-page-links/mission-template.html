@@ -214,40 +214,125 @@
       opacity: 1;
     }
 
-    /* ── Security gate ────────────────────────────────────── */
-    .security-gate {
-      margin-top: 1rem; padding: 1rem;
-      border: 1px solid var(--border); background: var(--dim);
+    /* ── Security gate (modal-style) ─────────────────────── */
+    .secure-btn {
+      display: none;
+      float: right;
+      margin: 0.2em 0 0.4em 0.8em;
+      background: linear-gradient(180deg, rgba(255,215,0,0.08), rgba(255,215,0,0.02));
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      padding: 0.55rem 0.8rem;
+      border-radius: 2px;
+      cursor: pointer;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 0 12px rgba(255,215,0,0.12) inset;
+      transition: background 0.18s, box-shadow 0.18s;
     }
-    .security-gate .section-label { margin-bottom: 0.5rem; }
-    .security-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-    .security-input-row input {
-      flex: 1; background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); padding: 0.4rem 0.6rem; font-family: inherit;
-      font-size: 0.85rem; letter-spacing: 0.08em; outline: none;
+    .secure-btn.visible { display: inline-flex; }
+    .secure-btn:hover { background: rgba(255,215,0,0.15); box-shadow: 0 0 18px rgba(255,215,0,0.3) inset; }
+    .secure-btn-icon { font-size: 0.95rem; }
+    .secure-btn-stack { display: flex; flex-direction: column; line-height: 1.05; align-items: flex-start; }
+    .secure-btn-stack small { font-size: 0.55rem; opacity: 0.6; letter-spacing: 0.15em; }
+    .secure-btn.unlocked {
+      border-color: #5fb88a; color: #5fb88a;
+      box-shadow: 0 0 12px rgba(95,184,138,0.18) inset;
+      cursor: default; pointer-events: none;
+      background: rgba(95,184,138,0.05);
     }
-    .security-input-row input:focus { border-color: var(--accent); }
-    .security-input-row button {
-      background: none; border: 1px solid var(--accent); color: var(--accent);
-      padding: 0.4rem 0.8rem; font-family: inherit; font-size: 0.75rem;
-      letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+    .secure-btn.locked-out {
+      border-color: var(--danger); color: var(--danger);
+      cursor: not-allowed; pointer-events: none;
+      background: rgba(204,0,0,0.06);
     }
-    .security-input-row button:hover { background: var(--dim); }
-    .security-error {
-      margin-top: 0.45rem; font-size: 0.7rem; color: var(--danger);
-      letter-spacing: 0.08em; display: none;
+    .security-overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,1,2,0.78);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 100; opacity: 0;
+      transition: opacity 0.22s;
     }
-    .security-error.visible { display: block; }
-    .security-success-reveal {
-      margin-top: 1rem; padding: 1rem;
-      border: 1px solid var(--accent); background: var(--dim); display: none;
+    .security-overlay.active { display: flex; opacity: 1; }
+    .security-modal {
+      background: var(--bg);
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      padding: 1.6rem 1.8rem 1.4rem;
+      width: 340px; max-width: calc(100vw - 2rem);
+      box-shadow: 0 0 40px rgba(255,215,0,0.18);
+      transform: translateY(-30px) scale(0.96);
+      opacity: 0;
+      transition: transform 0.28s ease-out, opacity 0.22s;
     }
-    .security-success-reveal.visible { display: block; }
-    .access-granted {
-      font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent);
-      margin-bottom: 0.6rem; opacity: 0.85;
+    .security-overlay.active .security-modal { transform: translateY(0) scale(1); opacity: 1; }
+    .security-modal.dropping {
+      transform: translateY(60vh) scale(0.92) !important;
+      opacity: 0 !important;
+      transition: transform 0.55s cubic-bezier(0.5,0,0.75,0), opacity 0.4s !important;
     }
-    .security-success-msg { font-size: 0.85rem; color: var(--text); line-height: 1.55; white-space: pre-wrap; }
+    .security-modal-title {
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.78rem; letter-spacing: 0.22em;
+      color: var(--accent); margin: 0 0 1.1rem; text-align: center;
+    }
+    .security-modal-input {
+      width: 100%; box-sizing: border-box;
+      background: var(--dim); border: 1px solid var(--border);
+      color: var(--accent);
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 1.3rem; letter-spacing: 0.4em; text-align: center;
+      padding: 0.7rem 0.5rem; outline: none; border-radius: 2px;
+      text-transform: uppercase;
+    }
+    .security-modal-input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(255,215,0,0.2); }
+    .security-modal-input.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 12px rgba(204,0,0,0.4);
+      animation: secshake 0.35s;
+    }
+    @keyframes secshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    .security-modal-row { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
+    .security-modal-btn {
+      flex: 1;
+      background: transparent; border: 1px solid var(--accent); color: var(--accent);
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.74rem; letter-spacing: 0.18em;
+      padding: 0.55rem; cursor: pointer; border-radius: 2px;
+      transition: background 0.15s;
+    }
+    .security-modal-btn:hover { background: rgba(255,215,0,0.12); }
+    .security-modal-btn.cancel { border-color: var(--border); color: var(--text); opacity: 0.7; }
+    .security-modal-error {
+      font-size: 0.7rem; color: var(--danger); text-align: center;
+      margin-top: 0.5rem; letter-spacing: 0.12em; height: 0.9rem;
+      opacity: 0; transition: opacity 0.18s;
+    }
+    .security-modal-error.visible { opacity: 1; }
+    .security-reveal {
+      margin-top: 1rem;
+      border: 1px solid #5fb88a; border-radius: 2px;
+      padding: 0.85rem 1rem;
+      background: rgba(95,184,138,0.06);
+      box-shadow: 0 0 18px rgba(95,184,138,0.15) inset;
+      display: none;
+      transform: translateY(-12px); opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.2,0.7,0.3,1.0), opacity 0.3s;
+    }
+    .security-reveal.shown { display: block; transform: translateY(0); opacity: 1; }
+    .security-reveal-ok {
+      font-family: var(--font-title, 'Orbitron', sans-serif);
+      font-size: 0.66rem; letter-spacing: 0.22em;
+      color: #5fb88a; margin-bottom: 0.4rem;
+    }
+    .security-reveal-msg {
+      font-size: 0.86rem; line-height: 1.55;
+      color: #d8efde; white-space: pre-wrap;
+    }
 
     /* ── High contrast mode ──────────────────────────────────── */
     body.hi-contrast {
@@ -556,7 +641,7 @@
       letter-spacing: 0.05em;
     }
   </style>
-  <script id="mission-security" type="application/json">{"enabled":false,"codes":[],"caseSensitive":false,"successMsg":""}</script>
+  <script id="mission-security" type="application/json">{"enabled":false,"answers":[],"lockoutEnabled":true,"attemptThreshold":5,"lockoutMinutes":10}</script>
 <meta name="mission-status" content="not-started"><meta name="logo-title" content="" data-color="#ffee00"><meta name="logo-footer" content="" data-color="#ffee00"><meta name="logo-watermark" content="" data-color="#ffee00"></head>
 <body>
 
@@ -626,7 +711,7 @@
             Mission Briefing
             &nbsp;<span class="aurebesh-accent" style="font-size:0.55rem; opacity:0.4;">◆ SECURE CHANNEL</span>
           </p>
-          <div class="mission-instructions">
+          <div class="mission-instructions"><button id="secure-btn" class="secure-btn" type="button"><span class="secure-btn-icon">⚿</span><span class="secure-btn-stack">SECURE<small>ENTER CODE</small></span></button>
             <p>[ REPLACE THIS TEXT WITH MISSION OBJECTIVES ]</p>
             <br>
             <p>You can use a simple paragraph, or a list like this:</p>
@@ -638,6 +723,10 @@
           </div>
         </div>
 
+        <div id="security-reveal" class="security-reveal">
+          <div class="security-reveal-ok">✓ ACCESS GRANTED</div>
+          <div class="security-reveal-msg" id="security-reveal-msg"></div>
+        </div>
       </div><!-- /.datapad-main -->
 
       <!-- ── RIGHT / SIDE: payout + turn-in ────────────────────── -->
@@ -663,19 +752,6 @@
           <p class="section-label">Mission Agent</p>
           <div class="agent-name">[ AGENT NAME ]</div>
         </div>
-
-
-          <!-- ── Access code gate ──────────────────────────── -->
-          <div class="security-gate" id="security-gate" style="display:none">
-            <p class="section-label">ACCESS CODE REQUIRED</p>
-            <div class="security-input-row">
-              <input type="text" id="security-code-input" placeholder="ENTER CODE" autocomplete="off" spellcheck="false" autocapitalize="characters">
-              <button onclick="submitSecurityCode()">► SUBMIT</button>
-            </div>
-            <div class="security-error" id="security-error">✗ INVALID CODE</div>
-          </div>
-          <div class="security-success-reveal" id="security-success-reveal">
-            <div class="access-granted">✓ ACCESS GRANTED</div>
             <div class="security-success-msg" id="security-success-msg"></div>
           </div>
 
@@ -745,41 +821,128 @@
         }
       } catch(_) {}
     })();
-      // ── Access code gate ─────────────────────────────────────
-      (function initSecurityGate() {
-        var el = document.getElementById('mission-security');
-        if (!el) return;
+      // ── Access code gate (modal + lockout) ───────────────────
+      (function initSecurity() {
+        var cfgEl = document.getElementById('mission-security');
+        if (!cfgEl) return;
         var cfg;
-        try { cfg = JSON.parse(el.textContent); } catch(_) { return; }
-        if (!cfg || !cfg.enabled) return;
-        document.getElementById('security-gate').style.display = '';
-        document.getElementById('security-code-input').addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') submitSecurityCode();
-        });
-      })();
+        try { cfg = JSON.parse(cfgEl.textContent); } catch(_) { return; }
+        if (!cfg || !cfg.enabled || !Array.isArray(cfg.answers) || cfg.answers.length === 0) return;
 
-      function submitSecurityCode() {
-        var el = document.getElementById('mission-security');
-        if (!el) return;
-        var cfg;
-        try { cfg = JSON.parse(el.textContent); } catch(_) { return; }
-        var input = (document.getElementById('security-code-input').value || '').trim();
-        var codes = cfg.codes || [];
-        var match = codes.some(function(c) {
-          return cfg.caseSensitive ? c === input : c.toLowerCase() === input.toLowerCase();
-        });
-        var errEl = document.getElementById('security-error');
-        if (match) {
-          document.getElementById('security-gate').style.display = 'none';
-          var reveal = document.getElementById('security-success-reveal');
-          reveal.classList.add('visible');
-          document.getElementById('security-success-msg').textContent = cfg.successMsg || '';
-          errEl.classList.remove('visible');
-        } else {
-          errEl.classList.add('visible');
-          setTimeout(function() { errEl.classList.remove('visible'); }, 2500);
+        var btn      = document.getElementById('secure-btn');
+        var overlay  = document.getElementById('security-overlay');
+        var modal    = document.getElementById('security-modal');
+        var input    = document.getElementById('security-modal-input');
+        var errEl    = document.getElementById('security-modal-error');
+        var revealEl = document.getElementById('security-reveal');
+        var revealMsg= document.getElementById('security-reveal-msg');
+        if (!btn || !overlay || !modal || !input) return;
+
+        var idMatch = (document.querySelector('.mission-id') || {textContent:''}).textContent.match(/MISSION\s*ID:\s*([^\s|]+)/i);
+        var missionId = idMatch ? idMatch[1] : (location.pathname.split('/').pop() || 'unknown');
+        var KEY = 'cantina-gate-' + missionId;
+
+        function getState() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(_) { return {}; } }
+        function setState(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(_){} }
+
+        function lockoutRemaining() {
+          if (!cfg.lockoutEnabled) return 0;
+          var s = getState();
+          if (s.lockedUntil && Date.now() < s.lockedUntil) return s.lockedUntil - Date.now();
+          return 0;
         }
-      }
+
+        function showLockedOut(remaining) {
+          btn.classList.add('locked-out');
+          var mins = Math.ceil(remaining / 60000);
+          btn.querySelector('.secure-btn-icon').textContent = '⌧';
+          btn.querySelector('.secure-btn-stack').innerHTML = 'LOCKED<small>~' + mins + ' MIN</small>';
+        }
+
+        function showUnlocked(message) {
+          btn.classList.add('unlocked');
+          btn.querySelector('.secure-btn-icon').textContent = '✓';
+          btn.querySelector('.secure-btn-stack').innerHTML = 'UNLOCKED<small>✓ ACCESS</small>';
+          if (revealMsg) revealMsg.textContent = message || '';
+          if (revealEl) {
+            revealEl.style.display = 'block';
+            // force reflow so the transition fires
+            // eslint-disable-next-line no-unused-expressions
+            revealEl.offsetHeight;
+            revealEl.classList.add('shown');
+          }
+        }
+
+        function persistUnlock(message) {
+          var s = getState(); s.unlocked = true; s.unlockedMessage = message; s.wrong = 0; setState(s);
+          showUnlocked(message);
+        }
+
+        function openModal() {
+          if (lockoutRemaining()) return;
+          overlay.classList.add('active');
+          overlay.setAttribute('aria-hidden', 'false');
+          setTimeout(function(){ input.focus(); }, 100);
+        }
+        function closeModal() {
+          overlay.classList.remove('active');
+          overlay.setAttribute('aria-hidden', 'true');
+          setTimeout(function(){
+            modal.classList.remove('dropping');
+            input.value = '';
+            input.classList.remove('error');
+            errEl.classList.remove('visible');
+          }, 280);
+        }
+        function submit() {
+          var v = (input.value || '').trim();
+          if (!v) return;
+          var match = null;
+          for (var i = 0; i < cfg.answers.length; i++) {
+            var a = cfg.answers[i];
+            if (a && a.code && a.code.toLowerCase() === v.toLowerCase()) { match = a; break; }
+          }
+          if (match) {
+            modal.classList.add('dropping');
+            setTimeout(function(){ overlay.classList.remove('active'); overlay.setAttribute('aria-hidden','true'); }, 200);
+            setTimeout(function(){
+              modal.classList.remove('dropping');
+              input.value = '';
+              persistUnlock(match.reveal || '');
+            }, 600);
+          } else {
+            input.classList.add('error');
+            errEl.classList.add('visible');
+            setTimeout(function(){ input.classList.remove('error'); }, 400);
+            var s = getState();
+            s.wrong = (s.wrong || 0) + 1;
+            if (cfg.lockoutEnabled && cfg.attemptThreshold && s.wrong >= cfg.attemptThreshold) {
+              var mins = cfg.lockoutMinutes || 10;
+              s.lockedUntil = Date.now() + mins * 60000;
+              s.wrong = 0;
+              setState(s);
+              setTimeout(function(){ closeModal(); showLockedOut(s.lockedUntil - Date.now()); }, 700);
+            } else {
+              setState(s);
+            }
+          }
+        }
+
+        btn.classList.add('visible');
+        btn.addEventListener('click', openModal);
+        document.getElementById('security-modal-submit').addEventListener('click', submit);
+        document.getElementById('security-modal-cancel').addEventListener('click', closeModal);
+        overlay.addEventListener('click', function(e){ if (e.target === overlay) closeModal(); });
+        input.addEventListener('keydown', function(e){ if (e.key === 'Enter') submit(); });
+        document.addEventListener('keydown', function(e){
+          if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal();
+        });
+
+        var s0 = getState();
+        if (s0.unlocked) { showUnlocked(s0.unlockedMessage || ''); return; }
+        var rem = lockoutRemaining();
+        if (rem) showLockedOut(rem);
+      })();
   </script>
   <!-- =============================================================
        EVENT LOGO SCRIPT
@@ -876,4 +1039,15 @@
 
 
 
-<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#ffee00"},'logo-footer':{data:null,color:"#ffee00"},'logo-watermark':{data:null,color:"#ffee00"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script></body></html>
+<script data-logo-override="1">(function(){var _L={'logo-title':{data:null,color:"#ffee00"},'logo-footer':{data:null,color:"#ffee00"},'logo-watermark':{data:null,color:"#ffee00"}};var _orig=window.drawLogoAt;window.drawLogoAt=function(id,h,c){var s=_L[id];if(!s){_orig(id,h,c);return;}var col=s.color||c;if(!s.data){_orig(id,h,col);return;}var cv=document.getElementById(id);if(!cv)return;var img=new Image();img.onload=function(){var asp=img.naturalWidth/img.naturalHeight||1;var sz=h*asp,sc=h/img.naturalHeight,pad=Math.ceil(24*sc);cv.width=sz+pad*2;cv.height=h+pad*2;var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);var tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;var t=tmp.getContext('2d');t.drawImage(img,pad,pad,sz,h);t.globalCompositeOperation='source-in';t.fillStyle=col;t.fillRect(0,0,tmp.width,tmp.height);ctx.shadowColor=col;ctx.shadowBlur=5*sc;ctx.drawImage(tmp,0,0);};img.src=s.data;};drawLogos();})();</script>  <div id="security-overlay" class="security-overlay" aria-hidden="true">
+    <div id="security-modal" class="security-modal" role="dialog" aria-modal="true" aria-label="Enter access code">
+      <div class="security-modal-title">⚿ ENTER ACCESS CODE</div>
+      <input id="security-modal-input" class="security-modal-input" type="text" maxlength="20" placeholder="••••••" autocomplete="off" spellcheck="false" autocapitalize="characters">
+      <div class="security-modal-row">
+        <button class="security-modal-btn cancel" type="button" id="security-modal-cancel">✕ CANCEL</button>
+        <button class="security-modal-btn" type="button" id="security-modal-submit">▶ SUBMIT</button>
+      </div>
+      <div class="security-modal-error" id="security-modal-error">✗ INVALID CODE</div>
+    </div>
+  </div>
+</body></html>
