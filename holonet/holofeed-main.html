@@ -1364,7 +1364,7 @@ const ADS = [
 //     To make posts appear faster: lower 180 (minimum gap) and/or 120 (random range)
 //     Example for ~1–2 min gaps: change to  60 + Math.floor(_feedRng()*60)
 //
-//   EXPIRE (below in buildNewsFeed): how long a post stays visible (default: 1800s = 30 min)
+//   EXPIRE (below in buildNewsFeed): how long a post stays visible (default: 3600s = 60 min)
 //     Increase to keep stories on screen longer.
 //
 // The full cycle (all 40 items) takes roughly 160 minutes before looping.
@@ -1395,7 +1395,7 @@ function buildNewsFeed(now) {
   const CYCLE = _scheduleShape._cycleDuration;
   // Which loop iteration are we in?
   const cycleNum = Math.floor(now / CYCLE);
-  const EXPIRE = 1800; // 30 min
+  const EXPIRE = 3600; // 60 min
   const visible = [];
 
   // Check current cycle and the one before (items near boundary might still be visible)
