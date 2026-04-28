@@ -2272,7 +2272,11 @@
     // Briefing
     const brief = doc.querySelector('.mission-instructions');
     if (brief) {
-      document.getElementById('rt-briefing').innerHTML = brief.innerHTML;
+      // Strip secure-btn before showing in editor; it lives in .mission-instructions for float:right
+      // text-wrap on the card, but musn't appear in the rich-text field. Re-injected on save.
+      const briefForEdit = brief.cloneNode(true);
+      briefForEdit.querySelectorAll('#secure-btn').forEach(b => b.remove());
+      document.getElementById('rt-briefing').innerHTML = briefForEdit.innerHTML;
     }
 
 
@@ -2402,7 +2406,18 @@
 
     // Briefing
     const brief = doc.querySelector('.mission-instructions');
-    if (brief) brief.innerHTML = document.getElementById('rt-briefing').innerHTML;
+    if (brief) {
+      brief.innerHTML = document.getElementById('rt-briefing').innerHTML;
+      // Re-inject secure-btn (stripped on load so it doesn't appear in the rich-text field)
+      if (!brief.querySelector('#secure-btn')) {
+        const sb = doc.createElement('button');
+        sb.id = 'secure-btn';
+        sb.className = 'secure-btn';
+        sb.type = 'button';
+        sb.innerHTML = '<span class="secure-btn-icon">⚿</span><span class="secure-btn-stack">SECURE<small>ENTER CODE</small></span>';
+        brief.insertBefore(sb, brief.firstChild);
+      }
+    }
 
 
     // Credits
