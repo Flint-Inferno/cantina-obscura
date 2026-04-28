@@ -251,6 +251,12 @@
       cursor: not-allowed; pointer-events: none;
       background: var(--dim);
     }
+    .secure-btn.not-configured {
+      border-color: var(--border); border-left-color: var(--border); color: var(--text);
+      opacity: 0.55;
+      cursor: not-allowed; pointer-events: none;
+      background: var(--dim);
+    }
     .security-overlay {
       position: fixed; inset: 0;
       background: rgba(5,1,2,0.78);
@@ -822,16 +828,27 @@
         if (!cfgEl) return;
         var cfg;
         try { cfg = JSON.parse(cfgEl.textContent); } catch(_) { return; }
-        if (!cfg || !cfg.enabled || !Array.isArray(cfg.answers) || cfg.answers.length === 0) return;
+        if (!cfg || !cfg.enabled) return;
 
-        var btn      = document.getElementById('secure-btn');
+        var btn = document.getElementById('secure-btn');
+        if (!btn) return;
+        btn.classList.add('visible');
+
+        var hasAnswers = Array.isArray(cfg.answers) && cfg.answers.some(function(a){ return a && a.code && String(a.code).trim(); });
+        if (!hasAnswers) {
+          btn.classList.add('not-configured');
+          var iconEl = btn.querySelector('.secure-btn-icon'); if (iconEl) iconEl.textContent = '⚠';
+          var stackEl = btn.querySelector('.secure-btn-stack'); if (stackEl) stackEl.innerHTML = 'GATE<small>NOT CONFIGURED</small>';
+          return;
+        }
+
         var overlay  = document.getElementById('security-overlay');
         var modal    = document.getElementById('security-modal');
         var input    = document.getElementById('security-modal-input');
         var errEl    = document.getElementById('security-modal-error');
         var revealEl = document.getElementById('security-reveal');
         var revealMsg= document.getElementById('security-reveal-msg');
-        if (!btn || !overlay || !modal || !input) return;
+        if (!overlay || !modal || !input) return;
 
         var idMatch = (document.querySelector('.mission-id') || {textContent:''}).textContent.match(/MISSION\s*ID:\s*([^\s|]+)/i);
         var missionId = idMatch ? idMatch[1] : (location.pathname.split('/').pop() || 'unknown');
@@ -926,7 +943,6 @@
           }
         }
 
-        btn.classList.add('visible');
         btn.addEventListener('click', openModal);
         document.getElementById('security-modal-submit').addEventListener('click', submit);
         document.getElementById('security-modal-cancel').addEventListener('click', closeModal);
