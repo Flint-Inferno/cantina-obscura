@@ -1821,6 +1821,14 @@
   // ── Commit confirm ────────────────────────────────────────────
   function saveFile() {
     if (!templateHTML) { setStatus('NOTHING TO COMMIT', 'err'); return; }
+    try {
+      const secCfg = getSecurityConfig();
+      if (secCfg.enabled && (!Array.isArray(secCfg.answers) || secCfg.answers.length === 0)) {
+        if (!confirm('Security gate is enabled but no access codes are set.\n\nThe card will show a "GATE NOT CONFIGURED" button. Commit anyway?')) {
+          return;
+        }
+      }
+    } catch(_) {}
     document.getElementById('commit-fname').textContent = fileName;
     document.getElementById('commit-overlay').classList.remove('hidden');
   }
