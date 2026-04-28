@@ -1752,7 +1752,8 @@ function fastSimulateRaceHealth(racers,trackIdx,bursts){
       heat=Math.max(0,Math.min(100,heat+lapHeat));
       raceTime=lapEnd;
       if(heat>=100){isDnf=true;deaths.push({name:r.name,survived:hrng()<0.75,timeInRace:raceTime});break;}
-      const willPit=handicapped?hrng()<0.85:hrng()<(s.pitWillingness*(heat/100)*1.5);
+      const _pitUrgency=heat>80?3:heat>60?1.5:1;
+      const willPit=handicapped?hrng()<0.85:hrng()<(s.pitWillingness*(heat/100)*1.5*_pitUrgency);
       if(willPit){raceTime+=heat/PIT_COOL_RATE;heat=0;handicapped=false;}
     }
   });
@@ -1999,9 +2000,10 @@ function _TBuildPaths(race){
           h.pitTriggered=false;
           if(!st.done&&!h.repairing){
             const heatRatio=h.heat/100;
+            const _pitUrgency=h.heat>80?3:h.heat>60?1.5:1;
             const willPit=h.handicapped
               ?h.hrng()<0.85
-              :h.hrng()<(h.strategy.pitWillingness*heatRatio*1.5);
+              :h.hrng()<(h.strategy.pitWillingness*heatRatio*1.5*_pitUrgency);
             if(willPit){
               h.repairing=true;
               events.push({time:timeNow,racerIdx:i,type:'repair',
