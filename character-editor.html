@@ -613,19 +613,14 @@
             <label>Name in Aurebesh (same text, different font)</label>
             <input type="text" id="f-aur-name" placeholder="Same as name — or override" spellcheck="false">
           </div>
-          <div class="field-row" style="margin-top:0.5rem;">
-            <div class="field">
-              <label>File Slug <span style="opacity:0.4;font-size:0.55rem;">(auto-fills from name)</span></label>
-              <input type="text" id="f-slug" placeholder="greedo" spellcheck="false" oninput="slugManuallyEdited=true">
-            </div>
-            <div class="field">
-              <label>Status</label>
-              <select id="f-status">
-                <option value="active">Active</option>
-                <option value="missing">Missing</option>
-                <option value="deceased">Deceased</option>
-              </select>
-            </div>
+          <input type="hidden" id="f-slug">
+          <div class="field" style="margin-top:0.5rem;">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="active">Active</option>
+              <option value="missing">Missing</option>
+              <option value="deceased">Deceased</option>
+            </select>
           </div>
           <div class="field-row" style="margin-top:0.5rem;">
             <div class="field">
