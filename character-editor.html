@@ -300,6 +300,44 @@
     }
     #link-manual-input:focus { border-color: var(--dim); }
 
+    /* Portrait picker gallery */
+    .pp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 0.5rem;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: 0.25rem;
+    }
+    .pp-grid::-webkit-scrollbar { width: 4px; }
+    .pp-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .pp-thumb {
+      position: relative;
+      aspect-ratio: 3/4;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      background: var(--dim);
+      overflow: hidden;
+      transition: border-color 0.12s;
+    }
+    .pp-thumb:hover { border-color: var(--accent); }
+    .pp-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pp-name {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      font-size: 0.55rem; letter-spacing: 0.05em;
+      background: rgba(0,0,0,0.75); color: var(--text);
+      padding: 0.18rem 0.3rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pp-in-use {
+      position: absolute; top: 0.2rem; right: 0.2rem;
+      font-size: 0.5rem; letter-spacing: 0.08em;
+      background: var(--accent); color: var(--bg);
+      padding: 0.1rem 0.3rem; border-radius: 1px;
+      max-width: calc(100% - 0.4rem);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
     /* GM section in editor */
     .gm-section-wrap {
       border: 1px solid rgba(204,51,51,0.3);
@@ -456,6 +494,18 @@
     </div>
   </div>
 
+  <!-- ── Portrait picker overlay ──────────────────────────────── -->
+  <div id="portrait-picker-overlay" class="overlay hidden">
+    <div class="overlay-box" style="width:min(720px,calc(100vw - 2rem));">
+      <h2>▦ SELECT PORTRAIT</h2>
+      <div id="portrait-picker-status" class="overlay-status">LOADING…</div>
+      <div id="portrait-picker-grid" class="pp-grid"></div>
+      <div class="overlay-actions">
+        <button class="btn" onclick="closePortraitPicker()">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Change GM password overlay ───────────────────────────── -->
   <div id="changegmpw-overlay" class="overlay hidden">
     <div class="overlay-box">
@@ -603,8 +653,9 @@
         <div>
           <div class="section-heading">Portrait</div>
           <div class="upload-row" style="margin-top:0.5rem;">
-            <label class="upload-btn" for="portrait-file-input">▲ UPLOAD PORTRAIT</label>
+            <label class="upload-btn" for="portrait-file-input">▲ UPLOAD</label>
             <input type="file" id="portrait-file-input" accept="image/*" style="display:none" onchange="handlePortraitUpload(this)">
+            <button class="upload-btn" type="button" onclick="openPortraitPicker()">▦ PICK EXISTING</button>
             <img id="portrait-thumb" class="preview-thumb" alt="">
             <button class="clear-btn" id="portrait-clear-btn" onclick="clearPortrait()">✕</button>
           </div>
@@ -1527,6 +1578,78 @@
     thumb.src = ''; thumb.style.display = 'none';
     document.getElementById('portrait-clear-btn').style.display = 'none';
     schedulePreview();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PORTRAIT PICKER (gallery of existing portraits/)
+  // ═══════════════════════════════════════════════════════════
+  const IMG_EXT_RE = /\.(jpe?g|png|webp|gif)$/i;
+
+  async function openPortraitPicker() {
+    document.getElementById('portrait-picker-overlay').classList.remove('hidden');
+    const status = document.getElementById('portrait-picker-status');
+    const grid   = document.getElementById('portrait-picker-grid');
+    grid.innerHTML = '';
+    status.textContent = 'LOADING…';
+    status.classList.remove('ok');
+    try {
+      const list = await ghGet(GH_CHARS + '/portraits');
+      if (!Array.isArray(list)) { status.textContent = '(no portraits yet)'; return; }
+      const images = list.filter(f => f.type === 'file' && IMG_EXT_RE.test(f.name));
+      if (!images.length) { status.textContent = '(no portraits yet)'; return; }
+      status.textContent = '';
+      // filename → slug currently using it (for "in use" badge)
+      const used = new Map();
+      for (const c of roster) {
+        if (!c.portrait) continue;
+        const fn = c.portrait.replace(/^.*\//, '');
+        if (!used.has(fn)) used.set(fn, c.slug);
+      }
+      grid.innerHTML = images.map(f => {
+        const url   = `${PAGES_BASE}${GH_CHARS}/portraits/${encodeURIComponent(f.name)}?t=${Date.now()}`;
+        const slug  = used.get(f.name);
+        const badge = slug ? `<span class="pp-in-use">${esc(slug)}</span>` : '';
+        return `<div class="pp-thumb" onclick="selectPortraitFromGallery('${encodeURIComponent(f.name)}')">
+          <img src="${url}" alt="${esc(f.name)}" loading="lazy">
+          ${badge}
+          <div class="pp-name">${esc(f.name)}</div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      status.textContent = 'ERROR: ' + (e.message || 'failed to load');
+    }
+  }
+
+  function closePortraitPicker() {
+    document.getElementById('portrait-picker-overlay').classList.add('hidden');
+  }
+
+  async function selectPortraitFromGallery(encodedName) {
+    const status = document.getElementById('portrait-picker-status');
+    status.textContent = 'LOADING IMAGE…';
+    try {
+      const url = `${PAGES_BASE}${GH_CHARS}/portraits/${encodedName}?t=${Date.now()}`;
+      const blob = await fetch(url).then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.blob();
+      });
+      const dataUrl = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload  = () => res(fr.result);
+        fr.onerror = () => rej(fr.error);
+        fr.readAsDataURL(blob);
+      });
+      portraitData    = { data: dataUrl };
+      portraitChanged = true;
+      const thumb = document.getElementById('portrait-thumb');
+      thumb.src = dataUrl;
+      thumb.style.display = 'block';
+      document.getElementById('portrait-clear-btn').style.display = '';
+      closePortraitPicker();
+      schedulePreview();
+    } catch(e) {
+      status.textContent = 'ERROR: ' + (e.message || 'failed to load image');
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
