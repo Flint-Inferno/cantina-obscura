@@ -1337,9 +1337,7 @@
       if (el) document.getElementById(id).innerHTML = el.innerHTML;
     };
     setRt('rt-background', '[data-section="background"]');
-    // Reputation (with legacy fallback to old "skills" section)
-    const repEl = doc.querySelector('[data-section="reputation"]') || doc.querySelector('[data-section="skills"]');
-    if (repEl) document.getElementById('rt-reputation').innerHTML = repEl.innerHTML;
+    setRt('rt-reputation', '[data-section="reputation"]');
 
     // Associates
     const assocEl = doc.querySelector('[data-section="associates"]');
@@ -1348,23 +1346,12 @@
       links.forEach(a => addAssociate(a.textContent.trim(), a.getAttribute('href') || ''));
     }
 
-    // GM content (decode). New schema: { notes }. Legacy fallback: concatenate
-    // motives/secrets/plot_hooks/cast_notes under labels for any unmigrated bio.
+    // GM content (decode)
     const gmEnc = meta('gm-content');
     if (gmEnc) {
       try {
         const gmData = JSON.parse(decodeURIComponent(escape(atob(gmEnc))));
-        if (gmData.notes != null) {
-          document.getElementById('rt-gm-notes').innerHTML = gmData.notes || '<p>—</p>';
-        } else {
-          const isEmpty = v => !v || v.trim() === '' || v.trim() === '<p>—</p>' || v.trim() === '<p></p>';
-          const parts = [];
-          if (!isEmpty(gmData.motives))    parts.push('<p><strong>Motives</strong></p>'    + gmData.motives);
-          if (!isEmpty(gmData.secrets))    parts.push('<p><strong>Secrets</strong></p>'    + gmData.secrets);
-          if (!isEmpty(gmData.plot_hooks)) parts.push('<p><strong>Plot Hooks</strong></p>' + gmData.plot_hooks);
-          if (!isEmpty(gmData.cast_notes)) parts.push('<p><strong>Cast Notes</strong></p>' + gmData.cast_notes);
-          document.getElementById('rt-gm-notes').innerHTML = parts.join('') || '<p>—</p>';
-        }
+        document.getElementById('rt-gm-notes').innerHTML = gmData.notes || '<p>—</p>';
       } catch(_) {}
     }
   }
