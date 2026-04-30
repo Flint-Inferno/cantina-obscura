@@ -758,20 +758,7 @@
       try {
         const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
         const el = document.getElementById('gm-notes');
-        if (el) {
-          if (data.notes != null) {
-            el.innerHTML = data.notes || '<p>—</p>';
-          } else {
-            // Legacy fallback for unmigrated bios
-            const isEmpty = v => !v || v.trim() === '' || v.trim() === '<p>—</p>' || v.trim() === '<p></p>';
-            const parts = [];
-            if (!isEmpty(data.motives))    parts.push('<p><strong>Motives</strong></p>'    + data.motives);
-            if (!isEmpty(data.secrets))    parts.push('<p><strong>Secrets</strong></p>'    + data.secrets);
-            if (!isEmpty(data.plot_hooks)) parts.push('<p><strong>Plot Hooks</strong></p>' + data.plot_hooks);
-            if (!isEmpty(data.cast_notes)) parts.push('<p><strong>Cast Notes</strong></p>' + data.cast_notes);
-            el.innerHTML = parts.join('') || '<p>—</p>';
-          }
-        }
+        if (el) el.innerHTML = data.notes || '<p>—</p>';
       } catch(_) {}
       document.getElementById('gm-layer').style.display = '';
     }
