@@ -289,17 +289,6 @@
       flex-shrink: 0;
     }
     .stat-value { color: var(--text); }
-    .status-badge {
-      display: inline-block;
-      font-size: 0.6rem;
-      letter-spacing: 0.12em;
-      padding: 0.1rem 0.4rem;
-      border-radius: 2px;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-    }
-    .status-badge.deceased { border-color: var(--danger); color: var(--danger); opacity: 0.7; }
-    .status-badge.missing  { border-color: #888; color: #888; }
 
     /* ── Section containers ──────────────────────────────────────── */
     .section {
@@ -495,12 +484,11 @@
   <meta name="char-homeworld" content="Unknown">
   <meta name="char-occupation" content="Unknown">
   <meta name="char-affiliation" content="Independent">
-  <meta name="char-status" content="active">
   <meta name="char-portrait" content="portraits/nisska.jpg">
   <meta name="char-watermark-color" content="#f08080">
   <meta name="char-watermark-data" content="">
   <meta name="gm-pw-hash" content="">
-  <meta name="gm-content" content="eyJtb3RpdmVzIjoiPHA+4oCUPC9wPiIsInNlY3JldHMiOiI8cD7igJQ8L3A+IiwicGxvdF9ob29rcyI6IjxwPuKAlDwvcD4iLCJjYXN0X25vdGVzIjoiPHA+4oCUPC9wPiJ9">
+  <meta name="gm-content" content="eyJub3RlcyI6ICI8cD7igJQ8L3A+In0=">
 <style id="scanner-pip-cursor">*, *::before, *::after { cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC40Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOSIgIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxIiAgIG9wYWNpdHk9IjAuOSIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEuNSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==") 12 12, crosshair !important; }</style>
 </head>
 <body>
@@ -559,11 +547,6 @@
       <div class="profile-stats">
         <div class="char-name" id="char-name">CHARACTER NAME</div>
         <div class="char-name-aur aur" id="char-name-aur">CHARACTER NAME</div>
-
-        <div class="stat-row">
-          <span class="stat-label">STATUS</span>
-          <span class="stat-value"><span class="status-badge" id="stat-status">ACTIVE</span></span>
-        </div>
         <div class="stat-row">
           <span class="stat-label">OCCUPATION</span>
           <span class="stat-value" id="stat-occupation">Unknown</span>
@@ -591,8 +574,8 @@
 
     <!-- Skills -->
     <div class="section">
-      <div class="section-label">Known Skills &amp; Abilities</div>
-      <div class="section-content" data-section="skills"><ul><li>May have some connections with Nightsister magik.&nbsp;</li></ul></div>
+      <div class="section-label">Reputation</div>
+      <div class="section-content" data-section="reputation"><ul><li>May have some connections with Nightsister magik.&nbsp;</li></ul></div>
     </div>
 
     <!-- Associates -->
@@ -601,30 +584,12 @@
       <div class="section-content associates-list" data-section="associates"></div>
     </div>
 
-    <!-- Location -->
-    <div class="section">
-      <div class="section-label">Last Known Location</div>
-      <div class="section-content" data-section="location"><p>Unknown</p></div>
-    </div>
-
     <!-- GM layer (hidden until password entered) -->
     <div id="gm-layer">
       <div class="section-label">◈ GM — RESTRICTED</div>
       <div class="gm-field">
-        <div class="gm-field-label">MOTIVES</div>
-        <div class="gm-field-content" id="gm-motives"></div>
-      </div>
-      <div class="gm-field">
-        <div class="gm-field-label">SECRETS</div>
-        <div class="gm-field-content" id="gm-secrets"></div>
-      </div>
-      <div class="gm-field">
-        <div class="gm-field-label">PLOT HOOKS</div>
-        <div class="gm-field-content" id="gm-plot-hooks"></div>
-      </div>
-      <div class="gm-field">
-        <div class="gm-field-label">CAST NOTES</div>
-        <div class="gm-field-content" id="gm-cast-notes"></div>
+        <div class="gm-field-label">NOTES</div>
+        <div class="gm-field-content" id="gm-notes"></div>
       </div>
     </div>
 
@@ -691,7 +656,6 @@
       const homeworld  = getMeta('char-homeworld')  || 'Unknown';
       const occupation = getMeta('char-occupation') || 'Unknown';
       const affil      = getMeta('char-affiliation')|| 'Independent';
-      const status     = getMeta('char-status')     || 'active';
       const portrait   = getMeta('char-portrait');
 
       document.title = name + ' // CANTINA OBSCURA';
@@ -701,12 +665,6 @@
       document.getElementById('stat-homeworld').textContent  = homeworld;
       document.getElementById('stat-occupation').textContent = occupation;
       document.getElementById('stat-affiliation').textContent= affil;
-
-      const badge = document.getElementById('stat-status');
-      const statusMap = { active: 'ACTIVE', missing: 'MISSING', deceased: 'DECEASED' };
-      badge.textContent = statusMap[status] || status.toUpperCase();
-      if (status === 'deceased') badge.classList.add('deceased');
-      if (status === 'missing')  badge.classList.add('missing');
 
       // Portrait
       if (portrait) {
@@ -799,11 +757,22 @@
       const encoded = getMeta('gm-content');
       if (!encoded) { document.getElementById('gm-layer').style.display=''; return; }
       try {
-        const data = JSON.parse(atob(encoded));
-        ['motives','secrets','plot-hooks','cast-notes'].forEach(key => {
-          const el = document.getElementById('gm-' + key);
-          if (el) el.innerHTML = data[key.replace('-','_')] || '<p>—</p>';
-        });
+        const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+        const el = document.getElementById('gm-notes');
+        if (el) {
+          if (data.notes != null) {
+            el.innerHTML = data.notes || '<p>—</p>';
+          } else {
+            // Legacy fallback for unmigrated bios
+            const isEmpty = v => !v || v.trim() === '' || v.trim() === '<p>—</p>' || v.trim() === '<p></p>';
+            const parts = [];
+            if (!isEmpty(data.motives))    parts.push('<p><strong>Motives</strong></p>'    + data.motives);
+            if (!isEmpty(data.secrets))    parts.push('<p><strong>Secrets</strong></p>'    + data.secrets);
+            if (!isEmpty(data.plot_hooks)) parts.push('<p><strong>Plot Hooks</strong></p>' + data.plot_hooks);
+            if (!isEmpty(data.cast_notes)) parts.push('<p><strong>Cast Notes</strong></p>' + data.cast_notes);
+            el.innerHTML = parts.join('') || '<p>—</p>';
+          }
+        }
       } catch(_) {}
       document.getElementById('gm-layer').style.display = '';
     }
