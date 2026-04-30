@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MENU EDITOR // CANTINA OBSCURA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Electrolize&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #060608;
+      --panel:   #0d0d12;
+      --panel2:  #11111a;
+      --border:  #1e2030;
+      --accent:  #f0c060;
+      --accent2: #2af5ff;
+      --text:    #a0a8c0;
+      --dim:     #3a3d50;
+      --green:   #00cc88;
+      --red:     #cc3333;
+      --font:    'Electrolize', sans-serif;
+      --font-hd: 'Orbitron', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); font-size: 0.8rem;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    #topbar {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.5rem 1rem; background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0; flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 50;
+    }
+    #topbar .logo {
+      font-family: var(--font-hd); font-size: 0.65rem;
+      letter-spacing: 0.15em; color: var(--accent);
+      opacity: 0.9; white-space: nowrap;
+    }
+    #topbar .spacer { flex: 1; }
+    #status-msg {
+      font-size: 0.7rem; letter-spacing: 0.08em; opacity: 0.6;
+      text-align: right; white-space: nowrap;
+      max-width: 40ch; overflow: hidden; text-overflow: ellipsis;
+    }
+    #status-msg.ok  { color: var(--green); opacity: 1; }
+    #status-msg.err { color: var(--red);   opacity: 1; }
+
+    .btn {
+      font-family: var(--font); font-size: 0.7rem; letter-spacing: 0.1em;
+      padding: 0.35rem 0.85rem; border-radius: 2px; cursor: pointer;
+      border: 1px solid var(--dim); background: transparent; color: var(--text);
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover  { border-color: var(--text); color: #fff; }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.primary:hover { background: rgba(240,192,96,0.1); }
+    .btn.primary:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+    .btn.go     { border-color: var(--green); color: var(--green); }
+    .btn.go:hover { background: rgba(0,204,136,0.1); }
+    .btn.danger { border-color: var(--red); color: var(--red); }
+    .btn.danger:hover { background: rgba(204,51,51,0.1); }
+    .btn.tiny   { font-size: 0.6rem; padding: 0.2rem 0.45rem; letter-spacing: 0.05em; }
+
+    /* ── Main / sections ─────────────────────────────────────── */
+    #main {
+      max-width: 880px; margin: 0 auto; padding: 1.2rem 1rem 4rem;
+      width: 100%; display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    .empty-state {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--dim); font-size: 0.8rem; letter-spacing: 0.15em;
+      border: 1px dashed var(--border); border-radius: 4px;
+    }
+    .empty-state .hint { margin-top: 0.6rem; opacity: 0.7; font-size: 0.7rem; letter-spacing: 0.1em; }
+
+    .section-card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 3px; overflow: hidden;
+    }
+    .section-head {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 0.75rem; background: var(--panel2);
+      border-bottom: 1px solid var(--border);
+    }
+    .section-head input[type=text] {
+      flex: 1; min-width: 0;
+      font-family: var(--font-hd); font-size: 0.85rem;
+      font-weight: 700; letter-spacing: 0.18em;
+      color: var(--accent); text-transform: uppercase;
+      background: transparent; border: 1px solid transparent;
+      padding: 0.3rem 0.45rem; border-radius: 2px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .section-head input[type=text]:hover { border-color: var(--border); }
+    .section-head input[type=text]:focus { border-color: var(--accent); }
+
+    .section-body {
+      padding: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem;
+    }
+
+    .item-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 2px; padding: 0.6rem 0.7rem;
+      display: grid;
+      grid-template-columns: 1fr 110px;
+      gap: 0.4rem 0.6rem;
+      align-items: start;
+    }
+    .item-card .row-controls {
+      grid-column: 1 / -1;
+      display: flex; gap: 0.3rem; align-items: center;
+      padding-top: 0.3rem; border-top: 1px dashed var(--border);
+    }
+    .item-card .row-controls .preview {
+      flex: 1; font-size: 0.65rem; opacity: 0.5; letter-spacing: 0.06em;
+    }
+
+    .field-label {
+      font-size: 0.55rem; letter-spacing: 0.18em;
+      color: var(--dim); text-transform: uppercase;
+      margin-bottom: 0.15rem;
+    }
+    .field-label.req::after { content: ' *'; color: var(--red); }
+
+    .item-name-wrap   { grid-column: 1; grid-row: 1; }
+    .item-price-wrap  { grid-column: 2; grid-row: 1; }
+    .item-desc-wrap   { grid-column: 1 / -1; grid-row: 2; }
+
+    .field-input, .field-textarea {
+      width: 100%; font-family: var(--font); font-size: 0.78rem;
+      background: var(--panel2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.35rem 0.5rem; outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-input:focus, .field-textarea:focus { border-color: var(--accent); }
+    .field-textarea { resize: vertical; min-height: 2.4rem; line-height: 1.45; }
+    .field-price {
+      text-align: right; font-family: var(--font-hd); color: var(--accent);
+    }
+
+    .field-input::placeholder, .field-textarea::placeholder {
+      color: var(--dim); opacity: 0.7;
+    }
+
+    /* ── Overlays (auth) ─────────────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(6,6,8,0.94);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; padding: 1rem;
+    }
+    .overlay.hidden { display: none; }
+    .overlay-box {
+      background: var(--panel); border: 1px solid var(--accent);
+      border-radius: 4px; padding: 1.5rem 2rem;
+      width: min(420px, 100%);
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    .overlay-box h2 {
+      font-family: var(--font-hd); font-size: 0.7rem;
+      letter-spacing: 0.2em; color: var(--accent);
+    }
+    .overlay-box p { font-size: 0.7rem; line-height: 1.6; opacity: 0.7; }
+    .overlay-box p strong { color: var(--accent); opacity: 1; }
+    .overlay-box code {
+      font-family: var(--font); background: var(--bg);
+      padding: 0.05rem 0.3rem; border-radius: 2px;
+      color: var(--accent2); font-size: 0.72rem;
+    }
+    .overlay-input {
+      font-family: var(--font); font-size: 0.78rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 0.4rem 0.6rem; width: 100%; outline: none;
+    }
+    .overlay-input:focus { border-color: var(--accent); }
+    .overlay-actions {
+      display: flex; gap: 0.6rem; justify-content: flex-end; flex-wrap: wrap;
+    }
+    .overlay-status {
+      font-size: 0.65rem; min-height: 1rem; color: var(--red);
+    }
+    .overlay-status.ok { color: var(--green); }
+
+    /* ── Mobile ──────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      #topbar { padding: 0.45rem 0.6rem; gap: 0.4rem; }
+      #topbar .logo { font-size: 0.6rem; letter-spacing: 0.1em; }
+      .btn { font-size: 0.65rem; padding: 0.3rem 0.55rem; }
+      #status-msg { font-size: 0.62rem; letter-spacing: 0.05em; max-width: 100%; flex-basis: 100%; text-align: left; }
+      #main { padding: 0.8rem 0.6rem 3rem; }
+      .item-card { grid-template-columns: 1fr; }
+      .item-name-wrap, .item-price-wrap, .item-desc-wrap { grid-column: 1; }
+      .item-name-wrap { grid-row: auto; }
+      .item-price-wrap { grid-row: auto; }
+      .item-desc-wrap { grid-row: auto; }
+      .section-head { flex-wrap: wrap; }
+      .section-head input[type=text] { font-size: 0.78rem; letter-spacing: 0.12em; flex-basis: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Password overlay (collaborators) ──────────────────────── -->
+  <div id="pw-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>◈ CANTINA OBSCURA — MENU</h2>
+      <p>Enter the access password to edit the menu.</p>
+      <input type="password" class="overlay-input" id="pw-input" placeholder="Password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitPassword()">
+      <div class="overlay-status" id="pw-status"></div>
+      <div class="overlay-actions">
+        <button class="btn" onclick="openPat()" style="margin-right:auto;font-size:0.6rem;opacity:0.45;border-color:transparent;">USE TOKEN INSTEAD</button>
+        <button class="btn primary" onclick="submitPassword()">ENTER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Change collaborator password overlay (owner) ──────────── -->
+  <div id="changepw-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>⚿ CHANGE COLLABORATOR PASSWORD</h2>
+      <p>Set the shared password collaborators use to access the editors.<br>Your PAT will be encrypted with this password and saved to <code>editor-config.json</code> in the repo. This affects <strong>all</strong> editors using this config.</p>
+      <input type="password" class="overlay-input" id="changepw-input" placeholder="New password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') document.getElementById('changepw-confirm').focus()">
+      <input type="password" class="overlay-input" id="changepw-confirm" placeholder="Confirm password" spellcheck="false"
+             onkeydown="if(event.key==='Enter') submitChangePw()">
+      <div class="overlay-status" id="changepw-status"></div>
+      <div class="overlay-actions">
+        <button class="btn" onclick="closeChangePw()">CANCEL</button>
+        <button class="btn primary" onclick="submitChangePw()">SAVE PASSWORD</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAT overlay (owner) ───────────────────────────────────── -->
+  <div id="pat-overlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2>⚿ GITHUB TOKEN</h2>
+      <p>Enter a classic GitHub PAT with <code>repo</code> scope.<br>Stored in localStorage only — never sent anywhere except GitHub's API.</p>
+      <input type="password" class="overlay-input" id="pat-input" placeholder="ghp_..." spellcheck="false">
+      <div class="overlay-actions">
+        <button class="btn" onclick="closePat()">CANCEL</button>
+        <button class="btn primary" onclick="savePat()">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Top bar ─────────────────────────────────────────────── -->
+  <div id="topbar">
+    <div class="logo">MENU EDITOR // CANTINA OBSCURA</div>
+    <div class="spacer"></div>
+    <button class="btn" id="fetch-btn" onclick="ghFetch()">⬇ FETCH</button>
+    <button class="btn go" id="push-btn" onclick="ghPush()">▲ PUSH</button>
+    <button class="btn primary" id="add-section-btn" onclick="addSection()">+ SECTION</button>
+    <button class="btn" id="token-btn" onclick="openPat()" title="GitHub PAT">⚿ TOKEN</button>
+    <button class="btn" id="changepw-btn" onclick="showChangePw()" title="Change collaborator password" style="display:none">⚿ PASSWORD</button>
+    <div id="status-msg">READY</div>
+  </div>
+
+  <!-- ── Main editor area ────────────────────────────────────── -->
+  <div id="main">
+    <div id="sections-wrap"></div>
+  </div>
+
+<script>
+(() => {
+  // ═══════════════════════════════════════════════════════════
+  //  CONFIG
+  // ═══════════════════════════════════════════════════════════
+  const GH_OWNER    = 'Flint-Inferno';
+  const GH_REPO     = 'cantina-obscura';
+  const MENU_PATH   = 'holonet/menu.html';
+  const CONFIG_FILE = 'editor-config.json';
+
+  // ═══════════════════════════════════════════════════════════
+  //  STATE
+  // ═══════════════════════════════════════════════════════════
+  let menuData    = []; // [{ id, section, items: [{ id, name, desc, price }] }]
+  let originalHtml= '';
+  let menuSha     = null;
+  let isOwner     = false;
+  let _idCounter  = 0;
+  const newId = () => 'i' + (++_idCounter) + '_' + Date.now().toString(36);
+
+  // ═══════════════════════════════════════════════════════════
+  //  STATUS / HELPERS
+  // ═══════════════════════════════════════════════════════════
+  function setStatus(msg, kind) {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg;
+    el.className = '';
+    if (kind === 'ok')  el.classList.add('ok');
+    if (kind === 'err') el.classList.add('err');
+  }
+  function escHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  CRYPTO HELPERS (PAT encryption — same as character-editor)
+  // ═══════════════════════════════════════════════════════════
+  async function _deriveKey(password, salt) {
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password),
+      'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  }
+  function _hex(buf) { return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  function _unhex(h) { return new Uint8Array(h.match(/.{2}/g).map(x=>parseInt(x,16))); }
+
+  async function encryptPat(pat, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv   = crypto.getRandomValues(new Uint8Array(12));
+    const key  = await _deriveKey(password, salt);
+    const ct   = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, new TextEncoder().encode(pat));
+    return { salt: _hex(salt), iv: _hex(iv), ciphertext: btoa(String.fromCharCode(...new Uint8Array(ct))) };
+  }
+  async function decryptPat(cfg, password) {
+    const key = await _deriveKey(password, _unhex(cfg.salt));
+    const ct  = Uint8Array.from(atob(cfg.ciphertext), c => c.charCodeAt(0));
+    const pt  = await crypto.subtle.decrypt({name:'AES-GCM', iv: _unhex(cfg.iv)}, key, ct);
+    return new TextDecoder().decode(pt);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  GITHUB API HELPERS
+  // ═══════════════════════════════════════════════════════════
+  function ghHeaders() {
+    return {
+      'Authorization': 'Bearer ' + (localStorage.getItem('gh_pat') || ''),
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+  }
+  function ghUrl(path) {
+    return `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
+  }
+  function b64enc(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function b64dec(b64) { return decodeURIComponent(escape(atob(b64.replace(/\n/g, '')))); }
+
+  async function ghGet(path) {
+    const res = await fetch(ghUrl(path), { headers: ghHeaders() });
+    if (!res.ok) { if (res.status === 404) return null; throw new Error(`HTTP ${res.status}`); }
+    return res.json();
+  }
+  async function ghPut(path, content, sha, message) {
+    const body = { message, content: b64enc(content) };
+    if (sha) body.sha = sha;
+    const res = await fetch(ghUrl(path), {
+      method: 'PUT',
+      headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(()=>({}));
+      throw new Error(e.message || `HTTP ${res.status}`);
+    }
+    return (await res.json()).content.sha;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  AUTH FLOW
+  // ═══════════════════════════════════════════════════════════
+  async function checkOwner(pat) {
+    try {
+      const res = await fetch('https://api.github.com/user', { headers: ghHeaders() });
+      if (res.ok) {
+        const user = await res.json();
+        isOwner = (user.login === GH_OWNER);
+      } else if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('gh_pat');
+        await tryShowAuthOverlay();
+        return false;
+      }
+    } catch(_) {}
+    document.getElementById('changepw-btn').style.display = isOwner ? '' : 'none';
+    return true;
+  }
+
+  async function tryShowAuthOverlay() {
+    try {
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${CONFIG_FILE}?t=${Date.now()}`
+      );
+      if (res.ok) {
+        document.getElementById('pw-overlay').classList.remove('hidden');
+        setTimeout(() => document.getElementById('pw-input').focus(), 50);
+      } else {
+        openPat();
+      }
+    } catch(_) {
+      openPat();
+    }
+  }
+
+  async function submitPassword() {
+    const pw = document.getElementById('pw-input').value;
+    const st = document.getElementById('pw-status');
+    if (!pw) { st.textContent = 'Enter a password.'; st.className = 'overlay-status'; return; }
+    st.textContent = 'Verifying...'; st.className = 'overlay-status';
+    try {
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${CONFIG_FILE}?t=${Date.now()}`
+      );
+      if (!res.ok) throw new Error('No password configured yet — ask the owner to set one.');
+      const cfg = await res.json();
+      let pat;
+      try { pat = await decryptPat(cfg, pw); } catch(_) { throw new Error('incorrect'); }
+      if (!pat || (!pat.startsWith('ghp_') && !pat.startsWith('github_')))
+        throw new Error('incorrect');
+      localStorage.setItem('gh_pat', pat);
+      document.getElementById('pw-overlay').classList.add('hidden');
+      document.getElementById('pw-input').value = '';
+      await checkOwner(pat);
+      await ghFetch();
+    } catch(e) {
+      const msg = e.message === 'incorrect' ? 'Incorrect password.' : 'Error: ' + e.message;
+      st.textContent = msg; st.className = 'overlay-status';
+    }
+  }
+
+  // ── PAT overlay (owner) ─────────────────────────────────────
+  function openPat() {
+    document.getElementById('pat-input').value = localStorage.getItem('gh_pat') || '';
+    document.getElementById('pat-overlay').classList.remove('hidden');
+    document.getElementById('pw-overlay').classList.add('hidden');
+    setTimeout(() => document.getElementById('pat-input').focus(), 50);
+  }
+  function closePat() { document.getElementById('pat-overlay').classList.add('hidden'); }
+  async function savePat() {
+    const val = document.getElementById('pat-input').value.trim();
+    if (val) localStorage.setItem('gh_pat', val);
+    closePat();
+    await checkOwner(val);
+    await ghFetch();
+  }
+
+  // ── Change collaborator password (owner only) ──────────────
+  function showChangePw() {
+    document.getElementById('changepw-input').value   = '';
+    document.getElementById('changepw-confirm').value = '';
+    document.getElementById('changepw-status').textContent = '';
+    document.getElementById('changepw-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('changepw-input').focus(), 50);
+  }
+  function closeChangePw() { document.getElementById('changepw-overlay').classList.add('hidden'); }
+  async function submitChangePw() {
+    const pw1 = document.getElementById('changepw-input').value;
+    const pw2 = document.getElementById('changepw-confirm').value;
+    const st  = document.getElementById('changepw-status');
+    if (!pw1)        { st.textContent = 'Enter a password.'; st.className = 'overlay-status'; return; }
+    if (pw1 !== pw2) { st.textContent = 'Passwords do not match.'; st.className = 'overlay-status'; return; }
+    const pat = localStorage.getItem('gh_pat');
+    if (!pat) { st.textContent = 'No PAT stored — use ⚿ TOKEN first.'; st.className = 'overlay-status'; return; }
+    st.textContent = 'Encrypting and saving...'; st.className = 'overlay-status';
+    try {
+      const cfg    = await encryptPat(pat, pw1);
+      const cfgB64 = btoa(JSON.stringify(cfg, null, 2));
+      let sha = null;
+      try {
+        const ex = await fetch(ghUrl(CONFIG_FILE), { headers: ghHeaders() });
+        if (ex.ok) sha = (await ex.json()).sha;
+      } catch(_) {}
+      const body = { message: 'Update editor-config.json (collaborator password)', content: cfgB64 };
+      if (sha) body.sha = sha;
+      const put = await fetch(ghUrl(CONFIG_FILE), {
+        method: 'PUT',
+        headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!put.ok) { const e = await put.json().catch(()=>({})); throw new Error(e.message || `HTTP ${put.status}`); }
+      st.textContent = 'Password saved!'; st.className = 'overlay-status ok';
+      setTimeout(closeChangePw, 1200);
+    } catch(e) {
+      st.textContent = 'Error: ' + e.message; st.className = 'overlay-status';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PARSE — extract const MENU = [...] from menu.html
+  // ═══════════════════════════════════════════════════════════
+  function findArrayBounds(html, varName) {
+    const startIdx = html.search(new RegExp('const\\s+' + varName + '\\s*=\\s*\\['));
+    if (startIdx === -1) return null;
+    const openBracket = html.indexOf('[', startIdx);
+    let depth = 0, i = openBracket;
+    for (; i < html.length; i++) {
+      if (html[i] === '[') depth++;
+      else if (html[i] === ']') { depth--; if (depth === 0) break; }
+    }
+    if (i >= html.length) return null;
+    return { startIdx, openBracket, closeBracket: i };
+  }
+  function extractArray(html, varName) {
+    const b = findArrayBounds(html, varName);
+    if (!b) return null;
+    return html.slice(b.openBracket + 1, b.closeBracket);
+  }
+  // Escape literal newlines inside string literals so eval-style parse won't choke
+  function _escapeNewlinesInStrings(src) {
+    let out='', inStr=false, q='';
+    for (let i = 0; i < src.length; i++) {
+      const c = src[i];
+      if (!inStr && (c === '"' || c === "'" || c === '`')) { inStr = true; q = c; out += c; }
+      else if (inStr && c === '\\') { out += c + src[++i]; }
+      else if (inStr && c === q) { inStr = false; out += c; }
+      else if (inStr && c === '\r' && src[i+1] === '\n') { out += '\\n'; i++; }
+      else if (inStr && (c === '\n' || c === '\r')) { out += '\\n'; }
+      else { out += c; }
+    }
+    return out;
+  }
+  function parseObjectArray(raw) {
+    const items = []; let depth = 0, start = -1;
+    for (let i = 0; i < raw.length; i++) {
+      if (raw[i] === '{') { if (depth === 0) start = i; depth++; }
+      else if (raw[i] === '}') {
+        depth--;
+        if (depth === 0 && start >= 0) {
+          try {
+            items.push(Function('"use strict"; return (' + _escapeNewlinesInStrings(raw.slice(start, i+1)) + ')')());
+          } catch(e) { /* skip malformed object */ }
+          start = -1;
+        }
+      }
+    }
+    return items;
+  }
+
+  function parseMenu(html) {
+    const raw = extractArray(html, 'MENU');
+    if (raw === null) return null;
+    const arr = parseObjectArray(raw);
+    return arr.map(s => ({
+      id: newId(),
+      section: String(s.section ?? ''),
+      items: (Array.isArray(s.items) ? s.items : []).map(it => ({
+        id: newId(),
+        name: String(it.name ?? ''),
+        desc: String(it.desc ?? ''),
+        price: Number.isFinite(+it.price) ? Math.max(0, Math.round(+it.price)) : 0,
+      })),
+    }));
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SERIALIZE — write the menuData back as a JS literal
+  // ═══════════════════════════════════════════════════════════
+  function escStr(s) {
+    return String(s ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g,  '\\"')
+      .replace(/\r\n/g, '\\n')
+      .replace(/\r/g,  '\\n')
+      .replace(/\n/g,  '\\n');
+  }
+  function serializeItem(it) {
+    return [
+      '      {',
+      '        name: "' + escStr(it.name) + '",',
+      '        desc: "' + escStr(it.desc) + '",',
+      '        price: ' + (Number.isFinite(+it.price) ? Math.max(0, Math.round(+it.price)) : 0),
+      '      }'
+    ].join('\n');
+  }
+  function serializeSection(s) {
+    const items = (s.items || []).map(serializeItem).join(',\n');
+    return [
+      '  {',
+      '    section: "' + escStr(s.section) + '",',
+      '    items: [',
+      items,
+      '    ]',
+      '  }'
+    ].join('\n');
+  }
+  function serializeMenu(data) {
+    if (!data.length) return '[]';
+    return '[\n' + data.map(serializeSection).join(',\n') + '\n]';
+  }
+
+  function replaceArray(html, varName, newLiteral) {
+    const b = findArrayBounds(html, varName);
+    if (!b) return html;
+    let end = b.closeBracket + 1;
+    if (html[end] === ';') end++;
+    const eqPos = html.indexOf('=', b.startIdx);
+    return html.slice(0, eqPos + 1) + ' ' + newLiteral + ';' + html.slice(end);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  GH FETCH / PUSH
+  // ═══════════════════════════════════════════════════════════
+  async function ghFetch() {
+    if (!localStorage.getItem('gh_pat')) {
+      setStatus('NEED AUTH', 'err');
+      return tryShowAuthOverlay();
+    }
+    setStatus('FETCHING...', '');
+    try {
+      const data = await ghGet(MENU_PATH);
+      if (!data) {
+        // menu.html doesn't exist yet — start blank
+        originalHtml = '';
+        menuSha = null;
+        menuData = [];
+        renderEditor();
+        setStatus('NO MENU YET — push to create', '');
+        return;
+      }
+      menuSha = data.sha;
+      const html = b64dec(data.content);
+      originalHtml = html;
+      const parsed = parseMenu(html);
+      if (parsed === null) {
+        setStatus('PARSE ERROR — could not find MENU array', 'err');
+        menuData = [];
+        renderEditor();
+        return;
+      }
+      menuData = parsed;
+      renderEditor();
+      setStatus('LOADED — ' + menuData.length + ' section(s)', 'ok');
+    } catch(e) {
+      setStatus('FETCH FAILED: ' + e.message, 'err');
+    }
+  }
+
+  async function ghPush() {
+    if (!localStorage.getItem('gh_pat')) {
+      setStatus('NEED AUTH', 'err');
+      return tryShowAuthOverlay();
+    }
+    if (!originalHtml) {
+      setStatus('NO BASE FILE — fetch first (or menu.html missing on remote)', 'err');
+      return;
+    }
+    setStatus('PUSHING...', '');
+    try {
+      // Re-fetch SHA right before PUT so we don't 409 on a stale SHA
+      const head = await ghGet(MENU_PATH);
+      if (head) menuSha = head.sha;
+
+      const literal = serializeMenu(menuData);
+      const newHtml = replaceArray(originalHtml, 'MENU', literal);
+
+      if (newHtml === originalHtml) {
+        setStatus('NO CHANGES', '');
+        return;
+      }
+      const newSha = await ghPut(MENU_PATH, newHtml, menuSha,
+        'Update menu via menu-editor');
+      menuSha = newSha;
+      originalHtml = newHtml;
+      setStatus('PUSHED ✓ ' + new Date().toLocaleTimeString(), 'ok');
+    } catch(e) {
+      setStatus('PUSH FAILED: ' + e.message, 'err');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  CRUD
+  // ═══════════════════════════════════════════════════════════
+  function addSection() {
+    menuData.push({
+      id: newId(),
+      section: 'New Section',
+      items: [],
+    });
+    renderEditor();
+  }
+  function deleteSection(sid) {
+    const s = menuData.find(s => s.id === sid);
+    if (!s) return;
+    if (!confirm(`Delete section "${s.section || '(unnamed)'}" and all ${s.items.length} item(s)?`)) return;
+    menuData = menuData.filter(s => s.id !== sid);
+    renderEditor();
+  }
+  function moveSection(sid, dir) {
+    const i = menuData.findIndex(s => s.id === sid);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= menuData.length) return;
+    [menuData[i], menuData[j]] = [menuData[j], menuData[i]];
+    renderEditor();
+  }
+  function addItem(sid) {
+    const s = menuData.find(s => s.id === sid);
+    if (!s) return;
+    s.items.push({ id: newId(), name: '', desc: '', price: 0 });
+    renderEditor();
+  }
+  function deleteItem(sid, iid) {
+    const s = menuData.find(s => s.id === sid);
+    if (!s) return;
+    s.items = s.items.filter(it => it.id !== iid);
+    renderEditor();
+  }
+  function moveItem(sid, iid, dir) {
+    const s = menuData.find(s => s.id === sid);
+    if (!s) return;
+    const i = s.items.findIndex(it => it.id === iid);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= s.items.length) return;
+    [s.items[i], s.items[j]] = [s.items[j], s.items[i]];
+    renderEditor();
+  }
+  // Live edits — update data without re-rendering (preserve focus)
+  function setSectionField(sid, val) {
+    const s = menuData.find(s => s.id === sid);
+    if (s) s.section = val;
+  }
+  function setItemField(sid, iid, field, val) {
+    const s = menuData.find(s => s.id === sid);
+    if (!s) return;
+    const it = s.items.find(it => it.id === iid);
+    if (!it) return;
+    if (field === 'price') {
+      const n = parseInt(val, 10);
+      it.price = Number.isFinite(n) ? Math.max(0, n) : 0;
+    } else {
+      it[field] = val;
+    }
+  }
+  // Expose handlers
+  window.addSection      = addSection;
+  window.deleteSection   = deleteSection;
+  window.moveSection     = moveSection;
+  window.addItem         = addItem;
+  window.deleteItem      = deleteItem;
+  window.moveItem        = moveItem;
+  window.setSectionField = setSectionField;
+  window.setItemField    = setItemField;
+  window.ghFetch         = ghFetch;
+  window.ghPush          = ghPush;
+  window.openPat         = openPat;
+  window.closePat        = closePat;
+  window.savePat         = savePat;
+  window.submitPassword  = submitPassword;
+  window.showChangePw    = showChangePw;
+  window.closeChangePw   = closeChangePw;
+  window.submitChangePw  = submitChangePw;
+
+  // ═══════════════════════════════════════════════════════════
+  //  RENDER
+  // ═══════════════════════════════════════════════════════════
+  function renderEditor() {
+    const wrap = document.getElementById('sections-wrap');
+    if (!menuData.length) {
+      wrap.innerHTML = `
+        <div class="empty-state">
+          NO SECTIONS YET
+          <div class="hint">Press + SECTION above to add the first one — Smuggler's Snacks, Hutt Cocktails, anything goes.</div>
+        </div>`;
+      return;
+    }
+    wrap.innerHTML = menuData.map(s => renderSection(s)).join('');
+  }
+
+  function renderSection(s) {
+    const items = s.items.map(it => renderItem(s.id, it)).join('');
+    return `
+      <div class="section-card" data-sid="${s.id}">
+        <div class="section-head">
+          <input type="text"
+                 value="${escHtml(s.section)}"
+                 placeholder="Section name (e.g. Hutt Cocktails)"
+                 oninput="setSectionField('${s.id}', this.value)">
+          <button class="btn tiny" onclick="moveSection('${s.id}', -1)" title="Move up">↑</button>
+          <button class="btn tiny" onclick="moveSection('${s.id}',  1)" title="Move down">↓</button>
+          <button class="btn tiny" onclick="addItem('${s.id}')" title="Add item">+ ITEM</button>
+          <button class="btn tiny danger" onclick="deleteSection('${s.id}')" title="Delete section">×</button>
+        </div>
+        <div class="section-body">
+          ${items || '<div class="empty-state" style="padding:1rem;">No items yet — press + ITEM above.</div>'}
+        </div>
+      </div>`;
+  }
+
+  function renderItem(sid, it) {
+    return `
+      <div class="item-card" data-iid="${it.id}">
+        <div class="item-name-wrap">
+          <div class="field-label">Item name</div>
+          <input class="field-input" type="text"
+                 value="${escHtml(it.name)}"
+                 placeholder="Bantha Burger"
+                 oninput="setItemField('${sid}', '${it.id}', 'name', this.value)">
+        </div>
+        <div class="item-price-wrap">
+          <div class="field-label">Price (cr)</div>
+          <input class="field-input field-price" type="number" min="0" step="1"
+                 value="${Number(it.price) || 0}"
+                 oninput="setItemField('${sid}', '${it.id}', 'price', this.value)">
+        </div>
+        <div class="item-desc-wrap">
+          <div class="field-label">Description</div>
+          <textarea class="field-textarea" rows="2"
+                    placeholder="Char-grilled, blue-milk glaze, two stinger pickles..."
+                    oninput="setItemField('${sid}', '${it.id}', 'desc', this.value)">${escHtml(it.desc)}</textarea>
+        </div>
+        <div class="row-controls">
+          <span class="preview">$${Number(it.price) || 0}</span>
+          <button class="btn tiny" onclick="moveItem('${sid}', '${it.id}', -1)">↑</button>
+          <button class="btn tiny" onclick="moveItem('${sid}', '${it.id}',  1)">↓</button>
+          <button class="btn tiny danger" onclick="deleteItem('${sid}', '${it.id}')">× DELETE</button>
+        </div>
+      </div>`;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  INIT
+  // ═══════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', async () => {
+    renderEditor();
+    const pat = localStorage.getItem('gh_pat');
+    if (pat) {
+      const ok = await checkOwner(pat);
+      if (ok) await ghFetch();
+    } else {
+      await tryShowAuthOverlay();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
