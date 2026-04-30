@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cantina Menu — Outer Rim Provisions</title>
+<style>
+@font-face {
+  font-family: 'Aurebesh';
+  src: url('../toypad-system-backup/AurebeshAF-Canon.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+@import url('https://fonts.googleapis.com/css2?family=Electrolize&family=Orbitron:wght@400;700&display=swap');
+
+:root {
+  --bg: #020610;
+  --panel: #040916;
+  --panel2: #060c1c;
+  --border: #0e1e40;
+  --border2: #1c3060;
+  --glow: #4ab4ff;
+  --glow-dim: #3a80cc;
+  --glow-rgb: 74,180,255;
+  --amber: #2af5ff;
+  --amber-dim: #1a9aaa;
+  --danger: #ff4466;
+  --dim-text: #3a60a0;
+  --scan: rgba(0,0,20,0.15);
+  --font-alien: 'Aurebesh', serif;
+  --font-eng: 'Electrolize', sans-serif;
+  --font-title: 'Orbitron', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #010408;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12px;
+  font-family: var(--font-eng);
+  color: var(--glow);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, var(--scan) 3px, var(--scan) 4px);
+  pointer-events: none;
+  z-index: 9000;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+  z-index: 9001;
+}
+
+/* Aurebesh "fluent" mode — everything in alien glyphs */
+body.fluent-mode,
+body.fluent-mode * {
+  font-family: var(--font-alien) !important;
+}
+
+#datapad {
+  width: 100%;
+  max-width: 900px;
+  background: var(--bg);
+  border: 2px solid var(--border2);
+  border-radius: 6px;
+  box-shadow: 0 0 30px rgba(var(--glow-rgb),0.08), inset 0 0 40px rgba(0,0,0,0.5), 0 0 2px var(--glow-dim);
+  position: relative;
+  overflow: hidden;
+}
+
+#datapad::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(var(--glow-rgb),0.02) 0%, transparent 30%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+#header {
+  position: relative;
+  z-index: 2;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border2);
+  background: var(--panel2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#header-left { display: flex; flex-direction: column; gap: 2px; }
+#header-title {
+  font-family: var(--font-title);
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: var(--amber);
+  text-shadow: 0 0 8px var(--amber-dim);
+  text-transform: uppercase;
+}
+#header-sub {
+  font-family: var(--font-alien);
+  font-size: 12px;
+  color: var(--glow-dim);
+}
+#header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.header-btn {
+  background: none;
+  border: 1px solid var(--glow-dim);
+  color: var(--glow-dim);
+  font-family: var(--font-eng);
+  font-weight: bold;
+  font-size: 9px;
+  padding: 4px 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  border-radius: 2px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.header-btn:hover {
+  border-color: var(--glow);
+  color: var(--glow);
+  box-shadow: 0 0 6px rgba(var(--glow-rgb),0.3);
+}
+.header-btn.active {
+  border-color: var(--amber);
+  color: var(--amber);
+  box-shadow: 0 0 6px rgba(200,146,10,0.3);
+}
+
+/* ── Menu body ─────────────────────────────────────────────────── */
+#menu-body {
+  position: relative;
+  z-index: 2;
+  padding: 18px 22px 28px;
+}
+
+.menu-empty {
+  text-align: center;
+  padding: 60px 20px;
+  font-family: var(--font-alien);
+  font-size: 14px;
+  color: var(--glow-dim);
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+.menu-section {
+  margin-bottom: 28px;
+}
+.menu-section:last-child { margin-bottom: 0; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.section-glyph {
+  font-family: var(--font-alien);
+  font-size: 18px;
+  color: var(--amber);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+.section-name {
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--amber);
+  text-shadow: 0 0 6px var(--amber-dim);
+  text-transform: uppercase;
+}
+
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  align-items: baseline;
+  padding: 10px 12px;
+  background: rgba(var(--glow-rgb),0.025);
+  border-left: 2px solid var(--border2);
+  border-radius: 2px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.menu-item:hover {
+  border-left-color: var(--amber-dim);
+  background: rgba(var(--glow-rgb),0.04);
+}
+
+.item-name {
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--glow);
+  text-transform: uppercase;
+}
+.item-price {
+  font-family: var(--font-alien);
+  font-size: 16px;
+  color: var(--amber);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 5px var(--amber-dim);
+  white-space: nowrap;
+  justify-self: end;
+}
+.item-desc {
+  grid-column: 1 / -1;
+  font-family: var(--font-eng);
+  font-size: 11px;
+  color: var(--glow-dim);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.item-desc:empty { display: none; }
+
+/* In fluent-mode, the price already renders in Aurebesh thanks to the
+   global override, but bump weight slightly so "credit" digits read clearly */
+body.fluent-mode .item-price {
+  letter-spacing: 0.08em;
+}
+
+/* ── Footer ────────────────────────────────────────────────────── */
+#footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--border);
+  padding: 8px 14px;
+  font-family: var(--font-eng);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--dim-text);
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* ── Mobile ────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  body { padding: 0; }
+  #datapad { border-radius: 0; border-left: none; border-right: none; }
+  #header { padding: 6px 10px; gap: 4px; }
+  #header-title { font-size: 11px; letter-spacing: 2px; }
+  #header-sub { display: none; }
+  #header-right { gap: 4px; }
+  .header-btn { font-size: 8px; padding: 3px 6px; }
+  #menu-body { padding: 14px 12px 22px; }
+  .section-name { font-size: 12px; letter-spacing: 2px; }
+  .menu-item { padding: 8px 10px; }
+  .item-name { font-size: 11px; }
+  .item-price { font-size: 14px; }
+  .item-desc { font-size: 10px; }
+}
+
+</style>
+</head>
+<body class="fluent-mode">
+
+<div id="datapad">
+
+  <div id="header">
+    <div id="header-left">
+      <div id="header-title">Cantina Menu</div>
+      <div id="header-sub">Outer Rim Provisions — Authorized Vendors</div>
+    </div>
+    <div id="header-right">
+      <button class="header-btn active" id="translate-btn" onclick="toggleTranslate()">⬡ TRANSLATE ALL</button>
+      <a href="holofeed-main.html" class="header-btn">← HOLOFEED</a>
+    </div>
+  </div>
+
+  <div id="menu-body"></div>
+
+  <div id="footer">⬡ ALL TRANSACTIONS IN GALACTIC CREDITS ⬡ NO REFUNDS — HUTT POLICY ⬡</div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// MENU DATA
+// ════════════════════════════════════════════════════════════════
+// Edited via menu-editor.html (collaborator password protected).
+// Schema: [ { section: "...", items: [ { name, desc, price } ] } ]
+// price is a positive integer (galactic credits).
+// ════════════════════════════════════════════════════════════════
+const MENU = [
+  {
+    section: "Smuggler's Snacks",
+    items: [
+      {
+        name: "Bantha Burger",
+        desc: "Char-grilled bantha patty, blue-milk glaze, two stinger pickles. As ordered by the Krayt himself, allegedly.",
+        price: 50
+      },
+      {
+        name: "Endor Skewers",
+        desc: "Crispy roasted root and forest greens on a Wookiee toothpick. Vegetarian by accident.",
+        price: 35
+      }
+    ]
+  },
+  {
+    section: "Hutt Cocktails",
+    items: [
+      {
+        name: "Tatooine Sunset",
+        desc: "Spiced rum, blood-orange, a flicker of pyronium. Best sipped before sundown — both of them.",
+        price: 75
+      }
+    ]
+  }
+];
+
+// ════════════════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════════════════
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function renderMenu() {
+  const body = document.getElementById('menu-body');
+  const sections = (MENU || []).filter(s => s && s.items && s.items.length > 0);
+
+  if (sections.length === 0) {
+    body.innerHTML = '<div class="menu-empty">Provisions inbound… check back at the next dock cycle.</div>';
+    return;
+  }
+
+  const html = sections.map(s => {
+    const items = s.items.map(it => `
+      <div class="menu-item">
+        <div class="item-name">${escapeHtml(it.name)}</div>
+        <div class="item-price">$${Number(it.price) || 0}</div>
+        <div class="item-desc">${escapeHtml(it.desc)}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="menu-section">
+        <div class="section-header">
+          <span class="section-glyph">⬡</span>
+          <span class="section-name">${escapeHtml(s.section)}</span>
+        </div>
+        <div class="menu-items">${items}</div>
+      </div>
+    `;
+  }).join('');
+
+  body.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════
+// AUREBESH ↔ BASIC TOGGLE
+// ════════════════════════════════════════════════════════════════
+function applyFluentState(fluent) {
+  const btn = document.getElementById('translate-btn');
+  if (fluent) {
+    document.body.classList.add('fluent-mode');
+    btn.classList.add('active');
+    btn.textContent = '⬡ TRANSLATE ALL';
+  } else {
+    document.body.classList.remove('fluent-mode');
+    btn.classList.remove('active');
+    btn.textContent = '⬡ AUREBESH';
+  }
+}
+
+function toggleTranslate() {
+  const next = !document.body.classList.contains('fluent-mode');
+  applyFluentState(next);
+  try { localStorage.setItem('menu_fluent', next ? '1' : '0'); } catch(_) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Restore last preference (default: Aurebesh on)
+  let saved;
+  try { saved = localStorage.getItem('menu_fluent'); } catch(_) {}
+  applyFluentState(saved === null || saved === '1');
+  renderMenu();
+});
+</script>
+
+</body>
+</html>
