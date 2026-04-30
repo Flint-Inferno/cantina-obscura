@@ -614,14 +614,6 @@
             <input type="text" id="f-aur-name" placeholder="Same as name — or override" spellcheck="false">
           </div>
           <input type="hidden" id="f-slug">
-          <div class="field" style="margin-top:0.5rem;">
-            <label>Status</label>
-            <select id="f-status">
-              <option value="active">Active</option>
-              <option value="missing">Missing</option>
-              <option value="deceased">Deceased</option>
-            </select>
-          </div>
           <div class="field-row" style="margin-top:0.5rem;">
             <div class="field">
               <label>Species</label>
@@ -727,10 +719,10 @@
           </div>
         </div>
 
-        <!-- Skills section -->
+        <!-- Reputation section -->
         <div>
-          <div class="section-heading">Known Skills &amp; Abilities</div>
-          <div class="rt-wrap" style="margin-top:0.5rem;" data-section="skills">
+          <div class="section-heading">Reputation</div>
+          <div class="rt-wrap" style="margin-top:0.5rem;" data-section="reputation">
             <div class="rt-toolbar">
               <button class="rt-btn" onclick="rtCmd('bold')"          title="Bold"><b>B</b></button>
               <button class="rt-btn" onclick="rtCmd('italic')"        title="Italic"><i>I</i></button>
@@ -741,12 +733,12 @@
               </div>
               <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
               <button class="rt-btn" onclick="openLinkPicker()" title="Link">↗ LINK</button>
-              <button class="rt-btn" id="skills-list-btn" onclick="toggleSkillsList()" title="Toggle bullet list">≡ LIST</button>
+              <button class="rt-btn" id="reputation-list-btn" onclick="toggleReputationList()" title="Toggle bullet list">≡ LIST</button>
             </div>
-            <div class="rt-field" id="rt-skills" contenteditable="true" spellcheck="false"
-                 data-placeholder="Known abilities..."
+            <div class="rt-field" id="rt-reputation" contenteditable="true" spellcheck="false"
+                 data-placeholder="How they're known around the cantina..."
                  onfocus="setActiveRt(this)" oninput="schedulePreview()">
-              <ul><li>Unknown</li></ul>
+              <p>Unknown.</p>
             </div>
           </div>
         </div>
@@ -756,14 +748,6 @@
           <div class="section-heading">Known Associates</div>
           <div id="associates-list" style="margin-top:0.4rem;"></div>
           <button class="btn" onclick="addAssociate()" style="margin-top:0.4rem;font-size:0.62rem;padding:0.2rem 0.6rem;">+ ADD ASSOCIATE</button>
-        </div>
-
-        <!-- Location -->
-        <div>
-          <div class="section-heading">Last Known Location</div>
-          <div class="field" style="margin-top:0.5rem;">
-            <textarea id="f-location" rows="2" placeholder="Last known whereabouts..."></textarea>
-          </div>
         </div>
 
         <!-- GM notes -->
@@ -777,8 +761,8 @@
           <span id="gm-pw-lock-note">PAT required to change GM password</span>
 
           <div class="field" style="margin-top:0.5rem;">
-            <label>Motives</label>
-            <div class="rt-wrap" data-section="gm-motives">
+            <label>GM Notes</label>
+            <div class="rt-wrap" data-section="gm-notes">
               <div class="rt-toolbar">
                 <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
                 <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
@@ -787,61 +771,7 @@
                 <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
                 <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
               </div>
-              <div class="rt-field" id="rt-gm-motives" contenteditable="true" spellcheck="false"
-                   onfocus="setActiveRt(this)" oninput="schedulePreview()">
-                <p>—</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:0.5rem;">
-            <label>Secrets</label>
-            <div class="rt-wrap" data-section="gm-secrets">
-              <div class="rt-toolbar">
-                <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
-                <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
-                <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
-                <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
-                <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
-                <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
-              </div>
-              <div class="rt-field" id="rt-gm-secrets" contenteditable="true" spellcheck="false"
-                   onfocus="setActiveRt(this)" oninput="schedulePreview()">
-                <p>—</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:0.5rem;">
-            <label>Plot Hooks</label>
-            <div class="rt-wrap" data-section="gm-plot-hooks">
-              <div class="rt-toolbar">
-                <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
-                <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
-                <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
-                <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
-                <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
-                <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
-              </div>
-              <div class="rt-field" id="rt-gm-plot-hooks" contenteditable="true" spellcheck="false"
-                   onfocus="setActiveRt(this)" oninput="schedulePreview()">
-                <p>—</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:0.5rem;">
-            <label>Cast Notes</label>
-            <div class="rt-wrap" data-section="gm-cast-notes">
-              <div class="rt-toolbar">
-                <button class="rt-btn" onclick="rtCmd('bold')"      ><b>B</b></button>
-                <button class="rt-btn" onclick="rtCmd('italic')"    ><i>I</i></button>
-                <button class="rt-btn" onclick="rtCmd('underline')" ><u>U</u></button>
-                <div class="rt-color-wrap"><button class="rt-btn">A</button><input type="color" class="rt-color-input" onchange="rtColor(this.value)"></div>
-                <button class="rt-btn" onclick="rtClearColor()" title="Clear color">✕A</button>
-                <button class="rt-btn" onclick="openLinkPicker()">↗ LINK</button>
-              </div>
-              <div class="rt-field" id="rt-gm-cast-notes" contenteditable="true" spellcheck="false"
+              <div class="rt-field" id="rt-gm-notes" contenteditable="true" spellcheck="false"
                    onfocus="setActiveRt(this)" oninput="schedulePreview()">
                 <p>—</p>
               </div>
@@ -1344,19 +1274,14 @@
     document.getElementById('f-name').value        = '';
     document.getElementById('f-aur-name').value    = '';
     document.getElementById('f-slug').value        = '';
-    document.getElementById('f-status').value      = 'active';
     document.getElementById('f-species').value     = '';
     document.getElementById('f-homeworld').value   = '';
     document.getElementById('f-occupation').value  = '';
     document.getElementById('f-affiliation').value = '';
-    document.getElementById('f-location').value    = '';
     document.getElementById('f-gm-password').value = '';
     document.getElementById('rt-background').innerHTML    = '<p>[ No background on file. ]</p>';
-    document.getElementById('rt-skills').innerHTML        = '<ul><li>Unknown</li></ul>';
-    document.getElementById('rt-gm-motives').innerHTML    = '<p>—</p>';
-    document.getElementById('rt-gm-secrets').innerHTML    = '<p>—</p>';
-    document.getElementById('rt-gm-plot-hooks').innerHTML = '<p>—</p>';
-    document.getElementById('rt-gm-cast-notes').innerHTML = '<p>—</p>';
+    document.getElementById('rt-reputation').innerHTML    = '<p>Unknown.</p>';
+    document.getElementById('rt-gm-notes').innerHTML      = '<p>—</p>';
     document.getElementById('associates-list').innerHTML  = '';
     clearPortrait();
     clearWatermark();
@@ -1371,7 +1296,6 @@
     document.getElementById('f-slug').value        = meta('char-slug')        || currentSlug;
     document.getElementById('f-name').value        = meta('char-name')        || '';
     document.getElementById('f-aur-name').value    = meta('char-aur-name')    || '';
-    document.getElementById('f-status').value      = meta('char-status')      || 'active';
     document.getElementById('f-species').value     = meta('char-species')     || '';
     document.getElementById('f-homeworld').value   = meta('char-homeworld')   || '';
     document.getElementById('f-occupation').value  = meta('char-occupation')  || '';
@@ -1413,11 +1337,9 @@
       if (el) document.getElementById(id).innerHTML = el.innerHTML;
     };
     setRt('rt-background', '[data-section="background"]');
-    setRt('rt-skills',     '[data-section="skills"]');
-
-    // Location
-    const locEl = doc.querySelector('[data-section="location"]');
-    if (locEl) document.getElementById('f-location').value = locEl.textContent.trim();
+    // Reputation (with legacy fallback to old "skills" section)
+    const repEl = doc.querySelector('[data-section="reputation"]') || doc.querySelector('[data-section="skills"]');
+    if (repEl) document.getElementById('rt-reputation').innerHTML = repEl.innerHTML;
 
     // Associates
     const assocEl = doc.querySelector('[data-section="associates"]');
@@ -1426,15 +1348,23 @@
       links.forEach(a => addAssociate(a.textContent.trim(), a.getAttribute('href') || ''));
     }
 
-    // GM content (decode)
+    // GM content (decode). New schema: { notes }. Legacy fallback: concatenate
+    // motives/secrets/plot_hooks/cast_notes under labels for any unmigrated bio.
     const gmEnc = meta('gm-content');
     if (gmEnc) {
       try {
-        const gmData = JSON.parse(atob(gmEnc));
-        if (gmData.motives)    document.getElementById('rt-gm-motives').innerHTML    = gmData.motives;
-        if (gmData.secrets)    document.getElementById('rt-gm-secrets').innerHTML    = gmData.secrets;
-        if (gmData.plot_hooks) document.getElementById('rt-gm-plot-hooks').innerHTML = gmData.plot_hooks;
-        if (gmData.cast_notes) document.getElementById('rt-gm-cast-notes').innerHTML = gmData.cast_notes;
+        const gmData = JSON.parse(decodeURIComponent(escape(atob(gmEnc))));
+        if (gmData.notes != null) {
+          document.getElementById('rt-gm-notes').innerHTML = gmData.notes || '<p>—</p>';
+        } else {
+          const isEmpty = v => !v || v.trim() === '' || v.trim() === '<p>—</p>' || v.trim() === '<p></p>';
+          const parts = [];
+          if (!isEmpty(gmData.motives))    parts.push('<p><strong>Motives</strong></p>'    + gmData.motives);
+          if (!isEmpty(gmData.secrets))    parts.push('<p><strong>Secrets</strong></p>'    + gmData.secrets);
+          if (!isEmpty(gmData.plot_hooks)) parts.push('<p><strong>Plot Hooks</strong></p>' + gmData.plot_hooks);
+          if (!isEmpty(gmData.cast_notes)) parts.push('<p><strong>Cast Notes</strong></p>' + gmData.cast_notes);
+          document.getElementById('rt-gm-notes').innerHTML = parts.join('') || '<p>—</p>';
+        }
       } catch(_) {}
     }
   }
@@ -1731,9 +1661,9 @@
     schedulePreview();
   }
 
-  function toggleSkillsList() {
-    const field = document.getElementById('rt-skills');
-    const btn   = document.getElementById('skills-list-btn');
+  function toggleReputationList() {
+    const field = document.getElementById('rt-reputation');
+    const btn   = document.getElementById('reputation-list-btn');
     field.focus();
     const hasList = field.querySelector('ul, ol');
     if (hasList) {
@@ -1862,12 +1792,10 @@
     const slug       = (document.getElementById('f-slug').value.trim()        || 'character').toLowerCase().replace(/[^a-z0-9-]/g,'-');
     const name       = document.getElementById('f-name').value.trim()         || 'CHARACTER NAME';
     const aurName    = document.getElementById('f-aur-name').value.trim()     || name;
-    const status     = document.getElementById('f-status').value              || 'active';
     const species    = document.getElementById('f-species').value.trim()      || 'Unknown';
     const homeworld  = document.getElementById('f-homeworld').value.trim()    || 'Unknown';
     const occupation = document.getElementById('f-occupation').value.trim()   || 'Unknown';
     const affil      = document.getElementById('f-affiliation').value.trim()  || 'Independent';
-    const location   = document.getElementById('f-location').value.trim()     || 'Unknown';
 
     const bg     = getColorVal('bg');
     const text   = getColorVal('text');
@@ -1900,7 +1828,6 @@
     setMeta('char-homeworld',       homeworld);
     setMeta('char-occupation',      occupation);
     setMeta('char-affiliation',     affil);
-    setMeta('char-status',          status);
     setMeta('char-portrait',        portraitData ? `portraits/${slug}.jpg` : (doc.querySelector('meta[name="char-portrait"]')?.content || ''));
     setMeta('char-watermark-color', wmColor);
     setMeta('char-watermark-data',  wmData || '');
@@ -1908,10 +1835,7 @@
 
     // GM content: encode
     const gmObj = {
-      motives:    document.getElementById('rt-gm-motives').innerHTML,
-      secrets:    document.getElementById('rt-gm-secrets').innerHTML,
-      plot_hooks: document.getElementById('rt-gm-plot-hooks').innerHTML,
-      cast_notes: document.getElementById('rt-gm-cast-notes').innerHTML,
+      notes: document.getElementById('rt-gm-notes').innerHTML,
     };
     setMeta('gm-content', btoa(unescape(encodeURIComponent(JSON.stringify(gmObj)))));
 
@@ -1923,8 +1847,7 @@
       if (el) el.innerHTML = html;
     };
     setSect('[data-section="background"]', document.getElementById('rt-background').innerHTML);
-    setSect('[data-section="skills"]',     document.getElementById('rt-skills').innerHTML);
-    setSect('[data-section="location"]',   `<p>${esc(location)}</p>`);
+    setSect('[data-section="reputation"]', document.getElementById('rt-reputation').innerHTML);
 
     // Associates
     const assocEl = doc.querySelector('[data-section="associates"]');
