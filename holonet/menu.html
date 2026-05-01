@@ -284,7 +284,7 @@ body.fluent-mode .item-price {
 
 </style>
 </head>
-<body class="fluent-mode">
+<body>
 
 <div id="datapad">
 
@@ -294,7 +294,7 @@ body.fluent-mode .item-price {
       <div id="header-sub">Outer Rim Provisions — Authorized Vendors</div>
     </div>
     <div id="header-right">
-      <button class="header-btn active" id="translate-btn" onclick="toggleTranslate()">⬡ TRANSLATE ALL</button>
+      <button class="header-btn" id="translate-btn" onclick="toggleTranslate()">⬡ AUREBESH</button>
       <a href="holofeed-main.html" class="header-btn">← HOLOFEED</a>
     </div>
   </div>
@@ -407,10 +407,10 @@ function toggleTranslate() {
 // INIT
 // ════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore last preference (default: Aurebesh on)
+  // Restore last preference (default: Basic / English)
   let saved;
   try { saved = localStorage.getItem('menu_fluent'); } catch(_) {}
-  applyFluentState(saved === null || saved === '1');
+  applyFluentState(saved === '1');
   renderMenu();
 });
 </script>
